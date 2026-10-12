@@ -1,13 +1,19 @@
 /**
- * Objets posés sur la piste des planètes circuit :
- *  - cubes bonus arc-en-ciel (rangées de trois) : turbo plein, réapparaissent ;
- *  - tremplins : le véhicule s'envole (saut) ;
- *  - arche de départ en damier.
- * Positions calculées depuis la piste (track.ts), en espace planète.
+ * Objets « kart » éparpillés sur toute la planète (aucune piste à suivre) :
+ *  - cubes bonus arc-en-ciel (par trois) : turbo plein, ils réapparaissent ;
+ *  - accélérateurs (dalles à chevrons lumineux) : coup de vitesse ;
+ *  - tremplins : le véhicule s'envole (saut).
+ * Positions tirées au hasard (graine fixe par planète), en espace planète.
  */
 import * as THREE from 'three';
+import { URandom } from '../unity/math';
 import { toonGradient } from './toon';
-import { trackPoint, trackTangent, type TrackDef } from './track';
+
+export interface KartDef {
+  boosts: number;
+  items: number;
+  ramps: number;
+}
 
 const BOX_FRAG = /* glsl */ `
 uniform float time;
@@ -51,14 +57,24 @@ function questionAlpha(): THREE.Texture {
   return new THREE.CanvasTexture(c);
 }
 
-function checkerTexture(): THREE.Texture {
+function chevronTexture(): THREE.Texture {
   const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 32;
+  c.width = c.height = 64;
   const g = c.getContext('2d')!;
-  for (let y = 0; y < 2; y++) for (let x = 0; x < 8; x++) {
-    g.fillStyle = (x + y) % 2 ? '#111' : '#fff';
-    g.fillRect(x * 16, y * 16, 16, 16);
+  g.clearRect(0, 0, 64, 64);
+  g.fillStyle = 'rgba(255, 140, 0, 0.9)';
+  g.fillRect(2, 2, 60, 60);
+  for (let i = 0; i < 3; i++) {
+    g.fillStyle = i % 2 ? '#ffe46a' : '#fff6c0';
+    const y = 46 - i * 16;
+    g.beginPath();
+    g.moveTo(10, y + 8);
+    g.lineTo(32, y - 6);
+    g.lineTo(54, y + 8);
+    g.lineTo(54, y + 16);
+    g.lineTo(32, y + 2);
+    g.lineTo(10, y + 16);
+    g.fill();
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -85,8 +101,9 @@ function stripeTexture(): THREE.Texture {
   return t;
 }
 
-const MAX_BOX = 24;
-const MAX_RAMP = 6;
+const MAX_BOX = 30;
+const MAX_RAMP = 8;
+const MAX_PAD = 10;
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();
 const _p = new THREE.Vector3();
@@ -99,13 +116,15 @@ interface Box {
   respawn: number;
 }
 
-export class TrackProps {
+export class KartProps {
   readonly group = new THREE.Group();
   private readonly boxMesh: THREE.InstancedMesh;
   private readonly boxMat: THREE.ShaderMaterial;
   private readonly rampMesh: THREE.InstancedMesh;
-  private readonly arch: THREE.Group;
+  private readonly padMesh: THREE.InstancedMesh;
   private boxes: Box[] = [];
+  /** Accélérateurs (directions, espace planète). */
+  pads: THREE.Vector3[] = [];
   /** Tremplins : direction et axe avant (espace planète). */
   ramps: { dir: THREE.Vector3; fwd: THREE.Vector3 }[] = [];
   private radius = 5;
@@ -128,39 +147,53 @@ export class TrackProps {
     this.rampMesh.count = 0;
     this.rampMesh.frustumCulled = false;
     this.rampMesh.castShadow = true;
-    // Arche de départ : deux poteaux et une banderole en damier
-    this.arch = new THREE.Group();
-    const poleMat = new THREE.MeshToonMaterial({ color: 0xe8333a, gradientMap: toonGradient() });
-    for (const sx of [-1, 1]) {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.9, 10), poleMat);
-      pole.position.set(sx * 0.5, 0.45, 0);
-      pole.name = 'pole';
-      this.arch.add(pole);
-    }
-    const banner = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.2, 0.04), new THREE.MeshToonMaterial({ color: 0xffffff, map: checkerTexture(), gradientMap: toonGradient() }));
-    banner.position.y = 0.88;
-    this.arch.add(banner);
-    this.arch.visible = false;
-    this.group.add(this.boxMesh, this.rampMesh, this.arch);
+    // Accélérateur : dalle lumineuse à chevrons, posée à plat
+    this.padMesh = new THREE.InstancedMesh(
+      new THREE.PlaneGeometry(0.62, 0.62).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ map: chevronTexture(), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
+      MAX_PAD,
+    );
+    this.padMesh.count = 0;
+    this.padMesh.frustumCulled = false;
+    this.padMesh.renderOrder = 1;
+    this.group.add(this.boxMesh, this.rampMesh, this.padMesh);
     parent.add(this.group);
   }
 
-  /** Place les objets de la piste (ou rien si la planète n'a pas de piste). */
-  build(track: TrackDef | undefined, radius: number, scale: number): void {
+  /** Éparpille les objets sur la planète (rien si `kart` est absent). */
+  build(kart: KartDef | undefined, radius: number, scale: number, seed: number): void {
     this.radius = radius;
     this.scale = scale;
     this.boxes = [];
     this.ramps = [];
-    this.arch.visible = false;
+    this.pads = [];
     this.boxMesh.count = 0;
     this.rampMesh.count = 0;
-    if (!track) return;
-    for (const phi of track.items) {
-      for (const k of [-0.55, 0, 0.55]) this.boxes.push({ dir: trackPoint(track, phi, k * track.width), respawn: 0 });
+    this.padMesh.count = 0;
+    if (!kart) return;
+    const rng = new URandom(seed);
+    const start = new THREE.Vector3(0, 1, 0);
+    const used: THREE.Vector3[] = [];
+    const spot = (): { dir: THREE.Vector3; fwd: THREE.Vector3 } | null => {
+      for (let i = 0; i < 40; i++) {
+        const d = rng.onUnitSphere();
+        if (d.angleTo(start) < 0.35 || used.some((u) => u.angleTo(d) * radius < 1.1)) continue;
+        used.push(d);
+        const a = rng.onUnitSphere();
+        const fwd = a.addScaledVector(d, -a.dot(d)).normalize();
+        return { dir: d, fwd };
+      }
+      return null;
+    };
+    for (let i = 0; i < kart.items; i++) {
+      const s = spot();
+      if (!s) break;
+      const side = new THREE.Vector3().crossVectors(s.dir, s.fwd);
+      for (const k of [-0.42, 0, 0.42]) this.boxes.push({ dir: s.dir.clone().addScaledVector(side, k / radius).normalize(), respawn: 0 });
     }
-    for (const phi of track.ramps) {
-      const dir = trackPoint(track, phi);
-      this.ramps.push({ dir, fwd: trackTangent(track, phi) });
+    for (let i = 0; i < Math.min(kart.ramps, MAX_RAMP); i++) {
+      const s = spot();
+      if (s) this.ramps.push(s);
     }
     this.rampMesh.count = this.ramps.length;
     this.ramps.forEach((r, i) => {
@@ -170,21 +203,22 @@ export class TrackProps {
       this.rampMesh.setMatrixAt(i, _m);
     });
     this.rampMesh.instanceMatrix.needsUpdate = true;
-    if (track.arch) {
-      const d = trackPoint(track, 0.035);
-      this.orient(d, trackTangent(track, 0.035), 0);
-      this.arch.position.copy(_p);
-      this.arch.quaternion.copy(_q);
-      // Largeur de la piste en unités monde → écartement des poteaux
-      const w = track.width * radius;
-      this.arch.scale.setScalar(1 / scale);
-      this.arch.children.forEach((c) => {
-        if (c.name === 'pole') c.position.x = Math.sign(c.position.x) * (w + 0.08);
-        else c.scale.x = (w * 2 + 0.2) / 1.1;
-      });
-      this.arch.visible = true;
+    for (let i = 0; i < Math.min(kart.boosts, MAX_PAD); i++) {
+      const s = spot();
+      if (!s) break;
+      this.pads.push(s.dir);
+      this.orient(s.dir, s.fwd, 0.015);
+      _s.setScalar(1 / scale);
+      _m.compose(_p, _q, _s);
+      this.padMesh.setMatrixAt(this.padMesh.count++, _m);
     }
+    this.padMesh.instanceMatrix.needsUpdate = true;
     this.update(0);
+  }
+
+  /** Accélérateur sous le véhicule ? */
+  padAt(carDir: THREE.Vector3, reach: number, R = this.radius): boolean {
+    return this.pads.some((d) => d.angleTo(carDir) * R < reach);
   }
 
   /** Repère local : +Y = normale, +Z = avant ; position à la surface (+ lift monde). */

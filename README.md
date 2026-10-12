@@ -29,23 +29,23 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 |---|---|---|---|
 | Planète d'origine | ★★ | — | la planète Unity, telle quelle (voiture Unity) |
 | **Voyage galactique** | ★★★ | Mario Galaxy | une suite de petites planètes : une **étoile de lancement** fait sauter de l'une à l'autre |
-| **Circuit Champignon** | ★★ | Circuit Mario (Mario Kart) | grosse planète (×1,6) : asphalte, vibreurs rouge et blanc, herbe tondue, damier et arche de départ |
-| **Stade de Terre** | ★★★ | Stade Wario | boue sous les projecteurs, ornières, bosses, murs de pneus, **tremplins** |
-| **Lac Fantôme** | ★★★ | Vallée Fantôme | pont de planches sur une eau violette, lanternes flottantes, petits fantômes |
-| **Forteresse de Lave** | ★★★★ | Château de Bowser | briques de pierre, fissures de lave, blocs écraseurs, torches, ciel rouge |
-| **Route Arc-en-ciel** | ★★★★★ | Route Arc-en-ciel | ruban arc-en-ciel lumineux dans les étoiles ; hors de la route, le vide freine fort |
-| Planète du Sage | ★★ | Dragon Ball | minuscule, route jaune, maison-dôme, ciel doré « au-delà » |
-| Prairie | ★ | — | route de terre, maison-dôme ; météores lents et rares |
-| La Comté | ★ | les hobbits | **collines-terriers à porte ronde**, champs en patchwork, haies, chemins creux, mares |
-| Route des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), routes de terre, bâtiments au toit rouge, balles rouge et blanc |
+| **Stade Champignon** | ★★ | Circuit Mario (Mario Kart) | grosse planète (×1,6) : pelouse de stade en damier, tuyaux, arbres |
+| **Stade de Terre** | ★★★ | Stade Wario | boue, bosses, flaques, murs de pneus, projecteurs, **tremplins** |
+| **Lac Fantôme** | ★★★ | Vallée Fantôme | eau violette et radeaux de planches, lanternes flottantes, petits fantômes |
+| **Forteresse de Lave** | ★★★★ | Château de Bowser | pavés de pierre, fissures de lave, blocs écraseurs, torches, ciel rouge |
+| **Arc-en-ciel Céleste** | ★★★★★ | Route Arc-en-ciel | dalles arc-en-ciel lumineuses au milieu des étoiles |
+| Planète du Sage | ★★ | Dragon Ball | minuscule, prés dorés, maison-dôme, ciel doré « au-delà » |
+| Prairie | ★ | — | clairières de terre, maison-dôme ; météores lents et rares |
+| La Comté | ★ | les hobbits | **collines-terriers à porte ronde**, champs en patchwork, haies, mares |
+| Prairie des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), coins de terre, bâtiments au toit rouge, balles rouge et blanc |
 | Royaume Champignon | ★★ | Mario | tuyaux verts, champignons à pois, blocs « ? » |
-| Planète Bonbons | ★★ | Candy Crush | glaçage rose, rivière de chocolat, gros bonbons, sucettes, boules de gomme |
+| Planète Bonbons | ★★ | Candy Crush | glaçage rose, flaques de chocolat, gros bonbons, sucettes, boules de gomme |
 | Chambre de Jouets | ★★★ | Pixar | papier peint ciel et nuages, cubes à lettres, balle jaune à étoile, lampe de bureau |
-| Royaume Enchanté | ★★ | Disney | château aux flèches bleues, prés en fleurs, douves, allée dorée, ciel étoilé |
+| Royaume Enchanté | ★★ | Disney | château aux flèches bleues, prés en fleurs, lacs, ciel étoilé |
 | Grand Océan | ★★★ | One Piece | océan semé d'îles à palmiers, sillage d'écume, impacts en **tourbillons** ; adhérence 0,7 |
 | Émeraude | ★★★ | — | étangs : **éclaboussures** en les traversant ; météores plus rapides |
 | Monde de Cubes | ★★★ | Minecraft | tout en blocs |
-| Hill Valley | ★★★ | Retour vers le futur | banlieue en damier, tour de l'horloge (10 h 04) ; en turbo, **« 88 mph ! »** et deux traînées de feu |
+| Hill Valley | ★★★ | Retour vers le futur | pelouses, places pavées, tour de l'horloge (10 h 04) ; en turbo, **« 88 mph ! »** et deux traînées de feu |
 | Astéroïde B 612 | ★★★★ | Le Petit Prince | minuscule (rayon 0,62), sable doré, petits cratères, rose sous sa cloche, volcans, baobabs |
 | Banquise | ★★★ | — | sol gelé : la voiture glisse (adhérence 0,35) |
 | Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
@@ -58,23 +58,21 @@ Chaque planète a une **carte de surface** générée avec ses textures (sol, ea
 lave, glace, chemin, hautes herbes) : le jeu sait sur quoi roule la voiture et
 déclenche éclaboussures, sillage, braises ou brins d'herbe.
 
-### Circuits (planètes inspirées de Mario Kart)
+### Planètes « kart » (inspirées de Mario Kart)
 
-Les cinq planètes circuit sont plus grosses (×1,3 à ×1,7) et ont une **piste**
-: une boucle sinueuse autour de la planète, qui passe sous la voiture au
-départ (latitude f(φ) = a·sin 2φ + b·sin 3φ + c·sin 5φ dans le repère de
-départ, même formule dans `tools/procedural_planets.py` et
-`src/game/track.ts`).
+Pas de piste : comme partout, on roule où l'on veut tout autour de la
+planète. Ces cinq planètes sont plus grosses (×1,3 à ×1,7) et semées
+d'objets de course, placés au hasard (graine fixe par planète) :
 
-- **Hors-piste** : la voiture ralentit (×0,62 à ×0,78 selon la planète) et
-  soulève herbe, boue, poussière, éclaboussures ou étincelles d'étoiles ;
-- **accélérateurs** (chevrons lumineux sur la piste) : ×1,55 pendant 1,1 s ;
-- **cubes bonus** arc-en-ciel (rangées de trois) : turbo plein, ils
-  réapparaissent après 4 s ;
-- **tremplins** (Stade de Terre, Forteresse) : saut, et aucun cratère ne fait
-  mal pendant le saut ;
-- damier et arche de départ ; le décor ne se pose jamais sur la piste ;
-- elles rétrécissent moins (jusqu'à 75 %) pour garder une piste praticable.
+- **cubes bonus** arc-en-ciel, par trois : turbo plein, ils réapparaissent
+  après 4 s ;
+- **accélérateurs** (dalles à chevrons lumineux) : ×1,55 pendant 1,1 s ;
+- **tremplins** (Stade de Terre, Forteresse, Stade Champignon) : saut, et
+  aucun cratère ne fait mal pendant le saut.
+
+Aucune route ni bande n'est peinte sur les planètes : seulement des motifs
+répartis partout (taches, mares, dalles, pavés sur une grille 3D), qui ne
+s'étirent pas aux pôles.
 
 ### Voyage galactique
 
@@ -219,7 +217,7 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Véhicule | voiture volante | voiture Unity |
 | Modes de jeu (mort subite, zen, contre-la-montre…) | au choix | non |
 | Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
-| Circuits (hors-piste, accélérateurs, cubes bonus, tremplins) et voyage galactique | oui | non |
+| Objets kart (accélérateurs, cubes bonus, tremplins) et voyage galactique | oui | non |
 
 ---
 

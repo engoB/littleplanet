@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { unityColorToLinear } from './curves';
 import type { AssetsManifest, MaterialData, UnityProject } from './types';
 
-export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4, GRASS: 5, OFFROAD: 6, BOOST: 7 } as const;
+export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4, GRASS: 5 } as const;
 /** Valeur du pixel = classe × SURF_SCALE (tools/procedural_planets.py). */
 const SURF_SCALE = 30;
 

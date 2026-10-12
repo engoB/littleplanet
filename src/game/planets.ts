@@ -2,7 +2,7 @@
  * Planètes jouables (src/game/planets.json), déblocage et records par planète.
  */
 import data from './planets.json';
-import type { TrackDef } from './track';
+import type { KartDef } from './KartProps';
 
 export interface PlanetDef {
   id: string;
@@ -26,12 +26,10 @@ export interface PlanetDef {
   vehicle?: 'original' | 'hover';
   /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
   reticle?: string;
-  /** Planète circuit : piste, hors-piste, accélérateurs, cubes bonus, tremplins. */
-  track?: TrackDef;
+  /** Planète « kart » : accélérateurs, cubes bonus et tremplins éparpillés (aucune piste). */
+  kart?: KartDef;
   /** Intensité de la carte d'émission RVB (route arc-en-ciel, lave, lanternes). */
   emis?: number;
-  /** Taille minimale propre à la planète quand elle rétrécit. */
-  shrink?: number;
   /** Voyage galactique : planètes visitées l'une après l'autre. */
   galaxy?: string[];
   /** Hill Valley : traînées de feu au sol en turbo. */

@@ -35,8 +35,7 @@ import { VehicleDistanceTracker } from './VehicleDistanceTracker';
 import { animateVehicle, buildHover, type VehicleRig } from './vehicles';
 import * as fxp from './fxParticles';
 import { HealthRing } from './HealthRing';
-import { TrackProps } from './TrackProps';
-import { trackFields, trackPoint, trackTangent } from './track';
+import { KartProps } from './KartProps';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -148,8 +147,7 @@ export class World implements GameContext {
   private leaves!: ParticleSystem;
   private fireTrails: ParticleSystem[] = [];
   // --- circuits
-  private trackProps!: TrackProps;
-  private offroadFx: Record<string, ParticleSystem> = {};
+  private kart!: KartProps;
   private boostTime = 0;
   private boostCd = 0;
   /** Saut (tremplin) : temps restant (s). */
@@ -277,7 +275,7 @@ export class World implements GameContext {
     this.planet.add(this.atmo);
     this.decor = new Decor(this.planet);
     this.decor.prepare(PLANETS);
-    this.trackProps = new TrackProps(this.planet);
+    this.kart = new KartProps(this.planet);
     this.buildGalaxyObjects();
     const rp = getComponent<{ type: string; id: number; fields: { rotationSpeed: number } }>(this.findRoot(this.menuData, 'Planet')!, 'RotatePlanet');
     this.rotatePlanet = new RotatePlanet(this.planet, rp?.fields.rotationSpeed ?? 10);
@@ -343,16 +341,8 @@ export class World implements GameContext {
       this.car.add(fe);
       this.fireTrails.push(this.particles.add(fxp.fireTrail(fe, atlas)));
     }
-    // Hors-piste : boue, poussière, étincelles d'étoiles (et eau / herbe déjà prévues)
-    this.offroadFx = {
-      water: this.splash,
-      grass: this.leaves,
-      mud: this.particles.add(fxp.splash(surfEm, atlas, [0.42, 0.27, 0.15, 1])),
-      dust: this.particles.add(fxp.splash(surfEm, atlas, [0.62, 0.6, 0.62, 0.9])),
-      stars: this.particles.add(fxp.sparkle(surfEm, atlas)),
-    };
     this.sparkle = this.particles.add(fxp.sparkle(this.car, atlas));
-    this.surfaceFx = [this.splash, this.embers, this.wake, this.leaves, ...this.fireTrails, this.offroadFx.mud, this.offroadFx.dust, this.offroadFx.stars, this.sparkle];
+    this.surfaceFx = [this.splash, this.embers, this.wake, this.leaves, ...this.fireTrails, this.sparkle];
     // Fumée et feu selon les dégâts (systèmes des prefabs météores réutilisés)
     const smokeNode = findNode(a.project.prefabs['meteor 2 '] ?? a.project.prefabs['meteor3'], 'Smoke');
     const fireNode = findNode(a.project.prefabs['meteor 1'], 'CFXR Fire');
@@ -502,9 +492,8 @@ export class World implements GameContext {
       : this.assets.skybox;
     this.scene.backgroundIntensity = sky === 'space' ? (def.neon ? 0.55 : 0.8) : sky === 'db' ? 0.62 : sky === 'original' ? 1 : 0.95;
     this.scene.environment = this.dayEnvironment;
-    const tr = premium ? def.track : undefined;
-    this.decor.build(def, this.planetRadius(), def.radius, tr ? (d, m) => Math.abs(trackFields(tr, d).dist) < tr.width + m + 0.03 : undefined);
-    this.trackProps.build(tr, this.planetRadius(), def.radius);
+    this.decor.build(def, this.planetRadius(), def.radius);
+    this.kart.build(premium ? def.kart : undefined, this.planetRadius(), def.radius, [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
@@ -686,14 +675,6 @@ export class World implements GameContext {
     // Hauteur de départ : rayon de la planète choisie (5,011 sur la planète d'origine)
     this.car.position.y = carNode.position[1] - this.planetCollider + this.planetRadius();
     this.car.quaternion.set(...carNode.rotation);
-    // Circuits : la voiture part dans l'axe de la piste
-    const track = bool(this.settings, 'premiumFx') ? this.def.track : undefined;
-    if (track) {
-      const up = this.car.position.clone().sub(this.planet.position).normalize();
-      const f = trackTangent(track, 0);
-      const x = new THREE.Vector3().crossVectors(up, f).normalize();
-      this.car.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, up, f.clone().addScaledVector(up, -f.dot(up)).normalize()));
-    }
     this.car.visible = true;
     this.vehicle.reset();
     this.health.start();
@@ -891,16 +872,14 @@ export class World implements GameContext {
       if (wantTurbo && this.def.fireTrail) this.events.message('88 mph !', 'info');
     }
     this.events.turbo(this.turboLevel, this.turboActive);
-    // Circuits : accélérateur, hors-piste ; saut (tremplin)
-    const tr = bool(s, 'premiumFx') ? this.def.track : undefined;
+    // Accélérateurs et tremplins (planètes « kart »)
     this.boostTime = Math.max(0, this.boostTime - dt);
     this.boostCd = Math.max(0, this.boostCd - dt);
     this.hop = Math.max(0, this.hop - dt);
-    const offroad = !!tr && this.surface === SURF.OFFROAD && this.hop <= 0 && this.boostTime <= 0;
-    this.vehicle.speedMultiplier = (this.turboActive ? 1.7 : 1) * (this.boostTime > 0 ? 1.55 : 1) * (offroad ? tr.offroad : 1);
+    this.vehicle.speedMultiplier = (this.turboActive ? 1.7 : 1) * (this.boostTime > 0 ? 1.55 : 1);
     if (bool(s, 'planetShrink') && !this.galaxy) {
       const dur = num(s, 'shrinkDuration');
-      const min = Math.max(num(s, 'shrinkMin'), this.def.shrink ?? 0);
+      const min = num(s, 'shrinkMin');
       if (dur > 0) {
         // Arcade : rétrécissement continu et progressif jusqu'à la taille minimale
         const x = Math.min(1, Time.time / dur);
@@ -954,7 +933,7 @@ export class World implements GameContext {
     }
     this.clocks.update(dt, alive ? this.carOBB : null, alive);
     if (alive) this.obstacles();
-    if (alive) this.trackEvents(dt);
+    if (alive) this.kartEvents(dt);
     // Fumée (puis feu) selon les dégâts
     const hurt = 1 - this.health.currentHealth / Math.max(1, this.health.maxHealth);
     const smokeOn = bool(s, 'damageSmoke') && this.mode !== 'menu';
@@ -1013,11 +992,7 @@ export class World implements GameContext {
     set(this.splash, water ? (this.turboActive ? 1.6 : 1) : 0);
     set(this.wake, water ? (this.turboActive ? 1.4 : 0.8) : 0);
     set(this.embers, this.surface === SURF.LAVA ? 1 : 0);
-    const tr = fx ? this.def.track : undefined;
-    const off = !!tr && this.surface === SURF.OFFROAD && this.hop <= 0;
-    set(this.leaves, this.surface === SURF.GRASS || (off && tr.offroadFx === 'grass') ? 0.7 : 0);
-    if (off && tr.offroadFx === 'water') set(this.splash, 0.8);
-    for (const k of ['mud', 'dust', 'stars']) set(this.offroadFx[k], off && tr.offroadFx === k ? 0.9 : 0);
+    set(this.leaves, this.surface === SURF.GRASS ? 0.7 : 0);
     set(this.sparkle, this.launch ? 2 : 0);
     for (const f of this.fireTrails) set(f, this.def.fireTrail && this.turboActive && fx ? 1 : 0);
     this.splashSoundCd -= dt;
@@ -1028,25 +1003,24 @@ export class World implements GameContext {
   }
 
   /** Cubes bonus, accélérateurs, tremplins, étoile de lancement. */
-  private trackEvents(dt: number): void {
+  private kartEvents(dt: number): void {
     const s = this.settings;
-    this.trackProps.update(dt);
+    this.kart.update(dt);
     const R = this.planetRadius();
-    const tr = bool(s, 'premiumFx') ? this.def.track : undefined;
-    if (tr) {
-      if (this.surface === SURF.BOOST && this.boostCd <= 0) {
+    if (bool(s, 'premiumFx') && this.def.kart) {
+      if (this.kart.padAt(this.carDir, 0.42, R) && this.boostCd <= 0) {
         this.boostTime = 1.1;
         this.boostCd = 0.6;
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.8, 1.15);
         this.shaker.start({ enabled: true, delay: 0, duration: 0.25, space: 0, strength: [0.05, 0.05, 0.12], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
       }
-      if (this.trackProps.collect(this.carDir, 0.42, R)) {
+      if (this.kart.collect(this.carDir, 0.42, R)) {
         this.turboLevel = 1;
         this.turboLocked = false;
         this.events.message('Turbo plein !', 'good');
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.6, 1.25);
       }
-      if (this.hop <= 0 && this.trackProps.rampAt(this.carDir, 0.34, R)) {
+      if (this.hop <= 0 && this.kart.rampAt(this.carDir, 0.34, R)) {
         this.hop = 0.8;
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.6, 0.8);
       }
@@ -1233,15 +1207,9 @@ export class World implements GameContext {
     this.shaker.start({ enabled: true, delay: 0, duration: 0.3, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
   }
 
-  /** Pilote automatique (tests) : braquage qui suit la piste, ou vers l'étoile de lancement. */
+  /** Pilote automatique (tests) : braquage vers l'étoile de lancement. */
   autoSteer(): number {
-    const tr = this.def.track;
-    const local = this.planet.worldToLocal(this.car.position.clone()).normalize();
-    let target: THREE.Vector3 | null = null;
-    if (tr) {
-      const { phi } = trackFields(tr, local);
-      target = trackPoint(tr, phi + 0.14);
-    } else if (this.galaxy?.star) target = this.galaxy.star.clone();
+    const target = this.galaxy?.star?.clone();
     if (!target) return 0;
     const to = this.planet.localToWorld(target.multiplyScalar(this.planetCollider)).sub(this.car.position);
     // +X local de la voiture = sa gauche

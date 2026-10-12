@@ -63,8 +63,8 @@
     },
     {
       "id": "circuit",
-      "name": "Circuit Champignon",
-      "tagline": "Le grand circuit classique : asphalte, vibreurs rouge et blanc, herbe tondue, accélérateurs et cubes bonus. Ne sors pas de la piste !",
+      "name": "Stade Champignon",
+      "tagline": "La planète du grand circuit : pelouse de stade, tuyaux, accélérateurs et cubes bonus partout.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.6,
@@ -72,7 +72,6 @@
       "atmosphere": "#bfe8ff",
       "sky": "day",
       "vehicle": "hover",
-      "shrink": 0.75,
       "palette": {
         "light": "#7ad85a",
         "mid": "#6ccb4c",
@@ -84,27 +83,6 @@
         "line": "#202020"
       },
       "pattern": "circuit",
-      "track": {
-        "wave": [
-          0.38,
-          0.12,
-          0.04
-        ],
-        "width": 0.16,
-        "boosts": [
-          1.4,
-          -1.2
-        ],
-        "items": [
-          0.7,
-          2.6,
-          -2.0
-        ],
-        "ramps": [],
-        "offroad": 0.78,
-        "offroadFx": "grass",
-        "arch": true
-      },
       "decorColors": {
         "trunk": "#7a5230",
         "canopy": [
@@ -128,12 +106,17 @@
         "rocks": 0,
         "houses": 0,
         "pipes": 3
+      },
+      "kart": {
+        "boosts": 6,
+        "items": 5,
+        "ramps": 2
       }
     },
     {
       "id": "wario",
       "name": "Stade de Terre",
-      "tagline": "Piste de boue sous les projecteurs : bosses, ornières, murs de pneus et tremplins pour s'envoler.",
+      "tagline": "Boue et bosses sous les projecteurs, murs de pneus et tremplins pour s'envoler.",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.5,
@@ -141,7 +124,6 @@
       "atmosphere": "#ffd08a",
       "sky": "space",
       "vehicle": "hover",
-      "shrink": 0.75,
       "reticle": "#ffe14d",
       "palette": {
         "light": "#6a4428",
@@ -154,31 +136,6 @@
         "line": "#202020"
       },
       "pattern": "wario",
-      "track": {
-        "wave": [
-          0.3,
-          0.15,
-          0.05
-        ],
-        "width": 0.15,
-        "boosts": [
-          1.2,
-          -1.8
-        ],
-        "items": [
-          0.6,
-          2.4,
-          -1.0
-        ],
-        "ramps": [
-          1.75,
-          -2.6,
-          -0.35
-        ],
-        "offroad": 0.72,
-        "offroadFx": "mud",
-        "arch": true
-      },
       "decorColors": {
         "trunk": "#9aa3ad",
         "canopy": [
@@ -202,12 +159,17 @@
         "houses": 0,
         "floodlights": 5,
         "tirestacks": 8
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 4,
+        "ramps": 5
       }
     },
     {
       "id": "fantome",
       "name": "Lac Fantôme",
-      "tagline": "Un pont de planches au-dessus d'une eau violette, lanternes flottantes et petits fantômes. Tombe à l'eau et tu ralentis !",
+      "tagline": "Une eau violette semée de radeaux de planches, lanternes flottantes et petits fantômes.",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.3,
@@ -215,7 +177,6 @@
       "atmosphere": "#b8a0ff",
       "sky": "space",
       "vehicle": "hover",
-      "shrink": 0.75,
       "reticle": "#7dff6a",
       "emis": 0.6,
       "palette": {
@@ -229,26 +190,6 @@
         "line": "#202020"
       },
       "pattern": "fantome",
-      "track": {
-        "wave": [
-          0.28,
-          0.22,
-          0.05
-        ],
-        "width": 0.13,
-        "boosts": [
-          1.8,
-          -1.5
-        ],
-        "items": [
-          0.8,
-          2.5,
-          -0.8
-        ],
-        "ramps": [],
-        "offroad": 0.7,
-        "offroadFx": "water"
-      },
       "decorColors": {
         "trunk": "#3a2e3a",
         "canopy": [
@@ -278,12 +219,17 @@
         "ghosts": 5,
         "lanterns": 8,
         "deadtrees": 4
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 5,
+        "ramps": 0
       }
     },
     {
       "id": "bowser",
       "name": "Forteresse de Lave",
-      "tagline": "Briques de pierre, fissures de lave et blocs écraseurs : la piste du méchant, tout en virages.",
+      "tagline": "Pavés de pierre, fissures de lave, blocs écraseurs et torches sous un ciel rouge.",
       "difficulty": 4,
       "style": "toon",
       "radius": 1.4,
@@ -291,7 +237,6 @@
       "atmosphere": "#ff8a5a",
       "sky": "red",
       "vehicle": "hover",
-      "shrink": 0.75,
       "reticle": "#7df6ff",
       "emis": 0.55,
       "palette": {
@@ -305,28 +250,6 @@
         "line": "#202020"
       },
       "pattern": "bowser",
-      "track": {
-        "wave": [
-          0.25,
-          0.2,
-          0.08
-        ],
-        "width": 0.14,
-        "boosts": [
-          1.0,
-          -2.0
-        ],
-        "items": [
-          0.5,
-          2.2,
-          -1.2
-        ],
-        "ramps": [
-          2.8
-        ],
-        "offroad": 0.75,
-        "offroadFx": "dust"
-      },
       "decorColors": {
         "trunk": "#3a3438",
         "canopy": [
@@ -350,12 +273,17 @@
         "houses": 0,
         "thwomps": 4,
         "torches": 6
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 4,
+        "ramps": 3
       }
     },
     {
       "id": "arcenciel",
-      "name": "Route Arc-en-ciel",
-      "tagline": "La route mythique : un ruban arc-en-ciel lumineux au milieu des étoiles. Hors de la route, c'est le vide qui freine !",
+      "name": "Arc-en-ciel Céleste",
+      "tagline": "Des dalles arc-en-ciel lumineuses au milieu des étoiles, accélérateurs et cubes bonus.",
       "difficulty": 5,
       "style": "toon",
       "radius": 1.7,
@@ -363,7 +291,6 @@
       "atmosphere": "#c8a0ff",
       "sky": "space",
       "vehicle": "hover",
-      "shrink": 0.75,
       "reticle": "#ffffff",
       "emis": 0.7,
       "palette": {
@@ -377,31 +304,6 @@
         "line": "#202020"
       },
       "pattern": "arcenciel",
-      "track": {
-        "wave": [
-          0.32,
-          0.18,
-          0.06
-        ],
-        "width": 0.12,
-        "boosts": [
-          0.9,
-          2.3,
-          -1.6,
-          -0.5
-        ],
-        "items": [
-          0.5,
-          1.6,
-          2.9,
-          -2.2,
-          -1.0
-        ],
-        "ramps": [],
-        "offroad": 0.62,
-        "offroadFx": "stars",
-        "arch": true
-      },
       "decorColors": {
         "trunk": "#fff",
         "canopy": [
@@ -424,12 +326,17 @@
         "rocks": 0,
         "houses": 0,
         "stars": 10
+      },
+      "kart": {
+        "boosts": 7,
+        "items": 6,
+        "ramps": 0
       }
     },
     {
       "id": "sage",
       "name": "Planète du Sage",
-      "tagline": "Minuscule planète d'entraînement : route jaune, maison-dôme et ciel doré de l'au-delà.",
+      "tagline": "Minuscule planète d'entraînement : prés dorés, maison-dôme et ciel doré de l'au-delà.",
       "difficulty": 2,
       "style": "toon",
       "radius": 0.72,
@@ -475,7 +382,7 @@
     {
       "id": "prairie",
       "name": "Prairie",
-      "tagline": "Herbe tendre, route de terre et petite maison ronde. Idéale pour débuter.",
+      "tagline": "Herbe tendre, clairières et petite maison ronde. Idéale pour débuter.",
       "difficulty": 1,
       "style": "toon",
       "radius": 1.0,
@@ -574,8 +481,8 @@
     },
     {
       "id": "herbes",
-      "name": "Route des Herbes Hautes",
-      "tagline": "Hautes herbes qui frémissent, routes de terre, centres au toit rouge et balles rouge et blanc.",
+      "name": "Prairie des Herbes Hautes",
+      "tagline": "Hautes herbes qui frémissent, mares, centres au toit rouge et balles rouge et blanc.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.0,
@@ -677,7 +584,7 @@
     {
       "id": "candy",
       "name": "Planète Bonbons",
-      "tagline": "Glaçage rose, rivière de chocolat, sucettes géantes et bonbons qui brillent.",
+      "tagline": "Glaçage rose, flaques de chocolat, sucettes géantes et bonbons qui brillent.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.0,
@@ -782,7 +689,7 @@
     {
       "id": "disney",
       "name": "Royaume Enchanté",
-      "tagline": "Château de conte de fées aux flèches bleues, prés en fleurs, douves et allée dorée sous les étoiles.",
+      "tagline": "Château de conte de fées aux flèches bleues, prés en fleurs et lacs sous les étoiles.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.05,
@@ -977,7 +884,7 @@
     {
       "id": "futur",
       "name": "Hill Valley",
-      "tagline": "Banlieue en damier et tour de l'horloge. À fond de turbo, le véhicule laisse deux traînées de feu !",
+      "tagline": "Pelouses, places pavées et tour de l'horloge. À fond de turbo, le véhicule laisse deux traînées de feu !",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.0,
