@@ -368,7 +368,8 @@ export class World implements GameContext {
       const u = this.planetToonMat.userData.planetUniforms;
       u.planetCube.value = cubes.color;
       u.planetEmis.value = cubes.emis ?? cubes.color;
-      u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.85 : 0);
+      if (def.neon) u.emisColor.value.setRGB(1.9, 1.9, 1.9);
+      else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.85 : 0);
       u.rimColor.value.set(def.atmosphere);
       this.planetMesh.material = this.planetToonMat;
     } else {
@@ -376,19 +377,40 @@ export class World implements GameContext {
     }
     this.atmo.visible = premium;
     (this.atmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
+    (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon ? 0.3 : 0.6;
     if (this.haloRoot) this.haloRoot.visible = !premium;
     this.scene.background = premium && this.assets.space ? this.assets.space : this.assets.skybox;
-    this.scene.backgroundIntensity = premium ? 0.8 : 1;
+    this.scene.backgroundIntensity = premium ? (def.neon ? 0.55 : 0.8) : 1;
     this.scene.environment = this.dayEnvironment;
     this.decor.build(def, this.planetRadius(), def.radius);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
-    this.ambient.intensity = this.toon ? 0.95 : 0;
-    // En cel-shading, un flash ponctuel devient un aplat : il est fortement atténué
-    this.lights.scale = this.toon ? 0.22 : 1;
+    // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
+    // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
+    const neon = this.toon && !!def.neon;
+    this.ambient.intensity = this.toon ? (neon ? 0.42 : 1.15) : 0;
+    this.ambient.color.set(neon ? 0x8a6aff : 0xc4dcff);
+    this.ambient.groundColor.set(neon ? 0x2a1040 : 0x6a5a6a);
+    // En cel-shading, un flash ponctuel devient un aplat : il est atténué (sauf Néon)
+    this.lights.scale = neon ? 0.9 : this.toon ? 0.22 : 1;
     for (const l of this.sceneLights) {
       const base = this.mode === 'menu' ? l.menu : l.game;
-      l.light.intensity = this.toon && (l.light as THREE.PointLight).isPointLight ? 0 : base * (this.toon ? 0.72 : 1);
+      l.light.intensity = this.toon && (l.light as THREE.PointLight).isPointLight ? 0 : base * (this.toon ? (neon ? 0.22 : 0.62) : 1);
     }
+    if (this.sun) (this.sun.shadow as THREE.LightShadow & { intensity: number }).intensity = this.toon ? 0.3 : 1;
+    for (const c of this.carMats) {
+      for (const m of Array.isArray(c.toon) ? c.toon : [c.toon]) {
+        const t = m as THREE.MeshToonMaterial;
+        if (!t.isMeshToonMaterial) continue;
+        const n = t.name;
+        const glow = n.startsWith('body') ? new THREE.Color(0xff2050).multiplyScalar(0.3)
+          : n.startsWith('light_AV') ? new THREE.Color(0xfff6c0).multiplyScalar(3)
+          : n.startsWith('light_rear') ? new THREE.Color(0xff2030).multiplyScalar(3)
+          : n.startsWith('light_blinker') ? new THREE.Color(0xffa020).multiplyScalar(2)
+          : null;
+        if (glow) t.emissive.copy(neon ? glow : new THREE.Color(0, 0, 0));
+      }
+    }
+    this.craters.setGlow(neon ? new THREE.Color(0x22e8ff).multiplyScalar(2.5) : null);
     for (const c of this.carMats) c.mesh.material = this.toon ? c.toon : c.std;
     this.stars.points.visible = premium;
     this.rig.heightScale = premium ? Math.max(0.75, def.radius) : 1;
@@ -491,6 +513,8 @@ export class World implements GameContext {
     this.applyPlanet(this.planetDef);
     const camNode = this.findRoot(this.menuData, 'Main Camera')!;
     this.rig.tilt = 0;
+    this.rig.adaptive = false;
+    this.shaker.strength = 1;
     // La caméra du menu est à la racine 3D : pivot identité, nœud = transform du menu
     this.rig.pivot.position.set(0, 0, 0);
     this.rig.pivot.quaternion.identity();
@@ -534,6 +558,13 @@ export class World implements GameContext {
     this.updateDifficulty();
     this.meteors.start();
     this.shrink.start(0);
+    this.shrinkStep = 0;
+    this.rig.adaptive = bool(this.settings, 'cameraAdaptive');
+    this.rig.closeHeight = num(this.settings, 'cameraHeight');
+    this.rig.closeTilt = num(this.settings, 'cameraTilt');
+    this.rig.center.copy(this.planet.position);
+    this.rig.radius = this.planetRadius();
+    this.shaker.strength = this.rig.adaptive ? 0.3 : 1;
     const camNode = findNode(carNode, 'Main Camera')!;
     this.rig.node.position.set(...camNode.position);
     this.rig.node.quaternion.set(...camNode.rotation);
@@ -588,6 +619,7 @@ export class World implements GameContext {
   }
 
   private bumpCooldown = 0;
+  private shrinkStep = 0;
   /** Décor : cercle (voiture) contre cercle (obstacle) sur la sphère, rebond. */
   private obstacles(): void {
     this.bumpCooldown = Math.max(0, this.bumpCooldown - Time.deltaTime);
@@ -658,7 +690,11 @@ export class World implements GameContext {
     this.shaker.update(dt);
     // LateUpdate : caméra
     if (this.mode === 'menu') this.rig.pivot.updateMatrixWorld(true);
-    else this.rig.follow(this.car, realDt);
+    else {
+      this.rig.center.copy(this.planet.position);
+      this.rig.radius = this.planetRadius();
+      this.rig.follow(this.car, realDt);
+    }
     this.updateSun();
   }
 
@@ -675,7 +711,24 @@ export class World implements GameContext {
     }
     this.events.turbo(this.turboLevel, this.turboActive);
     this.vehicle.speedMultiplier = this.turboActive ? 1.7 : 1;
-    if (bool(s, 'planetShrink')) this.shrink.update(Time.time);
+    if (bool(s, 'planetShrink')) {
+      const dur = num(s, 'shrinkDuration');
+      const min = num(s, 'shrinkMin');
+      if (dur > 0) {
+        // Arcade : rétrécissement continu et progressif jusqu'à la taille minimale
+        const x = Math.min(1, Time.time / dur);
+        const k = 1 - (1 - min) * x * x * (3 - 2 * x);
+        this.planet.scale.setScalar(this.planetDef.radius * k);
+        const step = Math.floor((1 - k) / ((1 - min) / 4));
+        if (step > this.shrinkStep) {
+          this.shrinkStep = step;
+          if (alive) this.events.message('La planète rétrécit !', 'info');
+        }
+      } else {
+        this.shrink.minScale = this.planetDef.radius * min;
+        this.shrink.update(Time.time);
+      }
+    }
     this.planet.updateMatrixWorld(true);
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
     const radius = bool(s, 'planetShrink') || this.planetDef.id !== 'origine' ? this.planetRadius() : this.planetCollider;

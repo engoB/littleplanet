@@ -37,7 +37,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'craterBump', label: 'Les cratères font dévier', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Rouler dans un cratère dévie la voiture au hasard.' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en parcourant 100 m sur la précédente.' },
-  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Script ShrinkPlanet présent dans le projet mais non attaché à la scène.' },
+  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Script ShrinkPlanet présent dans le projet mais non attaché à la scène.' },
+  { key: 'shrinkDuration', label: 'Durée du rétrécissement', group: 'Jeu', type: 'number', arcade: 150, original: 0, min: 0, max: 400, step: 10, unit: 's', help: 'Temps pour atteindre la taille minimale. 0 = comportement de ShrinkPlanet.cs (× 0,99 par seconde).' },
+  { key: 'shrinkMin', label: 'Taille minimale', group: 'Jeu', type: 'number', arcade: 0.4, original: 0.45, min: 0.2, max: 1, step: 0.05 },
   { key: 'saveRecords', label: 'Enregistrer les records', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'HighScoreManager existe mais n’est jamais appelé dans l’original.' },
   // --- Météores
   { key: 'meteorInterval', label: 'Intervalle entre météores', group: 'Météores', type: 'number', arcade: 1.4, original: 1, min: 0.3, max: 4, step: 0.1, unit: 's', help: 'MeteorSpawner : WaitForSeconds(1)' },
@@ -57,7 +59,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'clockLifetime', label: 'Durée de vie', group: 'Horloges', type: 'number', arcade: 10, original: 10, min: 3, max: 30, step: 1, unit: 's' },
   { key: 'clockHeal', label: 'Santé rendue', group: 'Horloges', type: 'number', arcade: 20, original: 20, min: 5, max: 100, step: 5 },
   // --- Caméra
-  { key: 'cameraTilt', label: 'Inclinaison de la caméra', group: 'Caméra', type: 'number', arcade: 26, original: 0, min: 0, max: 60, step: 1, unit: '°', help: '0 = vue de dessus exacte de l’original' },
+  { key: 'cameraTilt', label: 'Inclinaison de la caméra', group: 'Caméra', type: 'number', arcade: 30, original: 0, min: 0, max: 60, step: 1, unit: '°', help: '0 = vue de dessus exacte de l’original' },
+  { key: 'cameraAdaptive', label: 'Caméra adaptative', group: 'Caméra', type: 'bool', arcade: true, original: false, help: 'Proche de la voiture sur une grosse planète, planète entière quand elle devient petite.' },
+  { key: 'cameraHeight', label: 'Hauteur de la caméra (proche)', group: 'Caméra', type: 'number', arcade: 6.2, original: 12, min: 3, max: 14, step: 0.2, unit: 'u', help: 'L’original place la caméra à 12 unités au-dessus de la voiture.' },
   { key: 'cameraShake', label: 'Secousses (explosions)', group: 'Caméra', type: 'bool', arcade: true, original: true },
   // --- Graphismes
   { key: 'quality', label: 'Qualité', group: 'Graphismes', type: 'select', arcade: 'auto', original: 'auto', options: [
@@ -84,7 +88,7 @@ export const SCHEMA: SettingDef[] = [
   { key: 'stickSide', label: 'Côté du stick', group: 'Contrôles', type: 'select', arcade: 'left', original: 'right', options: [
     { value: 'left', label: 'Gauche' }, { value: 'right', label: 'Droite' },
   ], help: 'Le joystick Unity est en bas à droite.' },
-  { key: 'stickFloating', label: 'Stick flottant', group: 'Contrôles', type: 'bool', arcade: true, original: false },
+  { key: 'stickFloating', label: 'Stick flottant', group: 'Contrôles', type: 'bool', arcade: false, original: false, help: 'Désactivé : joystick fixe en bas (à gauche par défaut).' },
   { key: 'haptics', label: 'Vibrations', group: 'Contrôles', type: 'bool', arcade: true, original: false },
   { key: 'minimap', label: 'Mini-carte', group: 'Contrôles', type: 'bool', arcade: true, original: false },
   // --- Personnalisation

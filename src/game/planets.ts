@@ -9,6 +9,8 @@ export interface PlanetDef {
   tagline: string;
   difficulty: number;
   style: 'original' | 'toon';
+  /** Planète nocturne : sol sombre, voiture et impacts lumineux. */
+  neon?: boolean;
   radius: number;
   unlock: { planet: string; distance: number } | null;
   atmosphere: string;

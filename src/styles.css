@@ -24,9 +24,12 @@ body:not(.original) .outline {
 }
 body:not(.original) .title { color: #ffe14d; letter-spacing: 0.02em; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; background: #0b1a2a; color: var(--ink); overflow: hidden; }
+html, body { margin: 0; height: 100%; background: #04050c; color: var(--ink); overflow: hidden; }
+/* Plein écran : la grande hauteur de viewport (lvh) couvre aussi la zone sous
+   la barre système (iOS en mode installé, barres Android escamotées) */
+html { min-height: 100lvh; }
 body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#game { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; }
 [hidden] { display: none !important; }
 
 .outline {
@@ -72,8 +75,12 @@ button.big { font-size: clamp(20px, 4vmin, 30px); min-width: 210px; background: 
 body.original .health-fill { background: #fff; }
 .health-text { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 700; color: #000; text-shadow: 0 0 2px #fff; }
 .hud-center { text-align: center; }
-#chrono { font-size: clamp(22px, 4.2vmin, 34px); font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.6); font-variant-numeric: tabular-nums; }
-#objective { margin-top: 2px; font-size: clamp(12px, 2.3vmin, 16px); background: rgba(0,0,0,0.38); padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
+#chrono { font-size: clamp(34px, 7.5vmin, 60px); line-height: 1; font-weight: 700; text-shadow: 0 3px 10px rgba(0,0,0,0.65); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+#objective {
+  margin-top: 6px; font-size: clamp(15px, 3.4vmin, 24px); font-weight: 600; white-space: nowrap;
+  background: rgba(8, 12, 30, 0.55); border: 1px solid rgba(255,255,255,0.18); padding: 5px 16px; border-radius: 999px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
 .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 #distance { font-size: clamp(20px, 4.4vmin, 36px); font-variant-numeric: tabular-nums; white-space: nowrap; }
 body.original #distance { font-size: clamp(18px, 4vmin, 34px); }
@@ -87,15 +94,24 @@ body.original #distance { font-size: clamp(18px, 4vmin, 34px); }
 #damage-flash.on { animation: flash 0.45s ease-out; }
 @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
 
-#stick-zone { position: absolute; left: 0; bottom: 0; width: 50%; height: 72%; pointer-events: auto; touch-action: none; }
+#stick-zone { position: absolute; left: 0; bottom: 0; width: 50%; height: 60%; pointer-events: auto; touch-action: none; }
 #stick-zone.right { left: auto; right: 0; }
 .stick-base {
   position: absolute; left: 0; top: 0; border-radius: 50%;
   background: radial-gradient(circle, rgba(255,255,255,0.10), rgba(255,255,255,0.22));
   border: 3px solid rgba(255,255,255,0.65); transition: opacity 0.2s;
 }
-.stick-base.idle { opacity: 0.45; }
-.stick-knob { position: absolute; left: 50%; top: 50%; border-radius: 50%; background: rgba(255,255,255,0.88); box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+.stick-base {
+  background: radial-gradient(circle, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.16));
+  border: 2px solid rgba(255,255,255,0.55); box-shadow: 0 0 0 6px rgba(255,255,255,0.06), inset 0 0 24px rgba(120,190,255,0.18);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.stick-base.idle { opacity: 0.75; }
+.stick-knob {
+  position: absolute; left: 50%; top: 50%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #dfe8ff 55%, #a9b8e0);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45), 0 0 18px rgba(140,200,255,0.35);
+}
 body.no-touch .stick-base { display: none; }
 
 #btn-turbo {
@@ -209,3 +225,120 @@ legend { font-weight: 700; font-size: 18px; padding: 6px 0; color: var(--accent)
   .over-buttons { flex-wrap: wrap; justify-content: center; }
   .planet-list { padding-bottom: 6px; }
 }
+
+/* =====================================================================
+   Menus premium (verre dépoli, dégradés, typographie ronde)
+   ===================================================================== */
+.glass {
+  background: linear-gradient(180deg, rgba(26, 32, 70, 0.62), rgba(10, 12, 32, 0.66));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.btn-primary, .btn-glass {
+  min-width: 0; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  text-decoration: none; cursor: pointer; transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s;
+}
+.btn-primary {
+  color: #2a1500; font-size: clamp(20px, 4.2vmin, 30px); min-height: 58px; padding: 0 34px;
+  background: linear-gradient(180deg, #ffe877 0%, #ffc83d 45%, #ff9f2e 100%);
+  box-shadow: 0 10px 30px rgba(255, 160, 40, 0.42), inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 0 rgba(150, 70, 0, 0.25);
+  animation: breathe 2.6s ease-in-out infinite;
+}
+.btn-primary:active { transform: scale(0.97); }
+@keyframes breathe { 50% { box-shadow: 0 12px 38px rgba(255, 170, 50, 0.62), inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 0 rgba(150, 70, 0, 0.25); } }
+.play-ico { width: 0; height: 0; border-left: 0.62em solid currentColor; border-top: 0.38em solid transparent; border-bottom: 0.38em solid transparent; margin-left: 2px; }
+.btn-glass {
+  color: #eef2ff; font-size: clamp(14px, 2.6vmin, 18px); min-height: 46px; padding: 0 20px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.btn-glass:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.16); }
+
+/* --- accueil : panneau à gauche, planète à droite (cadrage caméra) */
+.menu-home { align-items: flex-start; justify-content: center; padding-left: calc(4vw + var(--safe-l)); background: radial-gradient(ellipse at 20% 50%, rgba(4, 6, 20, 0.55), rgba(4, 6, 20, 0) 60%) !important; }
+.home-panel { width: min(400px, 44vw); padding: 26px 28px 22px; display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.brand { text-align: center; line-height: 0.95; margin-bottom: 2px; }
+.brand-kicker { font-size: clamp(16px, 3.2vmin, 24px); font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: #cfe0ff; opacity: 0.9; }
+.brand-title {
+  font-size: clamp(46px, 11vmin, 92px); font-weight: 700; margin: 0; letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #fff6c8 0%, #ffd34d 45%, #ff9a2e 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(255, 150, 40, 0.35)) drop-shadow(0 2px 0 rgba(60, 20, 0, 0.35));
+}
+.planet-chip {
+  display: flex; align-items: center; gap: 12px; min-height: 0; padding: 8px 14px 8px 8px; border-radius: 999px; min-width: 0;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.16); color: #fff; box-shadow: none; text-align: left;
+}
+.chip-pic { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; background: radial-gradient(circle at 35% 30%, #c8f070, #6cbf3a 55%, #2f6a2a); }
+.chip-pic img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.18); }
+.chip-text { display: flex; flex-direction: column; flex: 1; line-height: 1.15; }
+.chip-text b { font-size: 18px; }
+.chip-text small { color: var(--accent); letter-spacing: 2px; font-size: 12px; }
+.chip-change { font-size: 13px; opacity: 0.75; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
+.home-row { display: flex; gap: 10px; }
+.home-row > * { flex: 1; }
+.home-panel .records { position: static; background: rgba(0, 0, 0, 0.18); border-radius: 16px; padding: 10px 14px; text-align: left; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px 10px; }
+.home-panel .records-title { grid-column: 1 / -1; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #aebde8; font-weight: 600; }
+.home-panel .record { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 15px; }
+.home-panel .record::first-letter { color: var(--accent); }
+.badge { opacity: 0.65; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); }
+
+/* --- choix de planète */
+#menu-planets { justify-content: flex-end; padding-bottom: calc(18px + var(--safe-b)); background: linear-gradient(0deg, rgba(4, 6, 20, 0.75), rgba(4, 6, 20, 0) 55%); }
+.planets-title { font-size: clamp(24px, 5.2vmin, 40px); margin: 0; font-weight: 700; text-shadow: 0 3px 14px rgba(0, 0, 0, 0.6); }
+.planet-card {
+  background: linear-gradient(180deg, rgba(26, 32, 70, 0.72), rgba(10, 12, 32, 0.78)); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.planet-card.selected { border-color: rgba(255, 211, 77, 0.95); box-shadow: 0 0 0 3px rgba(255, 211, 77, 0.25), 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 190, 60, 0.25); }
+.planet-actions .btn-glass { min-width: 120px; }
+
+/* --- pause */
+.pause-panel { min-width: min(360px, 88vw); }
+.pause-panel h2 { font-size: clamp(26px, 5vmin, 38px); }
+.pause-panel .menu-col { align-items: stretch; }
+.panel-screen { background: rgba(4, 8, 20, 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+
+/* --- fin de partie (Arcade) */
+body:not(.original) #menu-over { background: radial-gradient(ellipse at center, rgba(4, 6, 20, 0.35), rgba(4, 6, 20, 0.8)); }
+body:not(.original) .over-panel {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 30px;
+  background: linear-gradient(180deg, rgba(26, 32, 70, 0.62), rgba(10, 12, 32, 0.7)); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+body:not(.original) .gameover { font-size: clamp(40px, 9vmin, 72px); background: linear-gradient(180deg, #fff, #ffb4a8); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 0; text-shadow: none; filter: drop-shadow(0 4px 12px rgba(255, 80, 60, 0.35)); }
+body:not(.original) .over-distance { font-size: clamp(30px, 7vmin, 54px); -webkit-text-stroke: 0; text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5); }
+.over-panel { display: contents; }
+body.original .over-panel { display: contents; }
+body:not(.original) .unity-btn.btn-glass { background: rgba(255, 255, 255, 0.08); color: #eef2ff; }
+
+/* --- préréglage Original : boutons blancs de l'UI Unity */
+body.original .btn-primary, body.original .btn-glass { animation: none; background: rgba(255, 255, 255, 0.86); color: #323232; border: 0; border-radius: 12px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); }
+body.original .brand-title { color: #fff; background: none; -webkit-text-fill-color: #fff; filter: none; }
+
+/* --- chargement */
+#loading { background: radial-gradient(circle at center, #1b2050 0%, #070917 60%, #04050c 100%); }
+.loading-brand .brand-title { font-size: clamp(54px, 12vmin, 100px); }
+
+@media (orientation: portrait) {
+  .menu-home { align-items: center; justify-content: flex-end; padding: 0 16px calc(20px + var(--safe-b)); background: linear-gradient(0deg, rgba(4, 6, 20, 0.7), rgba(4, 6, 20, 0) 60%) !important; }
+  .home-panel { width: min(440px, 100%); }
+  .brand-title { font-size: clamp(46px, 14vw, 80px); }
+}
+@media (max-height: 430px) and (orientation: landscape) {
+  .home-panel { padding: 14px 18px; gap: 9px; }
+  .brand-title { font-size: 44px; }
+  .btn-primary { min-height: 48px; }
+  .home-panel .records { display: none; }
+}
+
+.pip { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 2px; background: rgba(255, 255, 255, 0.22); }
+.pip.on { background: var(--accent); box-shadow: 0 0 6px rgba(255, 211, 77, 0.7); }
+.planet-stars { letter-spacing: 0; line-height: 1; padding: 2px 0; }
+.chip-text small { display: flex; padding-top: 3px; }
+.chip-text small .pip { width: 7px; height: 7px; margin: 0 3px 0 0; }
+.planet-chip:focus { outline: none; }
+.planet-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -45,6 +45,9 @@ const scenarios = [
   { name: 'banquise', query: 'preset=arcade&planet=banquise&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.6); }) },
   { name: 'volcan-damage', query: 'preset=arcade&planet=volcan&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 25; __mpp.step(400, 1 / 60, 0.2); }) },
   { name: 'naine', query: 'preset=arcade&planet=naine&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.1); }) },
+  { name: 'neon', query: 'preset=arcade&planet=neon', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 0.9; __mpp.step(330, 1 / 60, 0.25); }) },
+  { name: 'shrink-late', query: 'preset=arcade&planet=prairie&maxHealth=4000&meteorInterval=3', run: async (page) => page.evaluate(() => { __mpp.play(); for (let i = 0; i < 40; i++) __mpp.step(240, 1 / 60, Math.sin(i) * 0.5); }) },
+  { name: 'menu-portrait', viewport: { width: 400, height: 860 }, query: 'preset=arcade&planet=neon', run: async () => {} },
   { name: 'portrait', viewport: { width: 420, height: 860 }, query: 'preset=arcade&planet=prairie&orientation=auto', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.2); }) },
   { name: 'arcade-impact', query: 'preset=arcade&planet=prairie&meteorInterval=0.4', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 1; __mpp.step(200, 1 / 60, 0); }) },
   { name: 'original-6s', query: 'preset=original', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(360, 1 / 60, 0.35); }) },
@@ -68,7 +71,7 @@ for (const sc of scenarios) {
     await page.close();
     continue;
   }
-  await page.goto(`http://localhost:${port}/index.html?test=1&seed=1&${sc.query}`);
+  await page.goto(`http://localhost:${port}/index.html?test=1&touch=1&seed=1&${sc.query}`);
   await page.waitForFunction(() => window.__mppReady === true, null, { timeout: 120000 });
   await page.evaluate(() => __mpp.seed(12345));
   const t0 = Date.now();
@@ -100,11 +103,12 @@ server.close();
   await page.goto(`http://localhost:${srv.address().port}/index.html?test=1&touch=1&preset=arcade`);
   await page.waitForFunction(() => window.__mppReady === true, null, { timeout: 120000 });
   await page.evaluate(() => __mpp.play());
+  // Joystick fixe en bas à gauche : on touche le centre de sa base
   const r = await page.evaluate(() => {
-    const z = document.getElementById('stick-zone').getBoundingClientRect();
-    const base = Math.max(42, Math.min(80, Math.min(innerWidth, innerHeight) * 0.13));
-    return { x: z.left + z.width * 0.3, y: z.top + z.height * 0.6, radius: base };
+    const b = document.querySelector('.stick-base').getBoundingClientRect();
+    return { x: b.left + b.width / 2, y: b.top + b.height / 2, radius: b.width / 2, left: b.left, bottom: innerHeight - b.bottom };
   });
+  console.log('Base du stick : gauche', Math.round(r.left), 'px, bas', Math.round(r.bottom), 'px, rayon', Math.round(r.radius), 'px');
   await page.mouse.move(r.x, r.y);
   await page.mouse.down();
   const vals = [];
@@ -114,7 +118,7 @@ server.close();
   }
   await page.mouse.up();
   const after = await page.evaluate(() => { __mpp.input.update(0); return __mpp.input.horizontal; });
-  const ok = vals[0] > 0.4 && vals[0] < 0.55 && vals[1] >= 0.999 && vals[3] === 1 && after === 0;
+  const ok = vals[0] > 0.4 && vals[0] < 0.55 && vals[1] >= 0.999 && vals[3] === 1 && after === 0 && r.left < 120 && r.bottom < 60;
   console.log('Stick :', vals, 'relâché →', after, ok ? 'OK' : 'ÉCHEC');
   await b2.close();
   srv.close();

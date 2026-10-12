@@ -16,7 +16,7 @@ export function toonGradient(): THREE.DataTexture {
   for (let i = 0; i < n; i++) {
     const x = i / (n - 1);
     const t = Math.min(1, Math.max(0, (x - 0.47) / 0.07));
-    const v = 0.42 + 0.58 * t * t * (3 - 2 * t);
+    const v = 0.68 + 0.32 * t * t * (3 - 2 * t); // ombres légères : tout reste lisible
     data.fill(Math.round(v * 255), i * 4, i * 4 + 3);
     data[i * 4 + 3] = 255;
   }
@@ -127,7 +127,7 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
       .replace('#include <map_fragment>', 'diffuseColor.rgb *= textureCube(planetCube, normalize(vObjDir)).rgb;')
       .replace(
         '#include <emissivemap_fragment>',
-        `totalEmissiveRadiance += emisColor * textureCube(planetEmis, normalize(vObjDir)).r;
+        `totalEmissiveRadiance += emisColor * textureCube(planetEmis, normalize(vObjDir)).rgb;
         float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0), 3.0);
         totalEmissiveRadiance += rimColor * rim * rimStrength;`,
       );

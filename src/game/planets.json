@@ -64,9 +64,53 @@
         "craterDamage": 0.8
       },
       "decor": {
-        "trees": 14,
-        "rocks": 8,
+        "trees": 3,
+        "rocks": 3,
         "houses": 1
+      }
+    },
+    {
+      "id": "neon",
+      "name": "Néon",
+      "tagline": "Planète nocturne à grille lumineuse : voiture et impacts brillent comme en 1985.",
+      "difficulty": 3,
+      "style": "toon",
+      "neon": true,
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#b04bff",
+      "palette": {
+        "light": "#2a1650",
+        "mid": "#1d0f3c",
+        "dark": "#130a2a",
+        "path": "#22e8ff",
+        "pathDark": "#ff2bd6",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#000000"
+      },
+      "pattern": "neon",
+      "decorColors": {
+        "trunk": "#1a1030",
+        "canopy": [
+          "#2a1650"
+        ],
+        "rock": "#2a1a4a",
+        "house": "#1a1030",
+        "roof": "#ff2bd6"
+      },
+      "gameplay": {
+        "meteorInterval": 0.95,
+        "meteorSpeed": 1.1,
+        "clockInterval": 1.0,
+        "carSpeed": 1.05,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 2,
+        "houses": 0
       }
     },
     {
@@ -112,9 +156,9 @@
         "craterDamage": 1.0
       },
       "decor": {
-        "trees": 18,
-        "rocks": 10,
-        "houses": 2
+        "trees": 4,
+        "rocks": 3,
+        "houses": 0
       }
     },
     {
@@ -160,9 +204,9 @@
         "craterDamage": 1.0
       },
       "decor": {
-        "trees": 10,
-        "rocks": 14,
-        "houses": 1
+        "trees": 3,
+        "rocks": 4,
+        "houses": 0
       }
     },
     {
@@ -208,8 +252,8 @@
         "craterDamage": 1.5
       },
       "decor": {
-        "trees": 6,
-        "rocks": 22,
+        "trees": 0,
+        "rocks": 4,
         "houses": 0
       }
     },
@@ -256,8 +300,8 @@
         "craterDamage": 1.2
       },
       "decor": {
-        "trees": 7,
-        "rocks": 5,
+        "trees": 2,
+        "rocks": 1,
         "houses": 0
       }
     }

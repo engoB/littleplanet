@@ -40,13 +40,17 @@ export class VirtualStick {
 
   /** Taille et position de repos (à appeler au redimensionnement). */
   layout(): void {
-    const r = this.zone.getBoundingClientRect();
-    this.radius = Math.max(42, Math.min(80, Math.min(window.innerWidth, window.innerHeight) * 0.13));
+    let r = this.zone.getBoundingClientRect();
+    // HUD caché (menus) : la zone n'a pas encore de taille, on la déduit de l'écran
+    if (r.height === 0) r = new DOMRect(0, window.innerHeight * 0.4, window.innerWidth * 0.5, window.innerHeight * 0.6);
+    this.radius = Math.max(50, Math.min(88, Math.min(window.innerWidth, window.innerHeight) * 0.14));
+    // Zones sûres (encoche, barre d'accueil) lues une fois par redimensionnement
+    const { left: safeL, right: safeR, bottom: safeB } = safeArea();
     this.base.style.width = this.base.style.height = `${this.radius * 2}px`;
     this.knob.style.width = this.knob.style.height = `${this.radius * 0.9}px`;
     if (!this.active) {
-      this.baseX = this.side === 'right' ? r.width - this.radius * 1.6 : this.radius * 1.6;
-      this.baseY = r.height - this.radius * 1.4;
+      this.baseX = this.side === 'right' ? r.width - this.radius * 1.45 - safeR : this.radius * 1.45 + safeL;
+      this.baseY = r.height - this.radius * 1.3 - safeB;
       this.place();
       this.base.classList.toggle('idle', true);
     }
@@ -180,4 +184,16 @@ export class TouchButton {
     this.pointer = -1;
     this.el.classList.remove('down');
   }
+}
+
+let probe: HTMLDivElement | null = null;
+/** Marges de zone sûre en pixels (env(safe-area-inset-*) résolues). */
+export function safeArea(): { left: number; right: number; bottom: number; top: number } {
+  if (!probe) {
+    probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+    document.body.appendChild(probe);
+  }
+  const cs = getComputedStyle(probe);
+  return { left: parseFloat(cs.paddingLeft) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, top: parseFloat(cs.paddingTop) || 0 };
 }

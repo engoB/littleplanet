@@ -11,8 +11,11 @@ export class Screens {
   show(id: ScreenId): void {
     for (const s of document.querySelectorAll<HTMLElement>('.screen')) s.hidden = s.id !== id;
     this.current = id;
-    const first = id ? $(id).querySelector<HTMLButtonElement>('button') : null;
-    first?.focus({ preventScroll: true });
+    // Focus clavier/manette sur l'action principale (pas d'anneau au toucher)
+    if (id && !matchMedia('(pointer: coarse)').matches) {
+      const first = $(id).querySelector<HTMLButtonElement>('.btn-primary') ?? $(id).querySelector<HTMLButtonElement>('button');
+      first?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+    }
   }
 
   records(list: RecordEntry[], enabled: boolean): void {

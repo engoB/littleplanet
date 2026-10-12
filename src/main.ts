@@ -17,6 +17,17 @@ import { PLANETS, isUnlocked, planetById, recordDistance, selectPlanet, selected
 import * as THREE from 'three';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** Difficulté en pastilles (pleines / vides), indépendante des glyphes de la police. */
+function stars(el: HTMLElement, n: number): void {
+  el.textContent = '';
+  el.setAttribute('aria-label', `Difficulté ${n} sur 5`);
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('i');
+    d.className = i < n ? 'pip on' : 'pip';
+    el.appendChild(d);
+  }
+}
 const params = new URLSearchParams(location.search);
 const TEST = params.has('test');
 
@@ -105,13 +116,17 @@ async function main(): Promise<void> {
   if (quality === 'low') pixelRatio = Math.min(pixelRatio, 1);
   if (quality === 'medium') pixelRatio = Math.min(pixelRatio, 1.5);
   const resize = () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    // Taille réelle du canvas (100lvh) : pas de bande vide en bas de l'écran
+    const w = Math.max(1, canvas.clientWidth || window.innerWidth);
+    const h = Math.max(1, canvas.clientHeight || window.innerHeight);
     world.resize(w, h, pixelRatio);
     stick.layout();
     minimap.resize(Math.round(Math.max(84, Math.min(140, Math.min(w, h) * 0.24))), window.devicePixelRatio || 1);
   };
   window.addEventListener('resize', resize);
+  window.visualViewport?.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+  document.addEventListener('fullscreenchange', () => setTimeout(resize, 100));
   resize();
 
   $('loading-text').textContent = 'Préparation des shaders…';
@@ -124,9 +139,28 @@ async function main(): Promise<void> {
   let paused = false;
   let portrait = false;
   const records = () => screens.records(loadRecords(), settings.saveRecords === true);
-  $('preset-badge').textContent = preset === 'original' ? 'Préréglage : Original (Unity)' : 'Préréglage : Arcade';
+  $('preset-badge').textContent = preset === 'original' ? 'Préréglage : Original (Unity)' : '';
+  $('preset-badge').hidden = preset !== 'original';
+  const portraitNow = () => window.innerHeight > window.innerWidth;
+  /** Cadrage de la planète selon l'écran affiché (menus premium). */
+  const compose = (where: 'home' | 'planets' | 'game') => {
+    if (where === 'game') world.rig.setComposition(0, 0);
+    else if (where === 'planets') world.rig.setComposition(0, portraitNow() ? 0.22 : 0.14);
+    else world.rig.setComposition(portraitNow() ? 0 : 0.2, portraitNow() ? 0.2 : 0);
+  };
+  const updateChip = () => {
+    const p = planetById(planetId);
+    $('chip-name').textContent = p.name;
+    stars($('chip-stars'), p.difficulty);
+    const img = $<HTMLImageElement>('chip-img');
+    const prev = assets.planetPreviews.get(p.id);
+    img.hidden = !prev;
+    if (prev) img.src = prev;
+  };
   const toMenu = () => {
     paused = false;
+    compose('home');
+    updateChip();
     hud.show(false);
     hud.clearMessages();
     world.enterMenu();
@@ -146,9 +180,10 @@ async function main(): Promise<void> {
       const prev = assets.planetPreviews.get(p.id);
       const pic = prev ? Object.assign(document.createElement('img'), { src: prev, alt: '' }) : Object.assign(document.createElement('div'), { className: 'orig' });
       const name = Object.assign(document.createElement('div'), { className: 'planet-name', textContent: p.name });
-      const stars = Object.assign(document.createElement('div'), { className: 'planet-stars', textContent: '★'.repeat(p.difficulty) + '☆'.repeat(5 - p.difficulty) });
+      const diff = Object.assign(document.createElement('div'), { className: 'planet-stars' });
+      stars(diff, p.difficulty);
       const info = Object.assign(document.createElement('div'), { className: 'planet-info', textContent: p.tagline });
-      card.append(pic, name, stars, info);
+      card.append(pic, name, diff, info);
       if (unlocked && best[p.id]) card.append(Object.assign(document.createElement('div'), { className: 'planet-best', textContent: `Record : ${Math.floor(best[p.id])} m` }));
       if (!unlocked && p.unlock) card.append(Object.assign(document.createElement('div'), { className: 'planet-lock', textContent: `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` }));
       card.onclick = () => {
@@ -158,6 +193,7 @@ async function main(): Promise<void> {
         selectPlanet(p.id);
         world.planetDef = p;
         world.enterMenu();
+        updateChip();
         renderPlanets();
       };
       list.appendChild(card);
@@ -166,6 +202,7 @@ async function main(): Promise<void> {
   };
   const showPlanets = () => {
     paused = false;
+    compose('planets');
     hud.show(false);
     if (world.mode !== 'menu') world.enterMenu();
     renderPlanets();
@@ -173,9 +210,11 @@ async function main(): Promise<void> {
   };
   const play = () => {
     paused = false;
+    compose('game');
     input.reset();
     hud.clearMessages();
     hud.show(true);
+    stick.layout();
     screens.show(null);
     world.startGame();
     hud.setObjective(settings.stages === true ? world.stages.text : '');
@@ -206,7 +245,8 @@ async function main(): Promise<void> {
       click();
       fn();
     });
-  on('btn-play', () => (isOriginal ? play() : showPlanets()));
+  on('btn-play', play);
+  on('btn-current-planet', showPlanets);
   on('btn-planet-go', play);
   on('btn-planets-back', toMenu);
   on('btn-pause-planets', showPlanets);
@@ -311,6 +351,12 @@ async function main(): Promise<void> {
   };
 
   records();
+  updateChip();
+  compose('home');
+  window.addEventListener('resize', () => {
+    if (screens.current === 'menu-main') compose('home');
+    else if (screens.current === 'menu-planets') compose('planets');
+  });
   screens.show('menu-main');
   if (TEST) {
     // Mode test : pas de boucle rAF, simulation pilotée par Playwright
