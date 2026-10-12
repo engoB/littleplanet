@@ -14,6 +14,34 @@ Les horloges en rendent. Le but : aller le plus loin possible.
 
 Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une valeur Original.
 
+### Planètes (préréglage Arcade)
+
+Six planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
+le générateur de textures et par le jeu :
+
+| Planète | Difficulté | Particularité |
+|---|---|---|
+| Planète d'origine | ★★ | la planète Unity, telle quelle |
+| Prairie | ★ | route de terre, maison-dôme ; météores plus lents et plus rares |
+| Émeraude | ★★★ | étangs ; météores plus rapides |
+| Banquise | ★★★ | sol gelé : la voiture glisse (adhérence 0,35) |
+| Volcan | ★★★★ | rivières de lave lumineuses ; pluie de météores, cratères ×1,5 |
+| Naine | ★★★★★ | rayon 0,7 : tout arrive très vite |
+
+Chaque planète se débloque en parcourant 100 m sur la précédente (réglage
+« Toutes les planètes débloquées » pour tout ouvrir). Records par planète.
+
+### Style graphique Arcade
+
+Cel-shading doux « film d'animation » (inspiration Zelda récents) : deux aplats
+séparés par un terminateur adouci, ombres teintées de bleu par l'ambiance,
+liseré lumineux, **pas de contours noirs**. Textures des planètes peintes
+procéduralement en cubemaps (fonction de la direction 3D : ni couture ni
+pincement aux pôles), décor (arbres, rochers, maison-dôme) en InstancedMesh,
+aura d'atmosphère diffuse, ciel spatial (nébuleuse + étoiles en points 3D),
+bloom à seuil HDR + étalonnage (saturation, contraste, épaule douce), police
+ronde Fredoka.
+
 ---
 
 ## Lancement
@@ -73,6 +101,13 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Musique | en boucle, 70 % | une fois, 100 % |
 | Records (HighScoreManager) | enregistrés | non (jamais appelé dans l'original) |
 | Ombres | oui | non (aucune lumière Unity n'en projette) |
+| Style dessin animé, ciel spatial, réticules, balises des horloges | oui | non |
+| Bloom + étalonnage | oui | non (bloom inactif dans le profil URP) |
+| Cratères qui dévient la voiture | oui (25 à 60°, au hasard) | non |
+| Fumée puis feu selon les dégâts | oui | non |
+| Moteur | boucle procédurale, volume 0,45, hauteur selon la vitesse | `AccelerationLow`, volume 0,052, hauteur 0,65 |
+| Sons ajoutés (explosions, chocs, sifflement, turbo, carillon) | oui | non |
+| Orientation | libre (portrait ou paysage) | paysage |
 | Stick | flottant, à gauche | fixe, en bas à droite |
 
 ---
@@ -132,6 +167,9 @@ Appliquées par `tools/export_scene.py` et `src/unity/math.ts` :
 
 ## Écarts connus avec l'original
 
+- **Matériaux de la voiture** : ils ne sont référencés par aucune scène ;
+  l'importeur Unity les retrouve par leur nom (`materialSearch`). L'export
+  reproduit cette recherche (`models[].materials` dans `scene.json`).
 - **Matériau du cratère** : il manque dans le dépôt Unity (GUID
   `31321ba1…` introuvable, rendu magenta chez Unity). Préréglage Original :
   cube brun sombre ; Arcade : brûlure procédurale avec carte de normales.
@@ -195,6 +233,13 @@ Prérequis : Python 3.10+, `ffmpeg`, accès réseau pour télécharger FBX2glTF
    - inventaire → `public/data/assets.json`.
 3. `procedural_textures.py` (numpy, graine fixe, textures périodiques avec
    carte de normales) : relief du sol, cratère, anneau et point de l'atlas FX.
+4. `procedural_planets.py` : cubemaps peintes des planètes (couleur +
+   émission de la lave), aperçus du menu, nébuleuse du ciel spatial.
+5. `procedural_audio.py` : explosion, choc, sifflement de météore, turbo,
+   carillon, boucle moteur (les boucles restent en WAV : le MP3 ajoute un
+   silence qui casse la boucle).
+6. Police Fredoka (SIL OFL) prise du paquet npm `@fontsource/fredoka`,
+   métriques verticales corrigées avec fonttools.
 
 ---
 
@@ -252,6 +297,9 @@ littleplanet/
 │   │   ├── postprocess.ts     #   aberration chromatique, vignette (URP)
 │   │   ├── audio.ts, curves.ts, math.ts, time.ts, types.ts
 │   ├── game/                  # scripts portés (un fichier par script C#)
+│   │   ├── planets.json       #   planètes (source unique jeu + générateur)
+│   │   ├── toon.ts, fx.ts     #   cel-shading, aura, réticules, balises
+│   │   ├── Decor.ts, Starfield.ts
 │   ├── input/                 # stick, boutons, clavier, manette, vibrations
 │   ├── ui/                    # HUD, mini-carte, menus, orientation
 │   └── settings/              # schéma, stockage, liaisons scene.json, page
@@ -260,6 +308,13 @@ littleplanet/
 └── .github/workflows/deploy.yml
 ```
 
+## Son
+
+Web Audio, déverrouillé au premier toucher. Sur iOS 17+, la session audio
+passe en « lecture » (`navigator.audioSession`) pour que le son sorte même
+avec le bouton silencieux ; pour les iOS plus anciens, un `<audio>` muet est
+joué pendant le geste.
+
 ## À vérifier sur téléphone
 
 - fluidité (qualité adaptative : densité de pixels 2 → 1, particules) ;
@@ -267,5 +322,6 @@ littleplanet/
 - plein écran + verrouillage paysage au premier toucher (Android) ;
   sur iOS, installer la PWA pour masquer la barre d'adresse ;
 - zones sûres (encoche) ;
-- son au premier toucher (politique d'autoplay) ;
+- son au premier toucher (politique d'autoplay), y compris bouton silencieux sur iPhone ;
+- mode portrait et mode paysage ;
 - installation PWA et lancement hors ligne.

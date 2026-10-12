@@ -11,8 +11,18 @@
   --btn-ink: #323232;
   --danger: #ff4a3a;
   --good: #7ef08a;
-  font-family: 'Liberation', 'Liberation Sans', Arial, Helvetica, sans-serif;
+  /* Police ronde et épaisse (Fredoka) ; l'original garde LiberationSans (TextMeshPro) */
+  --font: 'Fredoka', 'Liberation', 'Arial Rounded MT Bold', Arial, sans-serif;
+  font-family: var(--font);
 }
+body.original { --font: 'Liberation', 'Liberation Sans', Arial, Helvetica, sans-serif; font-family: var(--font); }
+body:not(.original) button, body:not(.original) .button { font-weight: 700; letter-spacing: 0.01em; }
+body:not(.original) .outline {
+  -webkit-text-stroke: 0.06em #10142a;
+  paint-order: stroke fill;
+  text-shadow: 0 0.06em 0 #10142a, 0 0.12em 0.18em rgba(0,0,0,0.45);
+}
+body:not(.original) .title { color: #ffe14d; letter-spacing: 0.02em; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: #0b1a2a; color: var(--ink); overflow: hidden; }
 body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -158,3 +168,44 @@ legend { font-weight: 700; font-size: 18px; padding: 6px 0; color: var(--accent)
 .row.modified label::after { content: ' •'; color: var(--accent); }
 .about { font-size: 13px; opacity: 0.75; }
 @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+/* -------------------------------------------------- choix de la planète */
+.planets-title { font-size: clamp(26px, 6vmin, 48px); margin: 0; }
+.planet-list {
+  display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; max-width: 100%;
+  padding: 8px 6px 14px; touch-action: pan-x; -webkit-overflow-scrolling: touch;
+}
+.planet-card {
+  scroll-snap-align: center; flex: 0 0 auto; width: clamp(150px, 26vmin, 210px);
+  background: rgba(12, 18, 40, 0.78); border: 3px solid rgba(255,255,255,0.25); border-radius: 22px;
+  padding: 10px 10px 12px; text-align: center; cursor: pointer; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35); transition: transform 0.12s, border-color 0.12s; min-width: 0; min-height: 0;
+}
+.planet-card img { width: 78%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
+.planet-card .orig { width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c8f070, #6cbf3a 55%, #2f6a2a); box-shadow: 0 0 18px 4px rgba(140, 230, 255, 0.5); }
+.planet-card.selected { border-color: var(--accent); transform: translateY(-4px) scale(1.03); box-shadow: 0 0 0 4px rgba(255, 211, 77, 0.35), 0 10px 26px rgba(0,0,0,0.45); }
+.planet-card.locked { opacity: 0.55; }
+.planet-card.locked img, .planet-card.locked .orig { filter: grayscale(1) brightness(0.6); }
+.planet-name { font-weight: 700; font-size: clamp(16px, 3vmin, 22px); }
+.planet-stars { color: var(--accent); letter-spacing: 2px; font-size: 14px; }
+.planet-info { font-size: 12.5px; opacity: 0.85; line-height: 1.25; min-height: 3.6em; }
+.planet-best { font-size: 13px; color: var(--good); }
+.planet-lock { font-size: 12.5px; color: #ffb0a8; }
+.planet-actions { display: flex; gap: 12px; }
+.over-unlock { font-weight: 700; color: var(--good); font-size: clamp(15px, 3vmin, 22px); }
+
+/* ------------------------------------------------------------ portrait */
+@media (orientation: portrait) {
+  .hud-top { grid-template-columns: 1fr 1fr; grid-template-areas: 'left right' 'center center'; row-gap: 4px; }
+  .hud-left { grid-area: left; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .hud-right { grid-area: right; }
+  .hud-center { grid-area: center; margin-top: -40px; }
+  .health { width: min(42vw, 200px); }
+  #messages { top: calc(150px + var(--safe-t)); }
+  #stick-zone { width: 62%; height: 45%; }
+  #btn-turbo { width: 84px; height: 84px; bottom: calc(34px + var(--safe-b)); }
+  .records { bottom: auto; top: calc(14px + var(--safe-t)); }
+  .gameover { font-size: clamp(40px, 14vw, 80px); }
+  .over-buttons { flex-wrap: wrap; justify-content: center; }
+  .planet-list { padding-bottom: 6px; }
+}

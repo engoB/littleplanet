@@ -52,6 +52,15 @@
       <div id="install-hint" class="hint" hidden></div>
     </section>
 
+    <section id="menu-planets" class="screen" hidden>
+      <h2 class="planets-title outline">Choisis ta planète</h2>
+      <div id="planet-list" class="planet-list" role="listbox" aria-label="Planètes"></div>
+      <div class="planet-actions">
+        <button id="btn-planets-back">Retour</button>
+        <button id="btn-planet-go" class="big">GO !</button>
+      </div>
+    </section>
+
     <section id="menu-help" class="screen panel-screen" hidden>
       <div class="panel">
         <h2>Comment jouer</h2>
@@ -75,6 +84,7 @@
           <button id="btn-resume" class="big">Reprendre</button>
           <button id="btn-restart">Recommencer</button>
           <button id="btn-pause-menu">Menu</button>
+          <button id="btn-pause-planets" class="arcade-only">Changer de planète</button>
           <a class="button" href="./settings.html">Réglages</a>
         </div>
       </div>
@@ -85,8 +95,10 @@
       <div id="over-distance" class="over-distance outline"></div>
       <div id="over-details" class="over-details"></div>
       <div id="over-record" class="over-record" hidden></div>
+      <div id="over-unlock" class="over-unlock" hidden></div>
       <div class="over-buttons">
         <button id="btn-retry" class="unity-btn">Rejouer</button>
+        <button id="btn-over-planets" class="unity-btn arcade-only">Planètes</button>
         <button id="btn-over-menu" class="unity-btn">Menu</button>
       </div>
     </section>
@@ -99,7 +111,7 @@
 
     <div id="rotate" hidden>
       <div class="phone"></div>
-      <p>Tourne ton téléphone<br />en mode paysage</p>
+      <p id="rotate-text">Tourne ton téléphone<br />en mode paysage</p>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

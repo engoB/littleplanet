@@ -24,6 +24,8 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import dae2glb  # noqa: E402
+import procedural_audio  # noqa: E402
+import procedural_planets  # noqa: E402
 import procedural_textures  # noqa: E402
 
 MAX_TEX = 1024
@@ -153,23 +155,39 @@ def build_atlas(assets: str, out: str, scene: dict, proc_dir: str) -> dict:
     return meta
 
 
-def convert_audio(assets: str, out: str, scene: dict) -> dict:
+# Sons en boucle : WAV (le MP3 ajoute un silence d'encodeur qui casse la boucle)
+LOOPS = {'AccelerationLow', 'Skid', 'sfx_engine'}
+
+
+def convert_audio(assets: str, out: str, scene: dict, tmp: str) -> dict:
     adir = os.path.join(out, 'audio')
     os.makedirs(adir, exist_ok=True)
-    files = {k: v['source'] for k, v in scene['audio'].items()}
+    for f in os.listdir(adir):
+        os.remove(os.path.join(adir, f))
+    files = {k: os.path.join(assets, v['source']) for k, v in scene['audio'].items()}
     for p in EXTRA_AUDIO:
-        files[stem(p)] = p
+        files[stem(p)] = os.path.join(assets, p)
+    # Effets procéduraux (préréglage Arcade)
+    procedural_audio.main(tmp)
+    for f in sorted(os.listdir(tmp)):
+        if f.endswith('.wav'):
+            files[f[:-4]] = os.path.join(tmp, f)
     index = {}
-    for n, p in files.items():
-        dst = os.path.join(adir, n.replace(' ', '_') + '.mp3')
+    for n, src in files.items():
+        safe = n.replace(' ', '_')
         long = n in ('Totyputy', 'Joyful Jubilation_1')
-        run(['ffmpeg', '-y', '-i', os.path.join(assets, p), '-ac', '2' if long else '1', '-b:a', '128k' if long else '96k', dst])
+        if n in LOOPS:
+            dst = os.path.join(adir, safe + '.wav')
+            run(['ffmpeg', '-y', '-i', src, '-ac', '1', '-ar', '22050', '-c:a', 'pcm_s16le', dst])
+        else:
+            dst = os.path.join(adir, safe + '.mp3')
+            run(['ffmpeg', '-y', '-i', src, '-ac', '2' if long else '1', '-b:a', '128k' if long else '96k', dst])
         index[n] = 'audio/' + os.path.basename(dst)
         print('  son', n, os.path.getsize(dst) // 1024, 'Ko')
     return index
 
 
-def check_font(src: str, dst: str) -> dict:
+def check_font(src: str, dst: str, flavor: str | None = None) -> dict:
     """Vérifie que ascent/descent couvrent les glyphes (sinon texte coupé sur
     Safari / Chrome Android) ; écrit une copie corrigée si nécessaire."""
     from fontTools.ttLib import TTFont
@@ -189,6 +207,10 @@ def check_font(src: str, dst: str) -> dict:
         if os2.version >= 4:
             os2.fsSelection |= 1 << 7  # USE_TYPO_METRICS
         report['fixed'] = True
+        f.flavor = flavor
+        f.save(dst)
+    elif flavor and f.flavor != flavor:
+        f.flavor = flavor
         f.save(dst)
     else:
         shutil.copy(src, dst)
@@ -229,12 +251,24 @@ def main() -> None:
     for n in ('fx_ring.png', 'fx_dot.png'):
         os.remove(os.path.join(proc_dir, n))  # intégrés à l'atlas
     print('Sons')
-    audio = convert_audio(assets, out, scene)
+    audio = convert_audio(assets, out, scene, os.path.join(proc_dir, '..', '..', '.cache', 'sfx'))
     print('Polices')
     os.makedirs(os.path.join(out, 'fonts'), exist_ok=True)
     font = check_font(os.path.join(assets, 'TextMesh Pro/Fonts/LiberationSans.ttf'), os.path.join(out, 'fonts', 'LiberationSans.ttf'))
+    fonts = {'LiberationSans': {'file': 'fonts/LiberationSans.ttf', 'metrics': font}}
+    # Police ronde et épaisse (Fredoka, SIL OFL, paquet npm @fontsource/fredoka)
+    fk = os.path.join(HERE, '..', '.cache', 'package', 'files')
+    if os.path.isdir(fk):
+        for w in (600, 700):
+            src = os.path.join(fk, f'fredoka-latin-{w}-normal.woff2')
+            fonts[f'Fredoka-{w}'] = {'file': f'fonts/Fredoka-{w}.woff2', 'weight': w,
+                                     'metrics': check_font(src, os.path.join(out, 'fonts', f'Fredoka-{w}.woff2'), 'woff2')}
+        shutil.copy(os.path.join(fk, '..', 'LICENSE'), os.path.join(out, 'fonts', 'OFL-Fredoka.txt'))
     make_icons(assets, out)
-    manifest = {'textures': tex, 'fxAtlas': atlas, 'audio': audio, 'fonts': {'LiberationSans': {'file': 'fonts/LiberationSans.ttf', 'metrics': font}},
+    print('Planètes et ciel')
+    planets = procedural_planets.main(os.path.join(HERE, '..', 'src', 'game', 'planets.json'), os.path.join(out, 'textures'))
+    manifest = {'textures': tex, 'fxAtlas': atlas, 'audio': audio, 'fonts': fonts,
+                'planets': planets['planets'], 'space': planets['space'],
                 'procedural': ['planet_detail_n.png', 'crater.png', 'crater_n.png']}
     with open(os.path.join(out, 'data', 'assets.json'), 'w', encoding='utf-8') as fh:
         json.dump(manifest, fh, ensure_ascii=False, indent=1)

@@ -33,6 +33,8 @@ export class Craters {
   readonly boxSize: number[];
   readonly name: string;
   private readonly style: 'box' | 'decal';
+  /** Échelle de base de la planète (taille de la planète choisie). */
+  baseScale = 1;
 
   constructor(private readonly ctx: GameContext, prefab: NodeData, style: 'box' | 'decal') {
     this.name = prefab.name + '(Clone)';
@@ -71,7 +73,7 @@ export class Craters {
   }
 
   /** Instantiate(craterPrefab, point, LookRotation(normal)) — point/normale en espace planète. */
-  spawn(localPos: THREE.Vector3, localNormal: THREE.Vector3): Crater {
+  spawn(localPos: THREE.Vector3, localNormal: THREE.Vector3, playSound = true): Crater {
     if (this.list.length >= MAX) this.list.shift();
     const c: Crater = {
       pos: localPos.clone(),
@@ -86,7 +88,7 @@ export class Craters {
     this.list.push(c);
     // AudioSource du prefab : PlayerDeath.wav en lecture automatique
     const audio = getComponent<{ type: string; id: number; clip: string; volume: number; playOnAwake: boolean }>(this.ctx.assets.project.prefabs.Crater, 'AudioSource');
-    if (audio?.playOnAwake && audio.clip) this.ctx.audio.playOneShot(audio.clip, audio.volume);
+    if (playSound && audio?.playOnAwake && audio.clip) this.ctx.audio.playOneShot(audio.clip, audio.volume);
     return c;
   }
 
@@ -99,7 +101,8 @@ export class Craters {
     c.obb.axes[0].set(1, 0, 0).applyQuaternion(wq);
     c.obb.axes[1].set(0, 1, 0).applyQuaternion(wq);
     c.obb.axes[2].set(0, 0, 1).applyQuaternion(wq);
-    c.obb.half.set(this.size.x * this.boxSize[0] * ps / 2, this.size.y * this.boxSize[1] * ps / 2, this.size.z * this.boxSize[2] * ps / 2);
+    const k = ps / Math.max(0.01, this.baseScale);
+    c.obb.half.set(this.size.x * this.boxSize[0] * k / 2, this.size.y * this.boxSize[1] * k / 2, this.size.z * this.boxSize[2] * k / 2);
   }
 
   update(dt: number, lifetime: number, shrinking: boolean): void {
@@ -110,16 +113,18 @@ export class Craters {
       else if (shrinking) this.updateOBB(c);
     }
     const n = this.list.length;
+    // Taille constante en unités monde, même sur une petite planète
+    const inv = 1 / Math.max(0.01, this.baseScale);
     for (let i = 0; i < n; i++) {
       const c = this.list[i];
       let k = 1;
       if (lifetime > 0) k = Math.min(1, (lifetime - c.age) / 1.5);
       if (this.style === 'box') {
-        _s.copy(this.size).multiplyScalar(k);
+        _s.copy(this.size).multiplyScalar(k * inv);
         _m.compose(c.pos, c.quat, _s);
       } else {
         // Brûlure posée sur le sol, à peine plus grande que le trigger
-        const d = Math.max(this.size.x, this.size.y) * 1.45 * Math.min(1, c.age * 8 + 0.3) * k;
+        const d = Math.max(this.size.x, this.size.y) * 1.45 * Math.min(1, c.age * 8 + 0.3) * k * inv;
         _s.set(d, d, d);
         _p.copy(c.pos).addScaledVector(c.normal, 0.004);
         _m.compose(_p, c.quat, _s);

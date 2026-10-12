@@ -93,6 +93,8 @@ export class ParticleSystem {
   private shapeQ: THREE.Quaternion;
   /** Multiplicateur global d'émission (réglage de qualité). */
   static emissionScale = 1;
+  /** Multiplicateur d'émission propre au système (fumée selon les dégâts). */
+  rateScale = 1;
 
   constructor(readonly obj: THREE.Object3D, readonly d: ParticleData, r: ParticleRendererData, look: SpriteLook) {
     this.p = new Particles(Math.max(1, Math.min(d.main.maxParticles, 256)));
@@ -249,7 +251,7 @@ export class ParticleSystem {
         }
         if (d.emission.enabled) {
           const tn = d.duration > 0 ? (this.time % d.duration) / d.duration : 0;
-          this.emitAcc += evalMinMax(d.emission.rate, tn, Random.value) * (this.time - prev) * ParticleSystem.emissionScale;
+          this.emitAcc += evalMinMax(d.emission.rate, tn, Random.value) * (this.time - prev) * ParticleSystem.emissionScale * this.rateScale;
           const n = Math.floor(this.emitAcc);
           if (n > 0) {
             this.emitAcc -= n;
@@ -427,6 +429,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform sampler2D map;
+uniform float uIntensity;
 varying vec4 vCol;
 varying vec4 vRect;
 varying float vRot;
@@ -444,7 +447,7 @@ void main() {
   vec4 col = vCol * tex;
   if (col.a < 0.004) discard;
   // Prémultiplié : additif → alpha nul, alpha blending → alpha normal
-  gl_FragColor = vec4(col.rgb * col.a, col.a * (1.0 - vAdd));
+  gl_FragColor = vec4(min(col.rgb * uIntensity, vec3(1.6)) * col.a, col.a * (1.0 - vAdd));
   #include <colorspace_fragment>
 }`;
 
@@ -474,7 +477,7 @@ export class ParticleManager {
     this.geo.setAttribute('misc', attr(this.buf.misc, 4));
     this.geo.setDrawRange(0, 0);
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: atlas }, uViewportH: { value: 720 } },
+      uniforms: { map: { value: atlas }, uViewportH: { value: 720 }, uIntensity: { value: 1 } },
       vertexShader: VERT,
       fragmentShader: FRAG,
       transparent: true,
@@ -530,6 +533,11 @@ export class ParticleManager {
       a.needsUpdate = true;
     }
     this.geo.setDrawRange(0, n);
+  }
+
+  /** Multiplicateur de luminosité (tempère les couleurs HDR avec le bloom). */
+  set intensity(v: number) {
+    this.mat.uniforms.uIntensity.value = v;
   }
 
   get count(): number {

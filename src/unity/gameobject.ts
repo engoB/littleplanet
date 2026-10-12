@@ -85,8 +85,16 @@ function build(node: NodeData, ctx: BuildContext, inst: Instance, lightById: Map
       g.traverse((m) => {
         const mesh = m as THREE.Mesh;
         if (!mesh.isMesh) return;
-        const names = Array.isArray(mesh.material) ? mesh.material.map((x) => x.name) : [mesh.material.name];
-        const mats = names.map((n, i) => assets.material(node.materialOverride?.[i] ?? node.materialOverride?.[0] ?? (assets.materialData(n) ? n : null) ?? n));
+        // Matériaux : surcharge de l'instance, sinon recherche par nom de
+        // l'importeur Unity (models[].materials), sinon matériau du modèle.
+        const search = assets.project.models[node.model!]?.materials ?? {};
+        const src = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        const mats = src.map((m, i) => {
+          const over = node.materialOverride?.[i] ?? node.materialOverride?.[0];
+          if (over) return assets.material(over);
+          const found = search[m.name];
+          return found ? assets.material(found) : m;
+        });
         mesh.material = mats.length === 1 ? mats[0] : mats;
         mesh.castShadow = (node.castShadows ?? true) && (ctx.castShadows ?? false);
         mesh.receiveShadow = true;

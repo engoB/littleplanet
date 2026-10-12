@@ -64,6 +64,16 @@ const BINDINGS: Record<string, { get: (p: UnityProject) => unknown; same: boolea
     },
     same: false,
   },
+  engineVolume: {
+    get: (p) => {
+      for (const r of p.scenes.SampleScene.roots) {
+        const car = findNode(r, 'Cartoon_SportCar_B01');
+        if (car) return (getComponent(car, 'AudioSource') as { volume?: number } | undefined)?.volume;
+      }
+      return undefined;
+    },
+    same: false,
+  },
   craterStyle: { get: (p) => (prefab(p, 'Crater') ? 'box' : undefined), same: false },
 };
 

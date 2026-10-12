@@ -34,6 +34,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'turbo', label: 'Turbo (bouton maintenu)', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'stages', label: 'Étapes et objectifs', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Objectifs successifs, la difficulté augmente à chaque étape.' },
   { key: 'deathAnimation', label: 'Animation de fin', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Explosion et ralenti avant l’écran de fin (l’original fige tout : Time.timeScale = 0).' },
+  { key: 'craterBump', label: 'Les cratères font dévier', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Rouler dans un cratère dévie la voiture au hasard.' },
+  { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
+  { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en parcourant 100 m sur la précédente.' },
   { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Script ShrinkPlanet présent dans le projet mais non attaché à la scène.' },
   { key: 'saveRecords', label: 'Enregistrer les records', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'HighScoreManager existe mais n’est jamais appelé dans l’original.' },
   // --- Météores
@@ -61,6 +64,8 @@ export const SCHEMA: SettingDef[] = [
     { value: 'auto', label: 'Adaptative' }, { value: 'high', label: 'Haute' }, { value: 'medium', label: 'Moyenne' }, { value: 'low', label: 'Basse' },
   ] },
   { key: 'shadows', label: 'Ombres', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Les lumières Unity n’ont pas d’ombres.' },
+  { key: 'premiumFx', label: 'Style dessin animé et effets', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Cel-shading, contours, réticules, balises des horloges, ciel spatial.' },
+  { key: 'bloom', label: 'Halo lumineux (bloom) et étalonnage', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Le bloom est inactif dans le profil URP du jeu.' },
   { key: 'postProcess', label: 'Post-process (aberration, vignette)', group: 'Graphismes', type: 'bool', arcade: true, original: true },
   { key: 'dynamicLights', label: 'Lumières des météores', group: 'Graphismes', type: 'number', arcade: 3, original: 4, min: 0, max: 6, step: 1, help: 'Nombre de lumières ponctuelles réservées (rechargement nécessaire).' },
   { key: 'planetDetail', label: 'Relief du sol', group: 'Graphismes', type: 'bool', arcade: true, original: false },
@@ -70,8 +75,12 @@ export const SCHEMA: SettingDef[] = [
   { key: 'musicVolume', label: 'Musique', group: 'Audio', type: 'number', arcade: 0.7, original: 1, min: 0, max: 1, step: 0.05 },
   { key: 'sfxVolume', label: 'Effets', group: 'Audio', type: 'number', arcade: 1, original: 1, min: 0, max: 1, step: 0.05 },
   { key: 'loopMusic', label: 'Musique en boucle', group: 'Audio', type: 'bool', arcade: true, original: false },
-  { key: 'extraSounds', label: 'Sons supplémentaires (clic, dérapage)', group: 'Audio', type: 'bool', arcade: true, original: false },
+  { key: 'engineVolume', label: 'Moteur', group: 'Audio', type: 'number', arcade: 0.45, original: 0.052, min: 0, max: 1, step: 0.01, help: 'AudioSource de la voiture : 0,052 dans Unity (presque inaudible).' },
+  { key: 'extraSounds', label: 'Sons supplémentaires (explosions, chocs, turbo…)', group: 'Audio', type: 'bool', arcade: true, original: false },
   // --- Contrôles
+  { key: 'orientation', label: 'Orientation de l’écran', group: 'Contrôles', type: 'select', arcade: 'auto', original: 'landscape', options: [
+    { value: 'auto', label: 'Libre (portrait ou paysage)' }, { value: 'landscape', label: 'Paysage' }, { value: 'portrait', label: 'Portrait' },
+  ], help: 'L’APK Unity est en paysage (LandscapeLeft).' },
   { key: 'stickSide', label: 'Côté du stick', group: 'Contrôles', type: 'select', arcade: 'left', original: 'right', options: [
     { value: 'left', label: 'Gauche' }, { value: 'right', label: 'Droite' },
   ], help: 'Le joystick Unity est en bas à droite.' },

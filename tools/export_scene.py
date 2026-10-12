@@ -237,8 +237,35 @@ class Exporter:
         meta = open(os.path.join(self.assets, path + '.meta'), encoding='utf-8').read()
         gs = re.search(r'meshes:.*?globalScale: ([\d.eE+-]+)', meta, re.S)
         global_scale = float(gs.group(1)) if gs else 1.0
-        self.models[name] = {'source': path, 'file': f'models/{name}.glb', 'globalScale': global_scale}
+        self.models[name] = {'source': path, 'file': f'models/{name}.glb', 'globalScale': global_scale,
+                             'materials': self.model_materials(path, meta)}
         return name
+
+    def model_materials(self, path: str, meta: str) -> dict[str, str | None]:
+        """Matériaux d'un modèle importé, résolus comme l'importeur Unity
+        (materialSearch : recherche par nom dans les dossiers « Materials »
+        en remontant, sous-dossiers compris). Nom du modèle → matériau du
+        projet (exporté) ou None (Unity crée alors un matériau depuis le modèle)."""
+        names: list[str] = []
+        full = os.path.join(self.assets, path)
+        if path.lower().endswith('.dae'):
+            names = re.findall(r'<material id="[^"]*" name="([^"]+)"', open(full, encoding='utf-8', errors='ignore').read())
+        m = re.search(r'materialSearch: (\d+)', meta)
+        search = int(m.group(1)) if m else 1
+        index: dict[str, str] = {}
+        if search:
+            d = os.path.dirname(path)
+            while True:
+                mat_dir = os.path.join(self.assets, d, 'Materials')
+                if os.path.isdir(mat_dir):
+                    for dp, _dn, fn in os.walk(mat_dir):
+                        for f in fn:
+                            if f.endswith('.mat'):
+                                index.setdefault(f[:-4], os.path.relpath(os.path.join(dp, f), self.assets).replace(os.sep, '/'))
+                if not d:
+                    break
+                d = os.path.dirname(d)
+        return {n: (self.material(index[n]) if n in index else None) for n in names}
 
     # -- composants -------------------------------------------------------
     def component(self, d: UDoc, docs: dict[int, UDoc]) -> dict | None:

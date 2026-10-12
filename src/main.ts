@@ -13,6 +13,7 @@ import { setupOrientation } from './ui/orientation';
 import { Screens } from './ui/screens';
 import { Assets } from './unity/assets';
 import { World } from './game/World';
+import { PLANETS, isUnlocked, planetById, recordDistance, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
 import * as THREE from 'three';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -20,12 +21,20 @@ const params = new URLSearchParams(location.search);
 const TEST = params.has('test');
 
 async function loadFont(): Promise<void> {
-  try {
-    const f = new FontFace('Liberation', 'url(./fonts/LiberationSans.ttf)');
-    document.fonts.add(await f.load());
-  } catch {
-    /* police système de repli */
-  }
+  const faces = [
+    new FontFace('Liberation', 'url(./fonts/LiberationSans.ttf)'),
+    new FontFace('Fredoka', 'url(./fonts/Fredoka-600.woff2)', { weight: '400 600' }),
+    new FontFace('Fredoka', 'url(./fonts/Fredoka-700.woff2)', { weight: '700 900' }),
+  ];
+  await Promise.all(
+    faces.map(async (f) => {
+      try {
+        document.fonts.add(await f.load());
+      } catch {
+        /* police système de repli */
+      }
+    }),
+  );
 }
 
 async function main(): Promise<void> {
@@ -51,6 +60,7 @@ async function main(): Promise<void> {
     assets.planetOverride = t;
   }
   await fontP;
+  $('loading-text').textContent = 'Chargement des sons…';
 
   const hud = new Hud();
   const screens = new Screens();
@@ -66,6 +76,13 @@ async function main(): Promise<void> {
     gameOver: (stats) => onGameOver(stats),
     turbo: (l, a) => hud.turbo(l, a),
   });
+
+  const audioP = world.audio.loadAll('./', assets.manifest.audio);
+  const isOriginal = preset === 'original';
+  // Planète : la planète d'origine en préréglage Original, sinon la dernière choisie
+  let planetId = isOriginal ? 'origine' : params.get('planet') ?? selectedPlanet();
+  if (!isUnlocked(planetById(planetId), settings.unlockAll === true)) planetId = 'prairie';
+  world.planetDef = planetById(planetId);
 
   // --- contrôles tactiles
   const touch = matchMedia('(pointer: coarse)').matches || params.has('touch');
@@ -99,6 +116,7 @@ async function main(): Promise<void> {
 
   $('loading-text').textContent = 'Préparation des shaders…';
   await world.precompile();
+  await audioP;
   world.enterMenu();
   $('loading').hidden = true;
 
@@ -114,6 +132,44 @@ async function main(): Promise<void> {
     world.enterMenu();
     records();
     screens.show('menu-main');
+  };
+  const renderPlanets = () => {
+    const list = $('planet-list');
+    list.textContent = '';
+    const best = bestDistances();
+    for (const p of PLANETS) {
+      const unlocked = isUnlocked(p, settings.unlockAll === true);
+      const card = document.createElement('button');
+      card.className = 'planet-card' + (p.id === planetId ? ' selected' : '') + (unlocked ? '' : ' locked');
+      card.setAttribute('role', 'option');
+      card.setAttribute('aria-selected', String(p.id === planetId));
+      const prev = assets.planetPreviews.get(p.id);
+      const pic = prev ? Object.assign(document.createElement('img'), { src: prev, alt: '' }) : Object.assign(document.createElement('div'), { className: 'orig' });
+      const name = Object.assign(document.createElement('div'), { className: 'planet-name', textContent: p.name });
+      const stars = Object.assign(document.createElement('div'), { className: 'planet-stars', textContent: '★'.repeat(p.difficulty) + '☆'.repeat(5 - p.difficulty) });
+      const info = Object.assign(document.createElement('div'), { className: 'planet-info', textContent: p.tagline });
+      card.append(pic, name, stars, info);
+      if (unlocked && best[p.id]) card.append(Object.assign(document.createElement('div'), { className: 'planet-best', textContent: `Record : ${Math.floor(best[p.id])} m` }));
+      if (!unlocked && p.unlock) card.append(Object.assign(document.createElement('div'), { className: 'planet-lock', textContent: `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` }));
+      card.onclick = () => {
+        click();
+        if (!unlocked) return;
+        planetId = p.id;
+        selectPlanet(p.id);
+        world.planetDef = p;
+        world.enterMenu();
+        renderPlanets();
+      };
+      list.appendChild(card);
+    }
+    list.querySelector('.selected')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  };
+  const showPlanets = () => {
+    paused = false;
+    hud.show(false);
+    if (world.mode !== 'menu') world.enterMenu();
+    renderPlanets();
+    screens.show('menu-planets');
   };
   const play = () => {
     paused = false;
@@ -136,6 +192,10 @@ async function main(): Promise<void> {
     if (settings.saveRecords === true) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
     const best = settings.saveRecords === true ? loadRecords()[0]?.distance ?? null : null;
     screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original');
+    const unlocked = isOriginal ? [] : recordDistance(world.planetDef.id, stats.distance);
+    const un = $('over-unlock');
+    un.hidden = unlocked.length === 0;
+    un.textContent = unlocked.length ? `Nouvelle planète débloquée : ${unlocked.map((p) => p.name).join(', ')} !` : '';
     hud.show(preset !== 'original');
     screens.show('menu-over');
     vibrate([80, 60, 160], settings.haptics === true);
@@ -146,7 +206,11 @@ async function main(): Promise<void> {
       click();
       fn();
     });
-  on('btn-play', play);
+  on('btn-play', () => (isOriginal ? play() : showPlanets()));
+  on('btn-planet-go', play);
+  on('btn-planets-back', toMenu);
+  on('btn-pause-planets', showPlanets);
+  on('btn-over-planets', showPlanets);
   on('btn-help', () => screens.show('menu-help'));
   on('btn-help-back', () => screens.show('menu-main'));
   on('btn-pause', () => setPause(true));
@@ -164,7 +228,7 @@ async function main(): Promise<void> {
       world.audio.suspend();
     } else if (!paused) world.audio.resume();
   });
-  setupOrientation((p) => {
+  setupOrientation(String(settings.orientation) as 'auto' | 'landscape' | 'portrait', (p) => {
     portrait = p;
     if (p && world.mode === 'play') setPause(true);
   });
@@ -256,6 +320,12 @@ async function main(): Promise<void> {
       seed: (n: number) => world.seed(n),
       play,
       toMenu,
+      showPlanets,
+      planet: (id: string) => {
+        planetId = id;
+        world.planetDef = planetById(id);
+        world.enterMenu();
+      },
       step: (n: number, dt = 1 / 60, h = 0, turbo = false) => {
         for (let i = 0; i < n; i++) {
           world.step(dt, { horizontal: h, turbo });
