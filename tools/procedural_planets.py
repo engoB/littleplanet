@@ -125,6 +125,22 @@ def pattern(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.ndarray
         paint(pools > 0.74, pal['path'], 12, smooth(0.735, 0.75, pools))
         paint(pools > 0.78, pal['pathDark'], 13, smooth(0.775, 0.79, pools))
         emis = np.maximum(emis, smooth(0.75, 0.8, pools))
+    elif kind == 'neon':
+        # Grille « rétro-futuriste » : parallèles cyan, méridiens magenta
+        lat = np.arcsin(np.clip(d[..., 1], -1, 1))
+        lon = np.arctan2(d[..., 2], d[..., 0])
+        step = np.radians(12)
+        dl = np.abs((lat / step + 0.5) % 1 - 0.5) * step
+        dm = np.abs((lon / step + 0.5) % 1 - 0.5) * step * np.cos(lat)
+        w = 0.0035
+        gl = smooth(w * 2.2, w * 0.6, dl)
+        gm = smooth(w * 2.2, w * 0.6, dm) * smooth(0.97, 0.9, np.abs(d[..., 1]))
+        cy, mg = hexc(pal['path']), hexc(pal['pathDark'])
+        col = col * (1 - 0.6 * np.maximum(gl, gm)[..., None]) + (gl[..., None] * cy + gm[..., None] * mg) * 0.35
+        emis_rgb = gl[..., None] * cy + gm[..., None] * mg
+        # Halo doux autour des lignes
+        emis_rgb = emis_rgb + (smooth(w * 7, w, dl)[..., None] * cy + (smooth(w * 7, w, dm) * smooth(0.97, 0.9, np.abs(d[..., 1])))[..., None] * mg) * 0.25
+        emis = emis_rgb
     elif kind == 'naine':
         sv = np.sin(d[..., 1] * 18 + 3 * nz.fbm(d * 3, 2))
         paint(sv > 0.55, pal['path'], 10, smooth(0.5, 0.62, sv))
@@ -176,7 +192,8 @@ def to_img(rgb: np.ndarray) -> Image.Image:
 def planet(pl: dict, out: str, size: int = 512) -> dict:
     nz = Noise3(sum(map(ord, pl['id'])) * 7919)  # graine stable par planète
     files = {}
-    emissive = pl['pattern'] == 'volcan'
+    emissive = pl['pattern'] in ('volcan', 'neon')
+    esize = 512 if pl['pattern'] == 'neon' else 256
     for f in FACES:
         d = face_dirs(f, size)
         cls, col, emis = pattern(d, pl, nz)
@@ -185,9 +202,10 @@ def planet(pl: dict, out: str, size: int = 512) -> dict:
         to_img(rgb).save(os.path.join(out, fn), quality=88, optimize=True)
         files[f] = fn
         if emissive:
-            e = Image.fromarray((emis * 255).astype(np.uint8)).resize((256, 256), Image.BILINEAR)
+            arr = emis if emis.ndim == 3 else emis[..., None] * np.ones(3)
+            e = Image.fromarray((np.clip(arr, 0, 1) * 255).astype(np.uint8)).resize((esize, esize), Image.BILINEAR)
             efn = f"planet_{pl['id']}_e_{f}.jpg"
-            e.convert('RGB').save(os.path.join(out, efn), quality=85)
+            e.save(os.path.join(out, efn), quality=88)
             files['e_' + f] = efn
     # Aperçu : sphère éclairée façon cel-shading
     n = 256
@@ -206,7 +224,8 @@ def planet(pl: dict, out: str, size: int = 512) -> dict:
     ndl = nrm @ light
     lit = smooth(-0.05, 0.12, ndl)[..., None]
     shadow = col * np.array([0.55, 0.6, 0.8])
-    rgb = shadow + (col - shadow) * lit + emis[..., None] * hexc(pl['palette']['path']) * 0.5
+    em = emis if emis.ndim == 3 else emis[..., None] * hexc(pl['palette']['path'])
+    rgb = shadow + (col - shadow) * lit + em * (1.0 if emis.ndim == 3 else 0.5)
     rim = smooth(0.6, 0.86, np.sqrt(r2))[..., None] * 0.35
     rgb = rgb + rim * hexc(pl['atmosphere'])
     atm = hexc(pl['atmosphere'])

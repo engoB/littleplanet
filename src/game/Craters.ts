@@ -62,6 +62,9 @@ export class Craters {
         polygonOffsetFactor: -2,
         polygonOffsetUnits: -2,
       });
+      // Carte d'émission posée dès la création (émission noire par défaut) :
+      // l'activer plus tard forcerait une recompilation du shader
+      m.emissiveMap = m.map;
       mat = m;
     }
     this.mesh = new THREE.InstancedMesh(geo, mat, MAX);
@@ -70,6 +73,13 @@ export class Craters {
     this.mesh.receiveShadow = true;
     this.mesh.renderOrder = 1;
     ctx.planet.add(this.mesh);
+  }
+
+  /** Lueur des cratères (planète Néon) ; null = aucune. */
+  setGlow(c: THREE.Color | null): void {
+    const m = this.mesh.material as THREE.MeshStandardMaterial;
+    if (!m.isMeshStandardMaterial) return;
+    m.emissive.copy(c ?? new THREE.Color(0, 0, 0));
   }
 
   /** Instantiate(craterPrefab, point, LookRotation(normal)) — point/normale en espace planète. */

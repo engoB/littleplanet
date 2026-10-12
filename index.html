@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#0b1a2a" />
+    <meta name="theme-color" content="#04050c" />
     <meta name="description" content="Ma Petite Planète : roule sur une petite planète, évite les météores et ramasse les horloges." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -40,29 +40,39 @@
       <div id="fps" hidden></div>
     </div>
 
-    <section id="menu-main" class="screen" hidden>
-      <h1 class="title outline">Ma Petite Planète</h1>
-      <div class="menu-col">
-        <button id="btn-play" class="big">GO !</button>
-        <button id="btn-help">Comment jouer</button>
-        <a id="btn-settings" class="button" href="./settings.html">Réglages</a>
+    <section id="menu-main" class="screen menu-home" hidden>
+      <div class="home-panel glass">
+        <div class="brand">
+          <div class="brand-kicker">Ma Petite</div>
+          <h1 class="brand-title">Planète</h1>
+        </div>
+        <button id="btn-current-planet" class="planet-chip arcade-only" aria-label="Changer de planète">
+          <span class="chip-pic"><img id="chip-img" alt="" /></span>
+          <span class="chip-text"><b id="chip-name">Prairie</b><small id="chip-stars"></small></span>
+          <span class="chip-change">Changer</span>
+        </button>
+        <button id="btn-play" class="btn-primary"><span class="play-ico"></span>Jouer</button>
+        <div class="home-row">
+          <button id="btn-help" class="btn-glass">Comment jouer</button>
+          <a id="btn-settings" class="btn-glass" href="./settings.html">Réglages</a>
+        </div>
+        <div id="records" class="records"></div>
       </div>
-      <div id="records" class="records"></div>
       <div id="preset-badge" class="badge"></div>
       <div id="install-hint" class="hint" hidden></div>
     </section>
 
     <section id="menu-planets" class="screen" hidden>
-      <h2 class="planets-title outline">Choisis ta planète</h2>
+      <h2 class="planets-title">Choisis ta planète</h2>
       <div id="planet-list" class="planet-list" role="listbox" aria-label="Planètes"></div>
       <div class="planet-actions">
-        <button id="btn-planets-back">Retour</button>
-        <button id="btn-planet-go" class="big">GO !</button>
+        <button id="btn-planets-back" class="btn-glass">Retour</button>
+        <button id="btn-planet-go" class="btn-primary"><span class="play-ico"></span>Jouer</button>
       </div>
     </section>
 
     <section id="menu-help" class="screen panel-screen" hidden>
-      <div class="panel">
+      <div class="panel glass">
         <h2>Comment jouer</h2>
         <ul class="help">
           <li><b>Ta voiture avance toute seule</b> sur la petite planète : dirige-la avec le <b>stick</b> (ou ← → / A D, ou la manette).</li>
@@ -73,38 +83,42 @@
           <li class="arcade-only">Remplis les <b>objectifs d'étape</b> : la difficulté augmente à chaque étape.</li>
           <li>Va le plus loin possible !</li>
         </ul>
-        <button id="btn-help-back">Retour</button>
+        <button id="btn-help-back" class="btn-primary">Compris !</button>
       </div>
     </section>
 
     <section id="menu-pause" class="screen panel-screen" hidden>
-      <div class="panel">
+      <div class="panel glass pause-panel">
         <h2>Pause</h2>
         <div class="menu-col">
-          <button id="btn-resume" class="big">Reprendre</button>
-          <button id="btn-restart">Recommencer</button>
-          <button id="btn-pause-menu">Menu</button>
-          <button id="btn-pause-planets" class="arcade-only">Changer de planète</button>
-          <a class="button" href="./settings.html">Réglages</a>
+          <button id="btn-resume" class="btn-primary"><span class="play-ico"></span>Reprendre</button>
+          <button id="btn-restart" class="btn-glass">Recommencer</button>
+          <button id="btn-pause-planets" class="btn-glass arcade-only">Changer de planète</button>
+          <div class="home-row">
+            <button id="btn-pause-menu" class="btn-glass">Menu</button>
+            <a class="btn-glass" href="./settings.html">Réglages</a>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="menu-over" class="screen" hidden>
-      <div class="gameover outline">GAME OVER</div>
-      <div id="over-distance" class="over-distance outline"></div>
-      <div id="over-details" class="over-details"></div>
-      <div id="over-record" class="over-record" hidden></div>
-      <div id="over-unlock" class="over-unlock" hidden></div>
-      <div class="over-buttons">
-        <button id="btn-retry" class="unity-btn">Rejouer</button>
-        <button id="btn-over-planets" class="unity-btn arcade-only">Planètes</button>
-        <button id="btn-over-menu" class="unity-btn">Menu</button>
+      <div class="over-panel">
+        <div class="gameover outline">GAME OVER</div>
+        <div id="over-distance" class="over-distance outline"></div>
+        <div id="over-details" class="over-details"></div>
+        <div id="over-record" class="over-record" hidden></div>
+        <div id="over-unlock" class="over-unlock" hidden></div>
+        <div class="over-buttons">
+          <button id="btn-retry" class="unity-btn btn-primary">Rejouer</button>
+          <button id="btn-over-planets" class="unity-btn btn-glass arcade-only">Planètes</button>
+          <button id="btn-over-menu" class="unity-btn btn-glass">Menu</button>
+        </div>
       </div>
     </section>
 
     <div id="loading">
-      <div class="title outline">Ma Petite Planète</div>
+      <div class="brand loading-brand"><div class="brand-kicker">Ma Petite</div><div class="brand-title">Planète</div></div>
       <div class="progress"><div id="progress-fill"></div></div>
       <div id="loading-text">Chargement…</div>
     </div>

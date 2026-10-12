@@ -16,13 +16,17 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Six planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
-le générateur de textures et par le jeu :
+Sept planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
+le générateur de textures et par le jeu. En Arcade, **la planète rétrécit**
+au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra s'adapte** : proche
+de la voiture tant que la planète est grosse, elle recule pour la montrer en
+entier quand elle devient petite.
 
 | Planète | Difficulté | Particularité |
 |---|---|---|
 | Planète d'origine | ★★ | la planète Unity, telle quelle |
 | Prairie | ★ | route de terre, maison-dôme ; météores plus lents et plus rares |
+| Néon | ★★★ | planète nocturne à grille lumineuse, voiture et impacts qui brillent |
 | Émeraude | ★★★ | étangs ; météores plus rapides |
 | Banquise | ★★★ | sol gelé : la voiture glisse (adhérence 0,35) |
 | Volcan | ★★★★ | rivières de lave lumineuses ; pluie de météores, cratères ×1,5 |
@@ -34,8 +38,8 @@ Chaque planète se débloque en parcourant 100 m sur la précédente (réglage
 ### Style graphique Arcade
 
 Cel-shading doux « film d'animation » (inspiration Zelda récents) : deux aplats
-séparés par un terminateur adouci, ombres teintées de bleu par l'ambiance,
-liseré lumineux, **pas de contours noirs**. Textures des planètes peintes
+séparés par un terminateur adouci, ombres légères (tout reste lisible en jeu),
+liseré lumineux, **pas de contours noirs**. Décor volontairement rare. Textures des planètes peintes
 procéduralement en cubemaps (fonction de la direction 3D : ni couture ni
 pincement aux pôles), décor (arbres, rochers, maison-dôme) en InstancedMesh,
 aura d'atmosphère diffuse, ciel spatial (nébuleuse + étoiles en points 3D),
@@ -108,7 +112,9 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Moteur | boucle procédurale, volume 0,45, hauteur selon la vitesse | `AccelerationLow`, volume 0,052, hauteur 0,65 |
 | Sons ajoutés (explosions, chocs, sifflement, turbo, carillon) | oui | non |
 | Orientation | libre (portrait ou paysage) | paysage |
-| Stick | flottant, à gauche | fixe, en bas à droite |
+| Planète qui rétrécit | oui (150 s, jusqu'à 40 %) | non (ShrinkPlanet non attaché) |
+| Caméra | adaptative, 6,2 u au-dessus, 30° | fixe, 12 u, vue de dessus |
+| Joystick | fixe, en bas à gauche | fixe, en bas à droite |
 
 ---
 
@@ -307,6 +313,12 @@ littleplanet/
 ├── tests/visual.mjs           # tests visuels Playwright
 └── .github/workflows/deploy.yml
 ```
+
+## Plein écran
+
+PWA installée en `display: fullscreen` (repli `standalone`), canvas en
+`100lvh` dimensionné sur sa taille réelle : pas de bande vide en bas de
+l'écran (barre d'accueil iOS, barres Android escamotées).
 
 ## Son
 

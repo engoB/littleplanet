@@ -209,6 +209,21 @@
    "pz": "planet_naine_pz.jpg",
    "nz": "planet_naine_nz.jpg",
    "preview": "planet_naine_preview.png"
+  },
+  "neon": {
+   "px": "planet_neon_px.jpg",
+   "e_px": "planet_neon_e_px.jpg",
+   "nx": "planet_neon_nx.jpg",
+   "e_nx": "planet_neon_e_nx.jpg",
+   "py": "planet_neon_py.jpg",
+   "e_py": "planet_neon_e_py.jpg",
+   "ny": "planet_neon_ny.jpg",
+   "e_ny": "planet_neon_e_ny.jpg",
+   "pz": "planet_neon_pz.jpg",
+   "e_pz": "planet_neon_e_pz.jpg",
+   "nz": "planet_neon_nz.jpg",
+   "e_nz": "planet_neon_e_nz.jpg",
+   "preview": "planet_neon_preview.png"
   }
  },
  "space": {
