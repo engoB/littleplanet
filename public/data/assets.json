@@ -156,9 +156,35 @@
     "typoDescender": -236,
     "fixed": true
    }
+  },
+  "LilitaOne": {
+   "file": "fonts/LilitaOne.woff2",
+   "weight": 400,
+   "metrics": {
+    "unitsPerEm": 1000,
+    "yMax": 923,
+    "yMin": -220,
+    "hheaAscent": 923,
+    "hheaDescent": -220,
+    "winAscent": 923,
+    "winDescent": 220,
+    "typoAscender": 922,
+    "typoDescender": -219,
+    "fixed": false
+   }
   }
  },
  "planets": {
+  "sage": {
+   "px": "planet_sage_px.jpg",
+   "nx": "planet_sage_nx.jpg",
+   "py": "planet_sage_py.jpg",
+   "ny": "planet_sage_ny.jpg",
+   "pz": "planet_sage_pz.jpg",
+   "nz": "planet_sage_nz.jpg",
+   "surface": "planet_sage_surface.png",
+   "preview": "planet_sage_preview.png"
+  },
   "prairie": {
    "px": "planet_prairie_px.jpg",
    "nx": "planet_prairie_nx.jpg",
@@ -166,7 +192,28 @@
    "ny": "planet_prairie_ny.jpg",
    "pz": "planet_prairie_pz.jpg",
    "nz": "planet_prairie_nz.jpg",
+   "surface": "planet_prairie_surface.png",
    "preview": "planet_prairie_preview.png"
+  },
+  "champi": {
+   "px": "planet_champi_px.jpg",
+   "nx": "planet_champi_nx.jpg",
+   "py": "planet_champi_py.jpg",
+   "ny": "planet_champi_ny.jpg",
+   "pz": "planet_champi_pz.jpg",
+   "nz": "planet_champi_nz.jpg",
+   "surface": "planet_champi_surface.png",
+   "preview": "planet_champi_preview.png"
+  },
+  "ocean": {
+   "px": "planet_ocean_px.jpg",
+   "nx": "planet_ocean_nx.jpg",
+   "py": "planet_ocean_py.jpg",
+   "ny": "planet_ocean_ny.jpg",
+   "pz": "planet_ocean_pz.jpg",
+   "nz": "planet_ocean_nz.jpg",
+   "surface": "planet_ocean_surface.png",
+   "preview": "planet_ocean_preview.png"
   },
   "emeraude": {
    "px": "planet_emeraude_px.jpg",
@@ -175,7 +222,34 @@
    "ny": "planet_emeraude_ny.jpg",
    "pz": "planet_emeraude_pz.jpg",
    "nz": "planet_emeraude_nz.jpg",
+   "surface": "planet_emeraude_surface.png",
    "preview": "planet_emeraude_preview.png"
+  },
+  "cubes": {
+   "px": "planet_cubes_px.jpg",
+   "nx": "planet_cubes_nx.jpg",
+   "py": "planet_cubes_py.jpg",
+   "ny": "planet_cubes_ny.jpg",
+   "pz": "planet_cubes_pz.jpg",
+   "nz": "planet_cubes_nz.jpg",
+   "surface": "planet_cubes_surface.png",
+   "preview": "planet_cubes_preview.png"
+  },
+  "neon": {
+   "px": "planet_neon_px.jpg",
+   "e_px": "planet_neon_e_px.jpg",
+   "nx": "planet_neon_nx.jpg",
+   "e_nx": "planet_neon_e_nx.jpg",
+   "py": "planet_neon_py.jpg",
+   "e_py": "planet_neon_e_py.jpg",
+   "ny": "planet_neon_ny.jpg",
+   "e_ny": "planet_neon_e_ny.jpg",
+   "pz": "planet_neon_pz.jpg",
+   "e_pz": "planet_neon_e_pz.jpg",
+   "nz": "planet_neon_nz.jpg",
+   "e_nz": "planet_neon_e_nz.jpg",
+   "surface": "planet_neon_surface.png",
+   "preview": "planet_neon_preview.png"
   },
   "banquise": {
    "px": "planet_banquise_px.jpg",
@@ -184,6 +258,7 @@
    "ny": "planet_banquise_ny.jpg",
    "pz": "planet_banquise_pz.jpg",
    "nz": "planet_banquise_nz.jpg",
+   "surface": "planet_banquise_surface.png",
    "preview": "planet_banquise_preview.png"
   },
   "volcan": {
@@ -199,6 +274,7 @@
    "e_pz": "planet_volcan_e_pz.jpg",
    "nz": "planet_volcan_nz.jpg",
    "e_nz": "planet_volcan_e_nz.jpg",
+   "surface": "planet_volcan_surface.png",
    "preview": "planet_volcan_preview.png"
   },
   "naine": {
@@ -208,22 +284,8 @@
    "ny": "planet_naine_ny.jpg",
    "pz": "planet_naine_pz.jpg",
    "nz": "planet_naine_nz.jpg",
+   "surface": "planet_naine_surface.png",
    "preview": "planet_naine_preview.png"
-  },
-  "neon": {
-   "px": "planet_neon_px.jpg",
-   "e_px": "planet_neon_e_px.jpg",
-   "nx": "planet_neon_nx.jpg",
-   "e_nx": "planet_neon_e_nx.jpg",
-   "py": "planet_neon_py.jpg",
-   "e_py": "planet_neon_e_py.jpg",
-   "ny": "planet_neon_ny.jpg",
-   "e_ny": "planet_neon_e_ny.jpg",
-   "pz": "planet_neon_pz.jpg",
-   "e_pz": "planet_neon_e_pz.jpg",
-   "nz": "planet_neon_nz.jpg",
-   "e_nz": "planet_neon_e_nz.jpg",
-   "preview": "planet_neon_preview.png"
   }
  },
  "space": {
@@ -238,5 +300,13 @@
   "planet_detail_n.png",
   "crater.png",
   "crater_n.png"
- ]
+ ],
+ "skyDb": {
+  "px": "sky_db_px.jpg",
+  "nx": "sky_db_nx.jpg",
+  "py": "sky_db_py.jpg",
+  "ny": "sky_db_ny.jpg",
+  "pz": "sky_db_pz.jpg",
+  "nz": "sky_db_nz.jpg"
+ }
 }

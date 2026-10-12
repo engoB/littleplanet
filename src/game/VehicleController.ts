@@ -32,6 +32,8 @@ export class VehicleController {
   steerSpeed: number;
   /** 0 = pas de fatigue de virage. */
   fatigue: number;
+  /** Durée de braquage à pleine force avant que la fatigue commence (0 = original). */
+  fatigueHold = 0;
   speed: number;
   distanceMoved = 0;
   /** Adhérence (1 = trajectoire exacte de l'original ; < 1 = glisse). */
@@ -71,7 +73,10 @@ export class VehicleController {
       this.lastDirection = currentDirection;
     }
     const move = this.speed * this.speedMultiplier * dt;
-    const fadeOutFactor = this.fatigue > 0 ? Mathf.clamp01(1 - this.directionDuration / this.fatigue) : 1;
+    // Fatigue : l'original atténue dès le début (hold = 0) ; l'Arcade garde la
+    // pleine force pendant `fatigueHold` puis revient en ligne droite
+    const span = Math.max(1e-3, this.fatigue - this.fatigueHold);
+    const fadeOutFactor = this.fatigue > 0 && currentDirection !== 0 ? Mathf.clamp01(1 - Math.max(0, this.directionDuration - this.fatigueHold) / span) : 1;
     const inputRotation = input * fadeOutFactor;
     const targetRotation = inputRotation * this.steerSpeed;
     [this.currentRotation, this.rotationVelocity] = Mathf.smoothDamp(this.currentRotation, targetRotation, this.rotationVelocity, this.f.rotationSmoothing, Math.max(dt, 1e-6));

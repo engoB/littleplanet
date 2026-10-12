@@ -97,6 +97,11 @@ export class MeteorSpawner {
     }
   }
 
+  /** Couleur des réticules (selon la planète, pour rester lisibles sur le sol). */
+  setReticleColor(c: THREE.ColorRepresentation): void {
+    for (const m of this.reticles) (m.material as THREE.ShaderMaterial).uniforms.color.value.set(c);
+  }
+
   get instances(): THREE.Object3D[] {
     return [...this.pools.values()].flat().map((m) => m.inst.root);
   }

@@ -144,6 +144,7 @@ export interface AssetsManifest {
   fonts: Record<string, { file: string; weight?: number }>;
   planets?: Record<string, Record<string, string>>;
   space?: Record<string, string>;
+  skyDb?: Record<string, string>;
 }
 
 /** Recherche récursive d'un nœud par nom. */

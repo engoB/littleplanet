@@ -16,24 +16,48 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Sept planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
+Onze planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
 le générateur de textures et par le jeu. En Arcade, **la planète rétrécit**
 au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra s'adapte** : proche
 de la voiture tant que la planète est grosse, elle recule pour la montrer en
 entier quand elle devient petite.
 
-| Planète | Difficulté | Particularité |
-|---|---|---|
-| Planète d'origine | ★★ | la planète Unity, telle quelle |
-| Prairie | ★ | route de terre, maison-dôme ; météores plus lents et plus rares |
-| Néon | ★★★ | planète nocturne à grille lumineuse, voiture et impacts qui brillent |
-| Émeraude | ★★★ | étangs ; météores plus rapides |
-| Banquise | ★★★ | sol gelé : la voiture glisse (adhérence 0,35) |
-| Volcan | ★★★★ | rivières de lave lumineuses ; pluie de météores, cratères ×1,5 |
-| Naine | ★★★★★ | rayon 0,7 : tout arrive très vite |
+Plusieurs planètes s'inspirent d'univers de dessins animés et de jeux très
+connus, avec un style évident mais sans reprendre de personnage ni de logo :
 
-Chaque planète se débloque en parcourant 100 m sur la précédente (réglage
-« Toutes les planètes débloquées » pour tout ouvrir). Records par planète.
+| Planète | Difficulté | Véhicule | Particularité |
+|---|---|---|---|
+| Planète d'origine | ★★ | voiture Unity | la planète Unity, telle quelle |
+| Planète du Sage | ★★ | voiture volante | minuscule planète d'entraînement, route jaune, maison-dôme, ciel doré « au-delà » |
+| Prairie | ★ | voiture volante | route de terre, maison-dôme ; météores plus lents et plus rares |
+| Royaume Champignon | ★★ | voiture volante | collines rondes, tuyaux verts, champignons à pois, blocs « ? » flottants |
+| Grand Océan | ★★★ | **bateau pirate** | océan semé d'îles à palmiers, sillage d'écume, impacts en **tourbillons** ; adhérence 0,7 |
+| Émeraude | ★★★ | voiture volante | étangs : **éclaboussures** en les traversant ; météores plus rapides |
+| Monde de Cubes | ★★★ | voiture volante | tout en blocs : herbe, terre, eau, arbres carrés |
+| Néon | ★★★ | voiture volante | planète nocturne à grille lumineuse (lueur adoucie pour rester lisible) |
+| Banquise | ★★★ | voiture volante | sol gelé : la voiture glisse (adhérence 0,35) |
+| Volcan | ★★★★ | voiture volante | rivières de lave (braises en roulant dessus) ; pluie de météores, cratères ×1,5 |
+| Naine | ★★★★★ | voiture volante | rayon 0,7 : tout arrive très vite |
+
+Émeraude, Banquise, Volcan et Naine se débloquent en parcourant 100 m sur la
+planète précédente (réglage « Toutes les planètes débloquées » pour tout
+ouvrir). Records par planète.
+
+Chaque planète a une **carte de surface** générée avec ses textures (sol, eau,
+lave, glace, chemin) : le jeu sait sur quoi roule la voiture et déclenche
+éclaboussures, sillage ou braises. Les réticules d'impact prennent une couleur
+lisible sur chaque sol (jaune sur Néon, cyan sur Volcan).
+
+### Véhicules (préréglage Arcade)
+
+- **Voiture volante** : coque en goutte blanche à bande rouge, bulle de
+  cockpit, petites ailes, deux réacteurs arrière lumineux (jets de particules,
+  plus intenses en turbo), coussin anti-gravité ; flotte et s'incline dans les
+  virages (inspiration aéro-voitures des dessins animés japonais).
+- **Bateau pirate** (Grand Océan) : coque en bois, voile gonflée à emblème,
+  figure de proue, lanterne ; tangue et laisse un sillage d'écume.
+- La boîte de collision reste celle de la voiture d'origine : le gameplay ne
+  change pas. Préréglage Original : voiture Unity.
 
 ### Style graphique Arcade
 
@@ -67,12 +91,22 @@ jouable sans réseau.
 
 | Action | Tactile | Clavier | Manette |
 |---|---|---|---|
-| Tourner | stick (flottant, côté réglable) | ← → / A D (Q en AZERTY) | stick gauche, croix |
+| Tourner | appui n'importe où sur la moitié gauche / droite de l'écran (Arcade) ou stick (Original) | ← → / A D (Q en AZERTY) | stick gauche, croix |
 | Turbo (Arcade, maintenu) | bouton TURBO | Espace, Maj, ↑ | A, RB, RT |
 | Pause | bouton ❙❙ | Échap, P | Start |
 
-Le stick est analogique dans son cercle, au maximum dès 85 % de la course ;
-en mode flottant la base apparaît sous le doigt et le suit s'il sort du cercle.
+**Deux zones** (Arcade, réglage « Commande tactile ») : l'écran est coupé en
+deux ; tant qu'un doigt est posé à gauche la voiture tourne à gauche, à droite
+elle tourne à droite (le dernier doigt posé décide, glisser d'un côté à
+l'autre change de sens). Le bouton turbo et la pause capturent leur propre
+doigt : on peut tourner et turbo en même temps, sans virage parasite.
+
+**Pas de virage infini** : après 1,6 s de braquage dans le même sens, le
+virage s'éteint progressivement et la voiture repart en ligne droite
+(réglages « Fatigue de virage » et « Virage à pleine force pendant » ; c'est
+le `maxDirectionDuration` de l'original, prolongé en Arcade).
+
+Le stick (préréglage Original) est analogique, au maximum dès 85 % de la course.
 
 ---
 
@@ -114,7 +148,10 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Orientation | libre (portrait ou paysage) | paysage |
 | Planète qui rétrécit | oui (150 s, jusqu'à 40 %) | non (ShrinkPlanet non attaché) |
 | Caméra | adaptative, 6,2 u au-dessus, 30° | fixe, 12 u, vue de dessus |
-| Joystick | fixe, en bas à gauche | fixe, en bas à droite |
+| Commande tactile | deux demi-écrans (gauche / droite) | stick fixe, en bas à droite |
+| Virage maintenu | pleine force 1,6 s puis retour en ligne droite (3,4 s) | `maxDirectionDuration` 4 s |
+| Véhicule | voiture volante (bateau sur l'Océan) | voiture Unity |
+| Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
 
 ---
 
@@ -205,6 +242,10 @@ Appliquées par `tools/export_scene.py` et `src/unity/math.ts` :
   dans l'original ; les records ne sont enregistrés qu'en Arcade (réglable).
 - **Musique** : dans l'original elle ne boucle pas (99 s) ; option en Arcade.
 - **Skybox** : convertie en 6 faces 512 px ; visible autour du halo.
+- **Véhicules** : la voiture volante et le bateau sont des ajouts Arcade
+  construits en code ; la voiture Unity reste celle du préréglage Original.
+- **Commandes tactiles** : l'APK utilise des boutons ; Arcade utilise deux
+  demi-écrans, Original un stick.
 - Le collider de la voiture reste aligné sur le rayon **non mis à l'échelle**
   de la planète (comme `PlayerController.cs`) ; avec l'option « planète qui
   rétrécit », le rayon mis à l'échelle est utilisé (logique de `VehicleShrink.cs`).
@@ -235,7 +276,8 @@ Prérequis : Python 3.10+, `ffmpeg`, accès réseau pour télécharger FBX2glTF
    - sons → MP3 ;
    - police TextMeshPro : contrôle ascent/descent avec fonttools, copie
      corrigée si des glyphes dépassent (cas de LiberationSans) ;
-   - icônes PWA depuis `Graphics/Icon.png` ;
+   - icônes PWA depuis `Graphics/Icon.png` seulement si aucune n'existe
+     (l'icône actuelle est rendue par le moteur, voir « Icône ») ;
    - inventaire → `public/data/assets.json`.
 3. `procedural_textures.py` (numpy, graine fixe, textures périodiques avec
    carte de normales) : relief du sol, cratère, anneau et point de l'atlas FX.
@@ -259,8 +301,10 @@ Prérequis : Python 3.10+, `ffmpeg`, accès réseau pour télécharger FBX2glTF
   (menu, départ et 6 s en Arcade/Original, impact, pause, réglages, fin) ;
 - mesures écrites dans `tests/out/metrics.json` (distance, santé, cratères,
   météores, particules, appels de dessin…) ;
-- test fonctionnel du stick (pointer events) : 40 % de course → 0,47,
-  85 % → 1, relâché → 0.
+- test fonctionnel des **deux zones** (pointer events) : moitié gauche → −1,
+  moitié droite → +1, relâché → 0, bouton turbo → turbo sans virage ;
+  vérification que la barre de vie ne chevauche jamais le chrono (paysage
+  et portrait).
 
 Le dépôt Unity ne contient pas de captures d'écran ; la seule image de
 référence est son icône (`tests/reference/unity-icon.png`, rendu de la planète).
@@ -327,10 +371,31 @@ passe en « lecture » (`navigator.audioSession`) pour que le son sorte même
 avec le bouton silencieux ; pour les iOS plus anciens, un `<audio>` muet est
 joué pendant le geste.
 
+## Fluidité (objectif 60 Hz)
+
+- simulation : ~0,2 ms par image ; écriture des particules ~0,1 ms (tri par
+  clé numérique dans un tableau typé, copies sans allocation) ;
+- un seul appel de dessin pour toutes les particules, décor en InstancedMesh,
+  lumières pré-créées, shaders précompilés (aucun gel en cours de partie) ;
+- pas de MSAA sur le framebuffer final quand le post-process est actif (il
+  est fait dans la cible intermédiaire : 4 échantillons sur ordinateur, 2 sur
+  mobile) ;
+- qualité « auto » : départ à 1,5× sur mobile ; sous 54 i/s pendant 2 s la
+  densité de pixels baisse par paliers de 0,25 (jusqu'à 1×, puis MSAA coupé
+  et particules réduites) ; au-dessus de 58 i/s pendant 6 s elle remonte,
+  sans repasser au palier qui a ramé.
+
+## Icône
+
+Rendue par le moteur lui-même (voiture volante au-dessus de la Prairie,
+bloom et cel-shading du jeu) puis composée (nébuleuse, traînées des
+réacteurs, météore) :
+`npm run build && node tools/render_icon.mjs && python3 tools/icon_compose.py .cache/icon_render.png public/icons`.
+
 ## À vérifier sur téléphone
 
-- fluidité (qualité adaptative : densité de pixels 2 → 1, particules) ;
-- stick flottant et bouton turbo maintenu (multi-touch) ;
+- fluidité 60 Hz (afficher les FPS dans les réglages) ;
+- deux zones tactiles + bouton turbo maintenu (multi-touch) ;
 - plein écran + verrouillage paysage au premier toucher (Android) ;
   sur iOS, installer la PWA pour masquer la barre d'adresse ;
 - zones sûres (encoche) ;

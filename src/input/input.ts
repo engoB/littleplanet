@@ -3,6 +3,7 @@
  * InputManager Unity : sensibilité 3, gravité 3, snap), manette.
  */
 import type { TouchButton, VirtualStick } from './stick';
+import type { TouchZones } from './zones';
 
 export class Input {
   private keys = new Set<string>();
@@ -12,6 +13,8 @@ export class Input {
   private pauseEdge = false;
   private padPausePrev = false;
   stick: VirtualStick | null = null;
+  zones: TouchZones | null = null;
+  private zoneAxis = 0;
   turboButton: TouchButton | null = null;
   lastDevice: 'touch' | 'keyboard' | 'gamepad' = 'touch';
 
@@ -65,6 +68,16 @@ export class Input {
       if (p && !this.padPausePrev) this.pauseEdge = true;
       this.padPausePrev = p;
     }
+    // Zones tactiles : rampe rapide (6 unités/s) vers −1 / +1, retour net au relâché
+    if (this.zones) {
+      const t = this.zones.value;
+      if (t === 0) this.zoneAxis = 0;
+      else {
+        if (Math.sign(this.zoneAxis) !== t) this.zoneAxis = 0;
+        this.zoneAxis = Math.max(-1, Math.min(1, this.zoneAxis + t * 6 * dt));
+      }
+      if (this.zones.active) h = this.zoneAxis;
+    }
     if (this.stick?.active) h = this.stick.x;
     if (this.turboButton?.held) turbo = true;
     this.horizontal = Math.max(-1, Math.min(1, h));
@@ -83,6 +96,8 @@ export class Input {
     this.horizontal = 0;
     this.turbo = false;
     this.stick?.reset();
+    this.zones?.reset();
+    this.zoneAxis = 0;
     this.turboButton?.reset();
   }
 }

@@ -85,6 +85,13 @@ export class PostProcess {
   readonly mat: THREE.ShaderMaterial;
   enabled = true;
 
+  /** Change l'anticrénelage MSAA du rendu intermédiaire (qualité adaptative). */
+  setSamples(n: number): void {
+    if (this.rt.samples === n) return;
+    this.rt.samples = n;
+    this.rt.dispose();
+  }
+
   constructor(private readonly renderer: THREE.WebGLRenderer, profile: Record<string, VolumeComponent> | undefined, msaa: number) {
     const halfFloat = renderer.capabilities.isWebGL2 !== false;
     this.rt = new THREE.WebGLRenderTarget(4, 4, {
