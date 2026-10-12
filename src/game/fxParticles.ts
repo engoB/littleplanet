@@ -104,3 +104,15 @@ export function fireTrail(obj: THREE.Object3D, atlas: Record<string, [number, nu
   const look: SpriteLook = { rect: tex, additive: true, tint: [2.4, 1.3, 0.5], hidden: false };
   return new ParticleSystem(obj, d, renderer(0, 0.5), look);
 }
+
+/** Étincelles dorées et blanches (hors-piste de la route arc-en-ciel, vol galactique). */
+export function sparkle(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
+  const d = base({
+    main: { lifetime: rnd(0.4, 0.9), speed: rnd(0.6, 1.6), size: rnd(0.04, 0.09), gravity: k(0.15), color: col([1, 0.95, 0.7, 1]) },
+    shape: { type: 0, radius: 0.15 },
+    emission: { enabled: true, rate: k(50), rateOverDistance: k(0), bursts: [] },
+    colorOverLifetime: { enabled: true, gradient: fade([[0, 1, 1, 1], [0.5, 1, 0.85, 0.4], [1, 0.6, 0.8, 1]], [[0, 1], [1, 0]]) },
+  });
+  const look: SpriteLook = { rect: atlas.fx_dot, additive: true, tint: [2.2, 2.0, 1.6], hidden: false };
+  return new ParticleSystem(obj, d, renderer(0, 0.15), look);
+}

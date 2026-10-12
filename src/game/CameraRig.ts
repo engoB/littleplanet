@@ -129,6 +129,38 @@ export class CameraRig {
     this.pivot.updateMatrixWorld(true);
   }
 
+  private chasePos = new THREE.Vector3();
+  private chaseInit = false;
+  /** Caméra de poursuite (vol entre deux planètes) : derrière et au-dessus du véhicule. */
+  chase(target: THREE.Object3D, up: THREE.Vector3, dt: number, focus?: THREE.Vector3): void {
+    const f = new THREE.Vector3(0, 0, 1).applyQuaternion(target.quaternion);
+    // Derrière le véhicule, côté opposé à la destination : la planète visée reste à l'image
+    const away = focus ? target.position.clone().sub(focus).normalize() : f.clone().negate();
+    const want = target.position.clone().addScaledVector(away, 4.2).addScaledVector(up, 2.4);
+    if (!this.chaseInit) {
+      this.chasePos.copy(this.node.getWorldPosition(new THREE.Vector3()));
+      this.chaseInit = true;
+    }
+    this.chasePos.lerp(want, 1 - Math.exp(-dt * 4));
+    this.pivot.position.set(0, 0, 0);
+    this.pivot.quaternion.identity();
+    this.pivot.scale.set(1, 1, 1);
+    this.node.scale.set(1, 1, 1);
+    this.node.position.copy(this.chasePos);
+    const look = focus ? target.position.clone().lerp(focus, 0.3) : target.position.clone().addScaledVector(f, 2);
+    _fwd.copy(look).sub(this.chasePos).normalize();
+    _x.crossVectors(up, _fwd).normalize();
+    const y = new THREE.Vector3().crossVectors(_fwd, _x);
+    _m.makeBasis(_x, y, _fwd);
+    this.node.quaternion.setFromRotationMatrix(_m);
+    this.pivot.updateMatrixWorld(true);
+  }
+
+  /** Fin de poursuite : la prochaine poursuite repart de la caméra courante. */
+  endChase(): void {
+    this.chaseInit = false;
+  }
+
   /** Décalage de cadrage (fractions de l'écran) pour la composition des menus. */
   readonly composition = new THREE.Vector2();
   private lastAspect = 16 / 9;

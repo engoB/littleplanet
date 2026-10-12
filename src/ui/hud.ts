@@ -89,9 +89,9 @@ export class Hud {
   }
 
   /** Grande annonce au centre de l'écran : « Étape 2 » + nouvel objectif. */
-  stageBanner(stage: number, sub: string): void {
+  stageBanner(stage: number, sub: string, title = `Étape ${stage}`): void {
     const b = this.banner;
-    $('sb-title').textContent = `Étape ${stage}`;
+    $('sb-title').textContent = title;
     $('sb-sub').textContent = sub;
     b.hidden = false;
     b.classList.remove('on');

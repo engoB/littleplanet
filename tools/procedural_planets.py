@@ -72,7 +72,54 @@ def hexc(h: str) -> np.ndarray:
     return np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)], dtype=np.float64) / 255
 
 
-SURF_GROUND, SURF_WATER, SURF_LAVA, SURF_ICE, SURF_PATH, SURF_GRASS = 0, 1, 2, 3, 4, 5
+SURF_GROUND, SURF_WATER, SURF_LAVA, SURF_ICE, SURF_PATH, SURF_GRASS, SURF_OFFROAD, SURF_BOOST = 0, 1, 2, 3, 4, 5, 6, 7
+# Carte de surface : valeur du pixel = classe × SURF_SCALE (lue par le jeu)
+SURF_SCALE = 30
+
+# Repère des pistes : la voiture part de (0, 1, 0) en regardant vers +Z
+T_E1, T_E2, T_N = np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]), np.array([1.0, 0.0, 0.0])
+
+
+def track_fields(d: np.ndarray, tr: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Piste en boucle autour de la planète : latitude f(φ) dans le repère de départ.
+    Renvoie la distance signée à l'axe de la piste (radians) et l'abscisse φ (−π..π).
+    Même formule que src/game/track.ts."""
+    a, b, c = (tr['wave'] + [0, 0, 0])[:3]
+    phi = np.arctan2(d @ T_E2, d @ T_E1)
+    lat = np.arcsin(np.clip(d @ T_N, -1, 1))
+    f = a * np.sin(2 * phi) + b * np.sin(3 * phi) + c * np.sin(5 * phi)
+    fp = 2 * a * np.cos(2 * phi) + 3 * b * np.cos(3 * phi) + 5 * c * np.cos(5 * phi)
+    cl = np.cos(lat)
+    return (lat - f) * cl / np.sqrt(fp * fp + cl * cl), phi
+
+
+def ang_diff(a: np.ndarray, b: float) -> np.ndarray:
+    return (a - b + np.pi) % (2 * np.pi) - np.pi
+
+
+def paint_track_marks(d, tr, dist, phi, col, emis_rgb, surf, chevron='#ffb400', chevron2='#ffe46a'):
+    """Ligne de départ en damier et accélérateurs (chevrons) ; renvoie col, emis, masques."""
+    w = tr['width']
+    ad = np.abs(dist)
+    on = ad < w
+    # Damier de départ/arrivée juste derrière la voiture
+    sl = (np.abs(ang_diff(phi, -0.02)) < 0.022) & on
+    chk = ((np.floor((phi + 0.042) / 0.011) + np.floor((dist + w) / 0.011)) % 2) == 0
+    col = np.where((sl & chk)[..., None], np.array([0.97, 0.97, 0.97]), np.where(sl[..., None], np.array([0.08, 0.08, 0.1]), col))
+    emis_rgb = emis_rgb + (sl & chk)[..., None] * 0.15
+    # Accélérateurs : chevrons pointant vers l'avant
+    boost = np.zeros(d.shape[:-1], bool)
+    for pb in tr.get('boosts', []):
+        da = ang_diff(phi, pb)
+        m = (np.abs(da) < 0.055) & (ad < w * 0.55)
+        v = (da * 40 - np.abs(dist) * 35) % 1.0
+        stripe = v < 0.5
+        cc = np.where(stripe[..., None], hexc(chevron2), hexc(chevron))
+        col = np.where(m[..., None], cc, col)
+        emis_rgb = emis_rgb + m[..., None] * cc * 0.9
+        boost |= m
+    surf[boost] = SURF_BOOST
+    return col, emis_rgb, boost
 
 
 def sphere_points(n: int, seed: int) -> np.ndarray:
@@ -361,6 +408,115 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         shadow = np.zeros_like(c)
         paint(c > 0.5, pal['accent1'], 10, c * 0.98)
         cls = np.where(c > 0.5, 10, 0)
+    elif kind in ('arcenciel', 'wario', 'bowser', 'circuit', 'fantome'):
+        tr = pl['track']
+        w = tr['width']
+        dist, phi = track_fields(d, tr)
+        ad = np.abs(dist)
+        on = ad < w
+        across = np.clip((dist / w + 1) / 2, 0, 1)
+        emis = np.zeros(d.shape)
+        cls = np.where(on, 10, 0)
+        surf[:] = SURF_OFFROAD
+        surf[on] = SURF_PATH
+        if kind == 'arcenciel':
+            # Route arc-en-ciel sur fond d'espace : bandes de couleurs, rails lumineux
+            neb = nz.fbm(d * 2.5 + 3, 4)
+            col = lerp(hexc('#07061e'), hexc('#1a1450'), smooth(0.4, 0.7, neb))
+            col = col + (smooth(0.6, 0.8, nz.fbm(d * 4 + 70, 3)) [..., None] * np.array([0.12, 0.03, 0.18]))
+            cell = np.floor(d * 90)
+            hh = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
+            hh = hh - np.floor(hh)
+            cen = (cell + 0.5) / 90
+            sd = np.linalg.norm(d - cen / np.linalg.norm(cen, axis=-1, keepdims=True), axis=-1)
+            star = smooth(0.006, 0.002, sd) * (hh < 0.12)
+            col = col + star[..., None] * 0.9
+            emis = emis + star[..., None] * 0.6
+            rb = ['#ff4a5a', '#ff9a3a', '#ffe24a', '#5ae26a', '#3ac8ff', '#5a7aff', '#b05aff']
+            band = np.minimum(6, np.floor(across * 7)).astype(int)
+            rc = np.stack([hexc(c) for c in rb])[band]
+            seg = (np.floor(phi / 0.05) % 2)[..., None]
+            rc = rc * (0.88 + 0.12 * seg)
+            col = np.where(on[..., None], rc, col)
+            emis = emis + on[..., None] * rc * 0.55
+            rail = (ad > w - 0.012) & (ad < w + 0.004)
+            col = np.where(rail[..., None], np.array([1.0, 1.0, 1.0]), col)
+            emis = emis + rail[..., None] * 1.0
+            col, emis, _ = paint_track_marks(d, tr, dist, phi, col, emis, surf)
+        elif kind == 'wario':
+            mud = nz.fbm(d * 3.5 + 20, 4)
+            col = lerp(hexc('#4a2e1a'), hexc('#6a4428'), smooth(0.35, 0.65, mud))
+            pud = nz.fbm(d * 5 + 90, 3)
+            col = np.where((pud > 0.66)[..., None], hexc('#2e1c10'), col)
+            col = np.where(((pud > 0.66) & (pud < 0.68))[..., None], hexc('#8a6a4a'), col)
+            dirt = lerp(hexc('#b07a44'), hexc('#c8905a'), smooth(0.3, 0.7, nz.fbm(d * 9 + 5, 3)))
+            mog = 0.5 + 0.5 * np.sin(phi * 70)
+            dirt = dirt * (0.9 + 0.12 * mog[..., None])
+            rut = (np.abs(np.abs(dist) - w * 0.45) < 0.008)
+            dirt = np.where(rut[..., None], dirt * 0.72, dirt)
+            col = np.where(on[..., None], dirt, col)
+            line = (ad > w - 0.012) & (ad < w - 0.004)
+            col = np.where(line[..., None], np.array([0.95, 0.95, 0.92]), col)
+            tires = (ad >= w) & (ad < w + 0.026)
+            tq = ((phi / 0.026) % 1 - 0.5) ** 2 + (((ad - w) / 0.026) - 0.5) ** 2
+            tcol = np.where((tq < 0.06)[..., None], np.array([0.42, 0.42, 0.45]), np.array([0.09, 0.09, 0.1]))
+            col = np.where(tires[..., None], tcol, col)
+            col, emis, _ = paint_track_marks(d, tr, dist, phi, col, emis, surf)
+        elif kind == 'bowser':
+            # Dalles de pierre sombres, fissures de lave ; piste en briques claires
+            r = 1 - np.abs(2 * nz.fbm(d * 3.0 + 150, 4) - 1)
+            lat = np.arcsin(np.clip(d @ T_N, -1, 1))
+            row = np.floor(lat / 0.03)
+            brick_u = (phi / 0.05 + 0.5 * (row % 2)) % 1
+            brick_v = (lat / 0.03) % 1
+            grout = (brick_u < 0.06) | (brick_v < 0.1)
+            stone = lerp(hexc('#3a3438'), hexc('#4a4248'), smooth(0.3, 0.7, nz.fbm(d * 8 + 3, 3)))
+            col = np.where(grout[..., None], hexc('#221e22'), stone)
+            lava = (r > 0.965) & (ad > w + 0.06)
+            lc = lerp(hexc('#ff5a10'), hexc('#ffd040'), smooth(0.965, 0.99, r))
+            col = np.where(lava[..., None], lc, col)
+            emis = emis + lava[..., None] * lc
+            surf[lava] = SURF_LAVA
+            road = lerp(hexc('#9a96a0'), hexc('#b8b4bc'), smooth(0.3, 0.7, nz.fbm(d * 10 + 8, 3)))
+            road = np.where(grout[..., None], hexc('#6a666e'), road)
+            col = np.where(on[..., None], road, col)
+            edge = (ad > w - 0.014) & (ad < w + 0.008)
+            col = np.where(edge[..., None], hexc('#8a1a1a'), col)
+            gold = (ad > w - 0.016) & (ad < w - 0.012)
+            col = np.where(gold[..., None], hexc('#ffc93a'), col)
+            col, emis, _ = paint_track_marks(d, tr, dist, phi, col, emis, surf)
+        elif kind == 'circuit':
+            # Herbe tondue en bandes, asphalte, vibreurs rouge et blanc
+            mow = np.floor(np.abs(dist) / 0.05) % 2  # tonte parallèle à la piste
+            col = lerp(hexc('#5cc84a'), hexc('#7ad85a'), mow) * (1 + 0.06 * (nz.fbm(d * 6, 2)[..., None] - 0.5))
+            asphalt = hexc('#5c6068') * (0.95 + 0.1 * nz.fbm(d * 30 + 1, 2)[..., None])
+            col = np.where(on[..., None], asphalt, col)
+            wl = (ad > w - 0.016) & (ad < w - 0.01)
+            col = np.where(wl[..., None], np.array([0.96, 0.96, 0.96]), col)
+            curb = (ad >= w - 0.006) & (ad < w + 0.022)
+            cc = np.where(((np.floor(phi / 0.028) % 2) == 0)[..., None], hexc('#e8333a'), np.array([0.97, 0.97, 0.97]))
+            col = np.where(curb[..., None], cc, col)
+            surf[curb] = SURF_PATH
+            col, emis, _ = paint_track_marks(d, tr, dist, phi, col, emis, surf)
+        elif kind == 'fantome':
+            # Eau sombre violette à rides ; pont de planches de bois
+            rip = np.sin(d @ np.array([40.0, 13.0, 27.0]) + 8 * nz.fbm(d * 3 + 40, 2))
+            col = lerp(hexc('#1c1838'), hexc('#2e2858'), smooth(0.3, 0.7, nz.fbm(d * 2.5 + 7, 3)))
+            col = col + (smooth(0.85, 0.95, rip) * 0.12)[..., None] * np.array([0.6, 0.6, 1.0])
+            plank = np.floor(phi / 0.024)
+            hp = np.sin(plank * 12.9898) * 43758.5453
+            hp = hp - np.floor(hp)
+            woods = np.stack([hexc('#b98a5a'), hexc('#a87a4a'), hexc('#c89a6a')])
+            pc = woods[(hp * 3).astype(int) % 3] * (0.92 + 0.12 * nz.fbm(d * 40 + 2, 2)[..., None])
+            gap = ((phi / 0.024) % 1) < 0.1
+            pc = np.where(gap[..., None], hexc('#3a2a1a'), pc)
+            nail = (np.abs(((phi / 0.024) % 1) - 0.5) < 0.08) & (np.abs(ad - w * 0.8) < 0.004)
+            pc = np.where(nail[..., None], hexc('#3a3a3a'), pc)
+            col = np.where(on[..., None], pc, col)
+            beam = (ad > w - 0.012) & (ad < w + 0.006)
+            col = np.where(beam[..., None], hexc('#5a3a22'), col)
+            emis = emis + on[..., None] * pc * 0.08
+            col, emis, _ = paint_track_marks(d, tr, dist, phi, col, emis, surf)
     elif kind == 'naine':
         sv = np.sin(d[..., 1] * 18 + 3 * nz.fbm(d * 3, 2))
         paint(sv > 0.55, pal['path'], 10, smooth(0.5, 0.62, sv))
@@ -371,7 +527,8 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
     center = (cell + 0.5) / 34
     dist = np.linalg.norm(d - center / np.linalg.norm(center, axis=-1, keepdims=True), axis=-1)
     density = {'prairie': 0.05, 'emeraude': 0.02, 'banquise': 0.03, 'volcan': 0.0, 'naine': 0.05, 'ocean': 0.0, 'cubes': 0.0, 'sage': 0.04, 'champi': 0.05,
-               'petitprince': 0.02, 'candy': 0.0, 'futur': 0.02, 'comte': 0.03, 'herbes': 0.04, 'enchante': 0.08, 'nuages': 0.0}.get(kind, 0.03)
+               'petitprince': 0.02, 'candy': 0.0, 'futur': 0.02, 'comte': 0.03, 'herbes': 0.04, 'enchante': 0.08, 'nuages': 0.0,
+               'arcenciel': 0.0, 'wario': 0.0, 'bowser': 0.0, 'circuit': 0.03, 'fantome': 0.0}.get(kind, 0.03)
     dots = (dist < 0.009) & (h < density) & (cls <= 2)
     soft = smooth(0.009, 0.004, dist) * 0.85
     paint(dots & (h < density / 2), pal['accent1'], 20, soft * (dots & (h < density / 2)))
@@ -416,11 +573,25 @@ def to_img(rgb: np.ndarray) -> Image.Image:
     return Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8))
 
 
+def surface_map(pl: dict, out: str, nz: 'Noise3 | None' = None) -> str:
+    """Carte de surface équirectangulaire (1024 × 512) lue par le jeu : 0 sol, 1 eau,
+    2 lave, 3 glace, 4 chemin, 5 hautes herbes, 6 hors-piste, 7 accélérateur (× SURF_SCALE)."""
+    nz = nz or Noise3(sum(map(ord, pl['id'])) * 7919)
+    lat = (0.5 - (np.arange(512) + 0.5) / 512) * np.pi
+    lon = ((np.arange(1024) + 0.5) / 1024) * 2 * np.pi - np.pi
+    lo, la = np.meshgrid(lon, lat)
+    dd = np.stack([np.cos(la) * np.cos(lo), np.sin(la), np.cos(la) * np.sin(lo)], -1)
+    surf = pattern_full(dd, pl, nz)[3]
+    fn = f"planet_{pl['id']}_surface.png"
+    Image.fromarray((surf * SURF_SCALE).astype(np.uint8)).save(os.path.join(out, fn), optimize=True)
+    return fn
+
+
 def planet(pl: dict, out: str, size: int = 512) -> dict:
     nz = Noise3(sum(map(ord, pl['id'])) * 7919)  # graine stable par planète
     files = {}
-    emissive = pl['pattern'] in ('volcan', 'neon')
-    esize = 512 if pl['pattern'] == 'neon' else 256
+    emissive = pl['pattern'] in ('volcan', 'neon') or 'emis' in pl
+    esize = 512 if pl['pattern'] == 'neon' or 'emis' in pl else 256
     for f in FACES:
         d = face_dirs(f, size)
         cls, col, emis = pattern(d, pl, nz)
@@ -434,15 +605,7 @@ def planet(pl: dict, out: str, size: int = 512) -> dict:
             efn = f"planet_{pl['id']}_e_{f}.jpg"
             e.save(os.path.join(out, efn), quality=88)
             files['e_' + f] = efn
-    # Carte de surface équirectangulaire (512 × 256) lue par le jeu : 0 sol,
-    # 1 eau, 2 lave, 3 glace, 4 chemin (éclaboussures, sillage…)
-    lat = (0.5 - (np.arange(256) + 0.5) / 256) * np.pi
-    lon = ((np.arange(512) + 0.5) / 512) * 2 * np.pi - np.pi
-    lo, la = np.meshgrid(lon, lat)
-    dd = np.stack([np.cos(la) * np.cos(lo), np.sin(la), np.cos(la) * np.sin(lo)], -1)
-    surf = pattern_full(dd, pl, nz)[3]
-    Image.fromarray((surf * 50).astype(np.uint8)).save(os.path.join(out, f"planet_{pl['id']}_surface.png"), optimize=True)
-    files['surface'] = f"planet_{pl['id']}_surface.png"
+    files['surface'] = surface_map(pl, out, nz)
     # Aperçu : sphère éclairée façon cel-shading
     n = 256
     y, x = (np.mgrid[0:n, 0:n] + 0.5) / n * 2 - 1
@@ -514,6 +677,23 @@ def sky_db(out: str, size: int = 256) -> dict:
         to_img(col).save(os.path.join(out, fn), quality=86, optimize=True)
         files[f] = fn
     print('   ciel doré')
+    return files
+
+
+def sky_red(out: str, size: int = 256) -> dict:
+    """Ciel de forteresse : rouge sombre, nuées de fumée et lueurs de braise."""
+    nz = Noise3(666)
+    files = {}
+    for f in FACES:
+        d = face_dirs(f, size)
+        y = d[..., 1]
+        col = lerp(hexc('#1a0608'), hexc('#5a1410'), np.clip(0.55 - y * 0.6, 0, 1))
+        c = nz.fbm(d * np.array([2.0, 4.0, 2.0]) + 5, 5)
+        col = col * (1 - smooth(0.5, 0.7, c)[..., None] * 0.6) + smooth(0.62, 0.75, c)[..., None] * hexc('#ff6a2a') * 0.18
+        fn = f'sky_red_{f}.jpg'
+        to_img(col).save(os.path.join(out, fn), quality=86, optimize=True)
+        files[f] = fn
+    print('   ciel rouge')
     return files
 
 

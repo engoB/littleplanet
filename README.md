@@ -16,7 +16,7 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Seize planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
+Vingt et une planètes (et un voyage galactique) décrites dans un fichier unique, `src/game/planets.json`, lu par
 le générateur de textures et par le jeu. En Arcade, **la planète rétrécit**
 au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra s'adapte** : proche
 de la voiture tant que la planète est grosse, elle recule pour la montrer en
@@ -28,6 +28,12 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Planète | Difficulté | Inspiration | Particularité |
 |---|---|---|---|
 | Planète d'origine | ★★ | — | la planète Unity, telle quelle (voiture Unity) |
+| **Voyage galactique** | ★★★ | Mario Galaxy | une suite de petites planètes : une **étoile de lancement** fait sauter de l'une à l'autre |
+| **Circuit Champignon** | ★★ | Circuit Mario (Mario Kart) | grosse planète (×1,6) : asphalte, vibreurs rouge et blanc, herbe tondue, damier et arche de départ |
+| **Stade de Terre** | ★★★ | Stade Wario | boue sous les projecteurs, ornières, bosses, murs de pneus, **tremplins** |
+| **Lac Fantôme** | ★★★ | Vallée Fantôme | pont de planches sur une eau violette, lanternes flottantes, petits fantômes |
+| **Forteresse de Lave** | ★★★★ | Château de Bowser | briques de pierre, fissures de lave, blocs écraseurs, torches, ciel rouge |
+| **Route Arc-en-ciel** | ★★★★★ | Route Arc-en-ciel | ruban arc-en-ciel lumineux dans les étoiles ; hors de la route, le vide freine fort |
 | Planète du Sage | ★★ | Dragon Ball | minuscule, route jaune, maison-dôme, ciel doré « au-delà » |
 | Prairie | ★ | — | route de terre, maison-dôme ; météores lents et rares |
 | La Comté | ★ | les hobbits | **collines-terriers à porte ronde**, champs en patchwork, haies, chemins creux, mares |
@@ -51,6 +57,35 @@ Naine se débloquent en parcourant 100 m sur la planète précédente (réglage
 Chaque planète a une **carte de surface** générée avec ses textures (sol, eau,
 lave, glace, chemin, hautes herbes) : le jeu sait sur quoi roule la voiture et
 déclenche éclaboussures, sillage, braises ou brins d'herbe.
+
+### Circuits (planètes inspirées de Mario Kart)
+
+Les cinq planètes circuit sont plus grosses (×1,3 à ×1,7) et ont une **piste**
+: une boucle sinueuse autour de la planète, qui passe sous la voiture au
+départ (latitude f(φ) = a·sin 2φ + b·sin 3φ + c·sin 5φ dans le repère de
+départ, même formule dans `tools/procedural_planets.py` et
+`src/game/track.ts`).
+
+- **Hors-piste** : la voiture ralentit (×0,62 à ×0,78 selon la planète) et
+  soulève herbe, boue, poussière, éclaboussures ou étincelles d'étoiles ;
+- **accélérateurs** (chevrons lumineux sur la piste) : ×1,55 pendant 1,1 s ;
+- **cubes bonus** arc-en-ciel (rangées de trois) : turbo plein, ils
+  réapparaissent après 4 s ;
+- **tremplins** (Stade de Terre, Forteresse) : saut, et aucun cratère ne fait
+  mal pendant le saut ;
+- damier et arche de départ ; le décor ne se pose jamais sur la piste ;
+- elles rétrécissent moins (jusqu'à 75 %) pour garder une piste praticable.
+
+### Voyage galactique
+
+Une suite de petites planètes (Sage, Bonbons, B 612, Comté, Jouets, Naine,
+Herbes Hautes, Royaume Enchanté). La planète suivante flotte dans le ciel.
+Après 35 m sur une planète, une **étoile de lancement** apparaît sur la face
+tournée vers la suivante (étoile dorée sur la mini-carte) : en roulant
+dessus, le véhicule décolle et vole en arc (tonneau, traînée d'étincelles,
+caméra de poursuite) jusqu'à la planète suivante, qui devient la planète
+courante (+15 de santé, annonce « Planète N »). Les planètes ne rétrécissent
+pas dans ce monde ; le record compte la distance totale.
 
 ### Modes de jeu (bouton « Modes » du menu, ou page Réglages)
 
@@ -184,6 +219,7 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Véhicule | voiture volante | voiture Unity |
 | Modes de jeu (mort subite, zen, contre-la-montre…) | au choix | non |
 | Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
+| Circuits (hors-piste, accélérateurs, cubes bonus, tremplins) et voyage galactique | oui | non |
 
 ---
 

@@ -145,6 +145,8 @@ export interface AssetsManifest {
   planets?: Record<string, Record<string, string>>;
   space?: Record<string, string>;
   skyDb?: Record<string, string>;
+  skyRed?: Record<string, string>;
+  galaxyPreview?: string;
 }
 
 /** Recherche récursive d'un nœud par nom. */

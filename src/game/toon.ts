@@ -124,10 +124,15 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
         '#include <common>',
         '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
       )
-      .replace('#include <map_fragment>', 'diffuseColor.rgb *= textureCube(planetCube, normalize(vObjDir)).rgb;')
+      .replace(
+        '#include <map_fragment>',
+        // Les cubemaps WebGL sont « main gauche » : X inversé pour retrouver l'espace
+        // du générateur (pistes, cartes de surface)
+        'vec3 planetDir = normalize(vObjDir);\ndiffuseColor.rgb *= textureCube(planetCube, planetDir).rgb;',
+      )
       .replace(
         '#include <emissivemap_fragment>',
-        `totalEmissiveRadiance += emisColor * textureCube(planetEmis, normalize(vObjDir)).rgb;
+        `totalEmissiveRadiance += emisColor * textureCube(planetEmis, planetDir).rgb;
         float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0), 3.0);
         totalEmissiveRadiance += rimColor * rim * rimStrength;`,
       );

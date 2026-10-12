@@ -2,13 +2,14 @@
  * Planètes jouables (src/game/planets.json), déblocage et records par planète.
  */
 import data from './planets.json';
+import type { TrackDef } from './track';
 
 export interface PlanetDef {
   id: string;
   name: string;
   tagline: string;
   difficulty: number;
-  style: 'original' | 'toon';
+  style: 'original' | 'toon' | 'galaxy';
   /** Planète nocturne : sol sombre, voiture et impacts lumineux. */
   neon?: boolean;
   radius: number;
@@ -20,11 +21,19 @@ export interface PlanetDef {
   gameplay: { meteorInterval: number; meteorSpeed: number; clockInterval: number; carSpeed: number; grip: number; craterDamage: number };
   decor: { trees: number; rocks: number; houses: number; [kind: string]: number | undefined };
   /** Ciel : espace, ciel doré façon « au-delà », ciel de jour ou celui d'origine. */
-  sky?: 'space' | 'db' | 'day' | 'original';
+  sky?: 'space' | 'db' | 'day' | 'original' | 'red';
   /** Véhicule du préréglage Arcade. */
   vehicle?: 'original' | 'hover';
   /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
   reticle?: string;
+  /** Planète circuit : piste, hors-piste, accélérateurs, cubes bonus, tremplins. */
+  track?: TrackDef;
+  /** Intensité de la carte d'émission RVB (route arc-en-ciel, lave, lanternes). */
+  emis?: number;
+  /** Taille minimale propre à la planète quand elle rétrécit. */
+  shrink?: number;
+  /** Voyage galactique : planètes visitées l'une après l'autre. */
+  galaxy?: string[];
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */

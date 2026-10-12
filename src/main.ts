@@ -91,8 +91,8 @@ async function main(): Promise<void> {
     message: (t, k) => hud.message(t, k),
     gameOver: (stats) => onGameOver(stats),
     turbo: (l, a) => hud.turbo(l, a),
-    stage: (n, label) => {
-      hud.stageBanner(n, label);
+    stage: (n, label, title) => {
+      hud.stageBanner(n, label, title);
       vibrate([30, 40, 30], settings.haptics === true);
     },
   });
@@ -381,6 +381,8 @@ async function main(): Promise<void> {
         for (const p of world.clocks.positions()) items.push({ pos: toWorld(p), kind: 'clock' });
         if (settings.meteorWarning === true) for (const p of world.meteors.targets()) items.push({ pos: toWorld(p), kind: 'meteor' });
         for (const c of world.craters.list) items.push({ pos: toWorld(c.pos), kind: 'crater' });
+        const sd = world.starDir;
+        if (sd) items.push({ pos: toWorld(sd.clone().multiplyScalar(5)), kind: 'star' });
         minimap.draw(world.car, world.planet.getWorldPosition(center), items, world.chrono);
       }
     }
@@ -454,9 +456,10 @@ async function main(): Promise<void> {
         world.planetDef = planetById(id);
         world.enterMenu();
       },
-      step: (n: number, dt = 1 / 60, h = 0, turbo = false) => {
+      // h = 'auto' : pilote automatique (suit la piste ou va vers l'étoile de lancement)
+      step: (n: number, dt = 1 / 60, h: number | 'auto' = 0, turbo = false) => {
         for (let i = 0; i < n; i++) {
-          world.step(dt, { horizontal: h, turbo });
+          world.step(dt, { horizontal: h === 'auto' ? world.autoSteer() : h, turbo });
         }
       },
       render: () => frame(0),

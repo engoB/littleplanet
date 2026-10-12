@@ -324,6 +324,74 @@
    "nz": "planet_petitprince_nz.jpg",
    "surface": "planet_petitprince_surface.png",
    "preview": "planet_petitprince_preview.png"
+  },
+  "circuit": {
+   "px": "planet_circuit_px.jpg",
+   "nx": "planet_circuit_nx.jpg",
+   "py": "planet_circuit_py.jpg",
+   "ny": "planet_circuit_ny.jpg",
+   "pz": "planet_circuit_pz.jpg",
+   "nz": "planet_circuit_nz.jpg",
+   "surface": "planet_circuit_surface.png",
+   "preview": "planet_circuit_preview.png"
+  },
+  "wario": {
+   "px": "planet_wario_px.jpg",
+   "nx": "planet_wario_nx.jpg",
+   "py": "planet_wario_py.jpg",
+   "ny": "planet_wario_ny.jpg",
+   "pz": "planet_wario_pz.jpg",
+   "nz": "planet_wario_nz.jpg",
+   "surface": "planet_wario_surface.png",
+   "preview": "planet_wario_preview.png"
+  },
+  "fantome": {
+   "px": "planet_fantome_px.jpg",
+   "e_px": "planet_fantome_e_px.jpg",
+   "nx": "planet_fantome_nx.jpg",
+   "e_nx": "planet_fantome_e_nx.jpg",
+   "py": "planet_fantome_py.jpg",
+   "e_py": "planet_fantome_e_py.jpg",
+   "ny": "planet_fantome_ny.jpg",
+   "e_ny": "planet_fantome_e_ny.jpg",
+   "pz": "planet_fantome_pz.jpg",
+   "e_pz": "planet_fantome_e_pz.jpg",
+   "nz": "planet_fantome_nz.jpg",
+   "e_nz": "planet_fantome_e_nz.jpg",
+   "surface": "planet_fantome_surface.png",
+   "preview": "planet_fantome_preview.png"
+  },
+  "bowser": {
+   "px": "planet_bowser_px.jpg",
+   "e_px": "planet_bowser_e_px.jpg",
+   "nx": "planet_bowser_nx.jpg",
+   "e_nx": "planet_bowser_e_nx.jpg",
+   "py": "planet_bowser_py.jpg",
+   "e_py": "planet_bowser_e_py.jpg",
+   "ny": "planet_bowser_ny.jpg",
+   "e_ny": "planet_bowser_e_ny.jpg",
+   "pz": "planet_bowser_pz.jpg",
+   "e_pz": "planet_bowser_e_pz.jpg",
+   "nz": "planet_bowser_nz.jpg",
+   "e_nz": "planet_bowser_e_nz.jpg",
+   "surface": "planet_bowser_surface.png",
+   "preview": "planet_bowser_preview.png"
+  },
+  "arcenciel": {
+   "px": "planet_arcenciel_px.jpg",
+   "e_px": "planet_arcenciel_e_px.jpg",
+   "nx": "planet_arcenciel_nx.jpg",
+   "e_nx": "planet_arcenciel_e_nx.jpg",
+   "py": "planet_arcenciel_py.jpg",
+   "e_py": "planet_arcenciel_e_py.jpg",
+   "ny": "planet_arcenciel_ny.jpg",
+   "e_ny": "planet_arcenciel_e_ny.jpg",
+   "pz": "planet_arcenciel_pz.jpg",
+   "e_pz": "planet_arcenciel_e_pz.jpg",
+   "nz": "planet_arcenciel_nz.jpg",
+   "e_nz": "planet_arcenciel_e_nz.jpg",
+   "surface": "planet_arcenciel_surface.png",
+   "preview": "planet_arcenciel_preview.png"
   }
  },
  "space": {
@@ -346,5 +414,14 @@
   "ny": "sky_db_ny.jpg",
   "pz": "sky_db_pz.jpg",
   "nz": "sky_db_nz.jpg"
- }
+ },
+ "skyRed": {
+  "px": "sky_red_px.jpg",
+  "nx": "sky_red_nx.jpg",
+  "py": "sky_red_py.jpg",
+  "ny": "sky_red_ny.jpg",
+  "pz": "sky_red_pz.jpg",
+  "nz": "sky_red_nz.jpg"
+ },
+ "galaxyPreview": "galaxy_preview.png"
 }
