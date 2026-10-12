@@ -1,0 +1,265 @@
+{
+  "_doc": "Planètes jouables. Source unique : lue par tools/procedural_planets.py (textures, aperçus) et par le jeu (src/game/planets.ts). Les multiplicateurs s'appliquent aux réglages Arcade.",
+  "planets": [
+    {
+      "id": "origine",
+      "name": "Planète d'origine",
+      "tagline": "La planète du jeu Unity, telle quelle.",
+      "difficulty": 2,
+      "style": "original",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#8fe8ff",
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0
+      }
+    },
+    {
+      "id": "prairie",
+      "name": "Prairie",
+      "tagline": "Herbe tendre, route de terre et petite maison ronde. Idéale pour débuter.",
+      "difficulty": 1,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#9be7ff",
+      "palette": {
+        "light": "#8fe05a",
+        "mid": "#62c447",
+        "dark": "#3f9a3a",
+        "path": "#f0d58c",
+        "pathDark": "#c9a35a",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#235a28"
+      },
+      "pattern": "prairie",
+      "decorColors": {
+        "trunk": "#8a5a2b",
+        "canopy": [
+          "#4fbf45",
+          "#6fd65a",
+          "#3da83d"
+        ],
+        "rock": "#b9b2a4",
+        "house": "#f7f1e0",
+        "roof": "#d94a3a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.35,
+        "meteorSpeed": 0.85,
+        "clockInterval": 0.85,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 0.8
+      },
+      "decor": {
+        "trees": 14,
+        "rocks": 8,
+        "houses": 1
+      }
+    },
+    {
+      "id": "emeraude",
+      "name": "Émeraude",
+      "tagline": "Herbe turquoise, étangs bleus, arbres en boule. Les météores tombent plus vite.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": {
+        "planet": "prairie",
+        "distance": 100
+      },
+      "atmosphere": "#7dffd8",
+      "palette": {
+        "light": "#7ff0c0",
+        "mid": "#45d39c",
+        "dark": "#2a9f7a",
+        "path": "#4fb8ea",
+        "pathDark": "#2f86c4",
+        "accent1": "#d9fff2",
+        "accent2": "#ffffff",
+        "line": "#0f5a4a"
+      },
+      "pattern": "emeraude",
+      "decorColors": {
+        "trunk": "#6b7a3a",
+        "canopy": [
+          "#3fc8a0",
+          "#5fe0b8",
+          "#2fa88a"
+        ],
+        "rock": "#8fb7a8",
+        "house": "#e8f4ff",
+        "roof": "#3a8fd9"
+      },
+      "gameplay": {
+        "meteorInterval": 0.85,
+        "meteorSpeed": 1.2,
+        "clockInterval": 1.0,
+        "carSpeed": 1.05,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 18,
+        "rocks": 10,
+        "houses": 2
+      }
+    },
+    {
+      "id": "banquise",
+      "name": "Banquise",
+      "tagline": "Sol gelé : la voiture glisse et tourne avec retard.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 0.9,
+      "unlock": {
+        "planet": "emeraude",
+        "distance": 100
+      },
+      "atmosphere": "#c8f0ff",
+      "palette": {
+        "light": "#eaf6fd",
+        "mid": "#cfe8f7",
+        "dark": "#a9d0ec",
+        "path": "#9fd8ff",
+        "pathDark": "#5ea8e0",
+        "accent1": "#ffffff",
+        "accent2": "#d0f0ff",
+        "line": "#3a6f9a"
+      },
+      "pattern": "banquise",
+      "decorColors": {
+        "trunk": "#5a4a3a",
+        "canopy": [
+          "#2f7a5a",
+          "#3a8f6a",
+          "#e8f8ff"
+        ],
+        "rock": "#a8d8f0",
+        "house": "#ffffff",
+        "roof": "#7ab8e0"
+      },
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.1,
+        "carSpeed": 1.0,
+        "grip": 0.35,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 10,
+        "rocks": 14,
+        "houses": 1
+      }
+    },
+    {
+      "id": "volcan",
+      "name": "Volcan",
+      "tagline": "Roche brûlante et rivières de lave. Pluie de météores, cratères plus douloureux.",
+      "difficulty": 4,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": {
+        "planet": "banquise",
+        "distance": 100
+      },
+      "atmosphere": "#ff8a4a",
+      "palette": {
+        "light": "#4a3636",
+        "mid": "#382828",
+        "dark": "#241919",
+        "path": "#ff8a1a",
+        "pathDark": "#ffd23a",
+        "accent1": "#7a5a50",
+        "accent2": "#ff5a1a",
+        "line": "#120a0a"
+      },
+      "pattern": "volcan",
+      "decorColors": {
+        "trunk": "#2a1a14",
+        "canopy": [
+          "#3a2a28",
+          "#4a3430",
+          "#2a1e1c"
+        ],
+        "rock": "#4a3836",
+        "house": "#6a4a40",
+        "roof": "#ff6a2a"
+      },
+      "gameplay": {
+        "meteorInterval": 0.6,
+        "meteorSpeed": 1.35,
+        "clockInterval": 1.2,
+        "carSpeed": 1.1,
+        "grip": 1.0,
+        "craterDamage": 1.5
+      },
+      "decor": {
+        "trees": 6,
+        "rocks": 22,
+        "houses": 0
+      }
+    },
+    {
+      "id": "naine",
+      "name": "Naine",
+      "tagline": "Toute petite planète bonbon : tout arrive très vite.",
+      "difficulty": 5,
+      "style": "toon",
+      "radius": 0.7,
+      "unlock": {
+        "planet": "volcan",
+        "distance": 100
+      },
+      "atmosphere": "#ffb0f0",
+      "palette": {
+        "light": "#f7b4e2",
+        "mid": "#e98ccc",
+        "dark": "#bb63ad",
+        "path": "#fff3a8",
+        "pathDark": "#ffd25a",
+        "accent1": "#ffffff",
+        "accent2": "#8af0ff",
+        "line": "#6a2a6a"
+      },
+      "pattern": "naine",
+      "decorColors": {
+        "trunk": "#ffffff",
+        "canopy": [
+          "#ff6ab0",
+          "#8ae0ff",
+          "#fff07a"
+        ],
+        "rock": "#c8a0ff",
+        "house": "#fff4fb",
+        "roof": "#ff5aa0"
+      },
+      "gameplay": {
+        "meteorInterval": 0.75,
+        "meteorSpeed": 1.15,
+        "clockInterval": 1.0,
+        "carSpeed": 0.95,
+        "grip": 1.0,
+        "craterDamage": 1.2
+      },
+      "decor": {
+        "trees": 7,
+        "rocks": 5,
+        "houses": 0
+      }
+    }
+  ]
+}

@@ -25,6 +25,11 @@ export class CameraRig {
   readonly pivot = new THREE.Object3D();
   readonly camera: THREE.PerspectiveCamera;
   tilt = 0;
+  /** Facteur de hauteur (petites planètes, préréglage Arcade). */
+  heightScale = 1;
+  /** Élargit le champ en portrait (garde l'angle horizontal). */
+  portraitFit = false;
+  private baseFov: number;
   private smoothQ = new THREE.Quaternion();
   private readonly localPos: THREE.Vector3;
   private readonly localRot: THREE.Quaternion;
@@ -32,6 +37,7 @@ export class CameraRig {
   constructor(readonly data: NodeData, cam: CameraData) {
     this.camera = new THREE.PerspectiveCamera(cam.fov, 16 / 9, cam.near, cam.far);
     this.camera.rotation.y = Math.PI;
+    this.baseFov = cam.fov;
     this.node.add(this.camera);
     this.node.name = data.name;
     this.localPos = new THREE.Vector3(...data.position);
@@ -48,7 +54,7 @@ export class CameraRig {
     this.pivot.scale.copy(target.scale);
     if (this.tilt <= 0) {
       this.pivot.quaternion.copy(target.quaternion);
-      this.node.position.copy(this.localPos);
+      this.node.position.copy(this.localPos).multiplyScalar(this.heightScale);
       this.node.quaternion.copy(this.localRot);
     } else {
       // Arcade : orientation amortie, caméra reculée et inclinée
@@ -60,7 +66,7 @@ export class CameraRig {
       _q.setFromUnitVectors(curUp, _up);
       this.smoothQ.premultiply(_q);
       this.pivot.quaternion.copy(this.smoothQ);
-      const h = this.localPos.length();
+      const h = this.localPos.length() * this.heightScale;
       const a = this.tilt * Deg2Rad;
       this.node.position.set(0, Math.cos(a) * h, -Math.sin(a) * h);
       // Regarde un point un peu devant la voiture (en unités locales du pivot)
@@ -77,6 +83,11 @@ export class CameraRig {
 
   setAspect(aspect: number): void {
     this.camera.aspect = aspect;
+    // Portrait : FOV vertical élargi pour conserver ~le cadrage horizontal du paysage
+    if (this.portraitFit && aspect < 1) {
+      const t = Math.tan((this.baseFov * Math.PI) / 360) * 1.25;
+      this.camera.fov = Math.min(80, (Math.atan(t / aspect) * 360) / Math.PI);
+    } else this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
   }
 }

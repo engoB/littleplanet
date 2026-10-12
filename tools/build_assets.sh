@@ -24,6 +24,10 @@ if [ ! -x "$FBX2GLTF" ]; then
 fi
 
 python3 -m pip install -q -r tools/requirements.txt
+# Police ronde Fredoka (SIL OFL) depuis le registre npm
+if [ ! -d "$CACHE/package/files" ]; then
+  (cd "$CACHE" && npm pack @fontsource/fredoka@5.3.0 >/dev/null && tar xzf fontsource-fredoka-5.3.0.tgz)
+fi
 command -v ffmpeg >/dev/null || { echo "ffmpeg est requis (conversion des sons)"; exit 1; }
 
 mkdir -p public/data

@@ -3,3 +3,4 @@ numpy>=1.26
 Pillow>=10.0
 fonttools>=4.40
 pycollada>=0.8
+brotli>=1.1

@@ -28,6 +28,8 @@ const _p = new THREE.Vector3();
 export class LightPool {
   readonly lights: THREE.PointLight[] = [];
   readonly virtual: VirtualLight[] = [];
+  /** Multiplicateur global (lumières ponctuelles tempérées en cel-shading). */
+  scale = 1;
   constructor(scene: THREE.Scene, size: number) {
     for (let i = 0; i < size; i++) {
       const l = new THREE.PointLight(0xffffff, 0, 10, 2);
@@ -60,7 +62,7 @@ export class LightPool {
       c.v.obj.getWorldPosition(l.position);
       l.color.copy(c.v.color);
       // URP → three (éclairage physique) : intensité × π
-      l.intensity = c.v.intensity * Math.PI;
+      l.intensity = c.v.intensity * Math.PI * this.scale;
       l.distance = c.v.data.range;
     });
   }

@@ -13,6 +13,7 @@ import { lookRotation, Random } from '../unity/math';
 import { getComponent, type NodeData } from '../unity/types';
 import { sphereOBB, type OBB } from './collision';
 import { bool, num, type GameContext } from './context';
+import { reticleMaterial } from './fx';
 
 export interface MeteorSpawnerFields {
   meteorPrefabs: { prefab: string }[];
@@ -27,6 +28,7 @@ interface Meteor {
   dir: THREE.Vector3; // direction de déplacement (monde)
   target: THREE.Vector3; // point d'impact prévu (espace planète)
   marker: THREE.Mesh | null;
+  reticle: boolean;
   colliderRadius: number;
   age: number;
 }
@@ -42,7 +44,11 @@ export class MeteorSpawner {
   aim = 0;
   readonly active: Meteor[] = [];
   private readonly markers: THREE.Mesh[] = [];
+  private readonly reticles: THREE.Mesh[] = [];
+  /** Multiplicateur de vitesse (planète). */
+  speedMul = 1;
   private readonly markerMat: THREE.MeshBasicMaterial;
+  onSpawn: (dirLocal: THREE.Vector3) => void = () => undefined;
   onImpact: (worldPoint: THREE.Vector3, localPoint: THREE.Vector3, localNormal: THREE.Vector3) => void = () => undefined;
   onHitCar: (name: string, at: THREE.Vector3) => void = () => undefined;
 
@@ -66,7 +72,7 @@ export class MeteorSpawner {
           radius = 0.2;
         }
         ctx.scene.add(inst.root);
-        list.push({ inst, prefab: ref.prefab, active: false, dir: new THREE.Vector3(), target: new THREE.Vector3(), marker: null, colliderRadius: radius, age: 0 });
+        list.push({ inst, prefab: ref.prefab, active: false, dir: new THREE.Vector3(), target: new THREE.Vector3(), marker: null, reticle: false, colliderRadius: radius, age: 0 });
       }
       this.pools.set(ref.prefab, list);
     }
@@ -79,6 +85,15 @@ export class MeteorSpawner {
       m.renderOrder = 2;
       ctx.planet.add(m);
       this.markers.push(m);
+    }
+    // Réticules (style Arcade) : quad + shader, un matériau par instance (même programme)
+    const quad = new THREE.PlaneGeometry(0.66, 0.66);
+    for (let i = 0; i < 16; i++) {
+      const m = new THREE.Mesh(quad, reticleMaterial());
+      m.visible = false;
+      m.renderOrder = 2;
+      ctx.planet.add(m);
+      this.reticles.push(m);
     }
   }
 
@@ -99,7 +114,7 @@ export class MeteorSpawner {
     }
     const planet = this.ctx.planet;
     const R = this.ctx.planetRadius();
-    const speed = num(this.ctx.settings, 'meteorSpeed');
+    const speed = num(this.ctx.settings, 'meteorSpeed') * this.speedMul;
     planet.getWorldPosition(_c);
     for (let i = this.active.length - 1; i >= 0; i--) {
       const m = this.active[i];
@@ -111,9 +126,16 @@ export class MeteorSpawner {
       if (m.marker) {
         const dist = r.position.distanceTo(_c) - R;
         const k = Math.max(0, Math.min(1, dist / (this.f.spawnDistance - R)));
-        const s = 0.6 + 1.6 * k;
-        m.marker.scale.setScalar(s);
-        (m.marker.material as THREE.MeshBasicMaterial).opacity = 0.75 + 0.25 * (1 - k) * Math.sin(m.age * 18);
+        if (m.reticle) {
+          const u = (m.marker.material as THREE.ShaderMaterial).uniforms;
+          u.progress.value = 1 - k;
+          u.time.value = m.age;
+          m.marker.scale.setScalar((1.15 - 0.35 * (1 - k)) / this.ctx.planet.scale.x);
+        } else {
+          const s = 0.6 + 1.6 * k;
+          m.marker.scale.setScalar(s);
+          (m.marker.material as THREE.MeshBasicMaterial).opacity = 0.75 + 0.25 * (1 - k) * Math.sin(m.age * 18);
+        }
       }
       // Arcade : collision directe avec la voiture
       if (alive && car && bool(this.ctx.settings, 'meteorHitsCar') && sphereOBB(r.position, m.colliderRadius, car.obb)) {
@@ -166,14 +188,17 @@ export class MeteorSpawner {
     for (const l of m.inst.animatedLights) l.reset();
     for (const l of m.inst.lights) l.enabled = true;
     if (bool(this.ctx.settings, 'meteorWarning')) {
-      const mk = this.markers.find((x) => !x.visible);
+      const premium = bool(this.ctx.settings, 'premiumFx');
+      const mk = (premium ? this.reticles : this.markers).find((x) => !x.visible);
       if (mk) {
         mk.position.copy(m.target).addScaledVector(dir, 0.012);
         mk.quaternion.copy(lookRotation(dir));
         mk.visible = true;
         m.marker = mk;
+        m.reticle = premium;
       }
     }
+    this.onSpawn(dir);
     this.active.push(m);
   }
 
@@ -203,5 +228,6 @@ export class MeteorSpawner {
   forEachRoot(fn: (o: THREE.Object3D) => void): void {
     for (const pool of this.pools.values()) for (const m of pool) fn(m.inst.root);
     for (const mk of this.markers) fn(mk);
+    for (const mk of this.reticles) fn(mk);
   }
 }

@@ -34,6 +34,10 @@ export class VehicleController {
   fatigue: number;
   speed: number;
   distanceMoved = 0;
+  /** Adhérence (1 = trajectoire exacte de l'original ; < 1 = glisse). */
+  grip = 1;
+  private slip = 0;
+  private bumpVel = 0;
 
   constructor(readonly transform: THREE.Object3D, readonly f: VehicleControllerFields) {
     this.steerSpeed = f.rotationSpeed * f.rotationMultiplier;
@@ -48,6 +52,13 @@ export class VehicleController {
     this.lastDirection = 0;
     this.speedMultiplier = 1;
     this.distanceMoved = 0;
+    this.slip = 0;
+    this.bumpVel = 0;
+  }
+
+  /** Écart de trajectoire aléatoire (cratère, préréglage Arcade), en degrés. */
+  bump(deg: number): void {
+    this.bumpVel += deg * 7;
   }
 
   /** Update() — input : axe horizontal, planetRadius : SphereCollider.radius (non mis à l'échelle dans l'original). */
@@ -65,9 +76,20 @@ export class VehicleController {
     const targetRotation = inputRotation * this.steerSpeed;
     [this.currentRotation, this.rotationVelocity] = Mathf.smoothDamp(this.currentRotation, targetRotation, this.rotationVelocity, this.f.rotationSmoothing, Math.max(dt, 1e-6));
     // transform.Rotate(0, a, 0, Space.Self) : +a Unity = −a three (axe X inversé)
-    t.rotateY(-this.currentRotation * dt * Deg2Rad);
-    // transform.Translate(0, 0, move, Space.Self)
-    t.translateZ(move);
+    const yaw = this.currentRotation * dt + this.bumpVel * dt;
+    this.bumpVel *= Math.exp(-dt * 7);
+    t.rotateY(-yaw * Deg2Rad);
+    if (this.grip >= 1) {
+      // transform.Translate(0, 0, move, Space.Self)
+      t.translateZ(move);
+    } else {
+      // Glisse : la trajectoire suit le cap avec retard (planète gelée)
+      this.slip += yaw * Deg2Rad;
+      this.slip *= Math.exp(-dt * this.grip * 6);
+      const s = Math.max(-1.2, Math.min(1.2, this.slip));
+      t.translateZ(move * Math.cos(s));
+      t.translateX(move * Math.sin(s));
+    }
     this.distanceMoved += move;
     // Gravité : replacement à la surface + orientation
     _gUp.copy(t.position).sub(planetCenter).normalize();

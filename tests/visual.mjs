@@ -38,12 +38,16 @@ const browser = await chromium.launch({
 });
 
 const scenarios = [
-  { name: 'menu', query: 'preset=arcade', run: async () => {} },
-  { name: 'arcade-start', query: 'preset=arcade', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(30); }) },
-  { name: 'arcade-6s', query: 'preset=arcade', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(360, 1 / 60, 0.35); }) },
-  { name: 'original-start', query: 'preset=original', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(30); }) },
+  { name: 'menu', query: 'preset=arcade&planet=prairie', run: async () => {} },
+  { name: 'planets', query: 'preset=arcade&unlockAll=1&planet=volcan', run: async (page) => page.evaluate(() => __mpp.showPlanets()) },
+  { name: 'prairie-8s', query: 'preset=arcade&planet=prairie', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 0.8; __mpp.step(480, 1 / 60, 0.3); }) },
+  { name: 'emeraude', query: 'preset=arcade&planet=emeraude&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.2); }) },
+  { name: 'banquise', query: 'preset=arcade&planet=banquise&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.6); }) },
+  { name: 'volcan-damage', query: 'preset=arcade&planet=volcan&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 25; __mpp.step(400, 1 / 60, 0.2); }) },
+  { name: 'naine', query: 'preset=arcade&planet=naine&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.1); }) },
+  { name: 'portrait', viewport: { width: 420, height: 860 }, query: 'preset=arcade&planet=prairie&orientation=auto', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.2); }) },
+  { name: 'arcade-impact', query: 'preset=arcade&planet=prairie&meteorInterval=0.4', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 1; __mpp.step(200, 1 / 60, 0); }) },
   { name: 'original-6s', query: 'preset=original', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(360, 1 / 60, 0.35); }) },
-  { name: 'arcade-impact', query: 'preset=arcade&meteorInterval=0.4', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 1; __mpp.step(200, 1 / 60, 0); }) },
   { name: 'pause', query: 'preset=arcade', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(60); document.getElementById('btn-pause').click(); }) },
   { name: 'settings', page: 'settings.html', run: async () => {} },
   { name: 'gameover', query: 'preset=original&maxHealth=20', run: async (page) => page.evaluate(() => { __mpp.play(); for (let i = 0; i < 60 && __mpp.world.mode === 'play'; i++) __mpp.step(60, 1 / 60, Math.sin(i) * 0.8); }) },
@@ -52,7 +56,7 @@ const only = process.argv[2];
 const results = [];
 for (const sc of scenarios) {
   if (only && !sc.name.includes(only)) continue;
-  const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: sc.viewport ?? { width: 960, height: 540 }, deviceScaleFactor: 1 });
   const logs = [];
   page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));

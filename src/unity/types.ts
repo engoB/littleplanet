@@ -133,7 +133,7 @@ export interface UnityProject {
   scenes: Record<string, SceneData>;
   prefabs: Record<string, NodeData>;
   materials: Record<string, MaterialData>;
-  models: Record<string, { source: string; file: string; globalScale: number }>;
+  models: Record<string, { source: string; file: string; globalScale: number; materials?: Record<string, string | null> }>;
   audio: Record<string, { source: string; file: string }>;
 }
 
@@ -141,7 +141,9 @@ export interface AssetsManifest {
   textures: Record<string, string | Record<string, unknown>>;
   fxAtlas: Record<string, [number, number, number, number]>;
   audio: Record<string, string>;
-  fonts: Record<string, { file: string }>;
+  fonts: Record<string, { file: string; weight?: number }>;
+  planets?: Record<string, Record<string, string>>;
+  space?: Record<string, string>;
 }
 
 /** Recherche récursive d'un nœud par nom. */

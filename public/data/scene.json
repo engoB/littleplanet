@@ -19343,6 +19343,739 @@
     ]
    }
   },
+  "feather_02": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.39795896,
+     0.22550997,
+     0.0,
+     1.0
+    ],
+    "_Color": [
+     0.39795893,
+     0.22550994,
+     0.0,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "black_plastic": {
+   "shader": "URP/Lit",
+   "keywords": [],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.0,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.005,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.132653,
+     0.132653,
+     0.132653,
+     1.0
+    ],
+    "_Color": [
+     0.13265297,
+     0.13265297,
+     0.13265297,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "glass": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION",
+    "_SURFACE_TYPE_TRANSPARENT"
+   ],
+   "renderQueue": 3000,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 1.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 10.0,
+    "_DstBlendAlpha": 10.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 3.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 1.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 0.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.43918595,
+     0.54081595,
+     0.5391219,
+     0.086509526
+    ],
+    "_Color": [
+     0.43918592,
+     0.5408159,
+     0.53912187,
+     0.086509526
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "feather_01": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.4489799,
+     0.36049595,
+     0.19616997,
+     1.0
+    ],
+    "_Color": [
+     0.44897985,
+     0.36049592,
+     0.19616994,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "chrome": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.63265294,
+     0.63265294,
+     0.63265294,
+     1.0
+    ],
+    "_Color": [
+     0.63265294,
+     0.63265294,
+     0.63265294,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "light_blinker": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     1.0,
+     0.6,
+     0.0,
+     1.0
+    ],
+    "_Color": [
+     1.0,
+     0.6,
+     0.0,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "light_AV_02": {
+   "shader": "URP/Lit",
+   "keywords": [],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.0,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.005,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     1.0,
+     0.97673,
+     0.650943,
+     1.0
+    ],
+    "_Color": [
+     1.0,
+     0.9767299,
+     0.650943,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "mirror": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "_Color": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "light_rear_01": {
+   "shader": "URP/Lit",
+   "keywords": [],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.0,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.005,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.397959,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_Color": [
+     0.39795896,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "tire": {
+   "shader": "URP/Lit",
+   "keywords": [
+    "_EMISSION"
+   ],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.5,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_Mode": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.02,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_UVSec": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     0.12244896,
+     0.12244896,
+     0.12244896,
+     1.0
+    ],
+    "_Color": [
+     0.12244893,
+     0.12244893,
+     0.12244893,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
+  "body": {
+   "shader": "URP/Lit",
+   "keywords": [],
+   "renderQueue": -1,
+   "textures": {},
+   "floats": {
+    "_AlphaClip": 0.0,
+    "_AlphaToMask": 0.0,
+    "_Blend": 0.0,
+    "_BlendModePreserveSpecular": 1.0,
+    "_BumpScale": 1.0,
+    "_ClearCoatMask": 0.0,
+    "_ClearCoatSmoothness": 0.0,
+    "_Cull": 2.0,
+    "_Cutoff": 0.5,
+    "_DetailAlbedoMapScale": 1.0,
+    "_DetailNormalMapScale": 1.0,
+    "_DstBlend": 0.0,
+    "_DstBlendAlpha": 0.0,
+    "_EnvironmentReflections": 1.0,
+    "_GlossMapScale": 0.0,
+    "_Glossiness": 0.0,
+    "_GlossyReflections": 0.0,
+    "_Metallic": 0.0,
+    "_OcclusionStrength": 1.0,
+    "_Parallax": 0.005,
+    "_QueueOffset": 0.0,
+    "_ReceiveShadows": 1.0,
+    "_Smoothness": 0.5,
+    "_SmoothnessTextureChannel": 0.0,
+    "_SpecularHighlights": 1.0,
+    "_SrcBlend": 1.0,
+    "_SrcBlendAlpha": 1.0,
+    "_Surface": 0.0,
+    "_WorkflowMode": 1.0,
+    "_ZWrite": 1.0
+   },
+   "colors": {
+    "_BaseColor": [
+     1.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_Color": [
+     1.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_EmissionColor": [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    "_SpecColor": [
+     0.19999996,
+     0.19999996,
+     0.19999996,
+     1.0
+    ]
+   }
+  },
   "Halo": {
    "shader": "URP/Lit",
    "keywords": [
@@ -20636,22 +21369,39 @@
   "PlanetSmooth": {
    "source": "Graphics/Models/PlanetSmooth.fbx",
    "file": "models/PlanetSmooth.glb",
-   "globalScale": 1.0
+   "globalScale": 1.0,
+   "materials": {}
   },
   "Cartoon_SportCar_B01": {
    "source": "Graphics/Models/Cartoon_SportCar_B01.dae",
    "file": "models/Cartoon_SportCar_B01.glb",
-   "globalScale": 0.01
+   "globalScale": 0.01,
+   "materials": {
+    "Mat.": null,
+    "feather_02": "feather_02",
+    "black_plastic": "black_plastic",
+    "glass": "glass",
+    "feather_01": "feather_01",
+    "chrome": "chrome",
+    "light_blinker": "light_blinker",
+    "light_AV_02": "light_AV_02",
+    "mirror": "mirror",
+    "light_rear_01": "light_rear_01",
+    "tire": "tire",
+    "body": "body"
+   }
   },
   "Clock_A": {
    "source": "Graphics/Tiny Fantasy Loot/Models/Loot 1.1/Clock_A.fbx",
    "file": "models/Clock_A.glb",
-   "globalScale": 1.0
+   "globalScale": 1.0,
+   "materials": {}
   },
   "meteor": {
    "source": "Graphics/Models/meteor.fbx",
    "file": "models/meteor.glb",
-   "globalScale": 1.0
+   "globalScale": 1.0,
+   "materials": {}
   }
  },
  "audio": {

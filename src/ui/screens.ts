@@ -3,7 +3,7 @@ import type { RecordEntry } from '../settings/store';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-export type ScreenId = 'menu-main' | 'menu-help' | 'menu-pause' | 'menu-over' | null;
+export type ScreenId = 'menu-main' | 'menu-help' | 'menu-pause' | 'menu-over' | 'menu-planets' | null;
 
 export class Screens {
   current: ScreenId = null;

@@ -27,7 +27,7 @@ export default defineConfig({
         start_url: './',
         scope: './',
         display: 'standalone',
-        orientation: 'landscape',
+        orientation: 'any',
         background_color: '#0b1a2a',
         theme_color: '#0b1a2a',
         icons: [
@@ -38,7 +38,7 @@ export default defineConfig({
       },
       workbox: {
         // Tout le jeu est précaché : jouable hors ligne après la première visite
-        globPatterns: ['**/*.{js,css,html,json,glb,png,jpg,ttf,mp3,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,json,glb,png,jpg,ttf,woff2,mp3,wav,webmanifest}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: null,

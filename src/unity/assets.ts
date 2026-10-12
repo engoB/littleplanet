@@ -14,6 +14,11 @@ export class Assets {
   readonly textures = new Map<string, THREE.Texture>();
   readonly materials = new Map<string, THREE.Material>();
   skybox: THREE.CubeTexture | null = null;
+  /** Ciel spatial procédural (préréglage Arcade). */
+  space: THREE.CubeTexture | null = null;
+  /** Cubemaps des planètes toon : couleur et émission. */
+  readonly planetCubes = new Map<string, { color: THREE.CubeTexture; emis: THREE.CubeTexture | null }>();
+  readonly planetPreviews = new Map<string, string>();
   fxAtlas!: THREE.Texture;
   private readonly texLoader = new THREE.TextureLoader();
   /** Texture remplaçant le sol de la planète (réglage d'image perso). */
@@ -75,6 +80,20 @@ export class Assets {
         c.colorSpace = THREE.SRGBColorSpace;
         this.skybox = c;
       }));
+    }
+    const cube = (files: Record<string, string>, prefix = '', srgb = true) =>
+      new THREE.CubeTextureLoader().loadAsync(['px', 'nx', 'py', 'ny', 'pz', 'nz'].map((k) => this.url('textures/' + files[prefix + k]))).then((c) => {
+        c.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        return c;
+      });
+    if (manifest.space) void track(cube(manifest.space).then((c) => (this.space = c)));
+    for (const [id, files] of Object.entries(manifest.planets ?? {})) {
+      this.planetPreviews.set(id, this.url('textures/' + files.preview));
+      void track(
+        Promise.all([cube(files), files.e_px ? cube(files, 'e_', false) : Promise.resolve(null)]).then(([color, emis]) => {
+          this.planetCubes.set(id, { color, emis });
+        }),
+      );
     }
     await Promise.all(jobs);
   }

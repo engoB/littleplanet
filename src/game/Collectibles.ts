@@ -7,7 +7,8 @@ import { instantiate, type Instance } from '../unity/gameobject';
 import { Random } from '../unity/math';
 import { getComponent, scriptFields, type NodeData } from '../unity/types';
 import { makeOBB, obbFromBox, obbOverlap, type OBB } from './collision';
-import type { GameContext } from './context';
+import { bool, type GameContext } from './context';
+import { clockBeacon } from './fx';
 
 export interface CollectibleSpawnerFields {
   repairCollectiblePrefab: { prefab: string };
@@ -21,6 +22,8 @@ export interface CollectibleSpawnerFields {
 
 interface Clock {
   inst: Instance;
+  beacon: ReturnType<typeof clockBeacon>;
+  base: THREE.Vector3;
   active: boolean;
   age: number;
   inside: boolean;
@@ -40,6 +43,8 @@ export class CollectibleSpawner {
   private readonly box: { size: number[]; center: number[] };
   private readonly collectSound: string | null;
   onCollect: (name: string, at: THREE.Vector3) => void = () => undefined;
+  /** Rayon local d'apparition ; null = formule de l'original. */
+  spawnRadius: (() => number) | null = null;
 
   constructor(private readonly ctx: GameContext, readonly f: CollectibleSpawnerFields, poolSize = 5) {
     const node: NodeData = ctx.assets.project.prefabs[f.repairCollectiblePrefab.prefab];
@@ -59,7 +64,10 @@ export class CollectibleSpawner {
       const inst = instantiate(node, { assets: ctx.assets, particles: ctx.particles, lights: ctx.lights, castShadows: true });
       inst.root.visible = false;
       ctx.planet.add(inst.root);
-      this.pool.push({ inst, active: false, age: 0, inside: false, obb: makeOBB() });
+      const beacon = clockBeacon();
+      beacon.group.visible = false;
+      ctx.planet.add(beacon.group);
+      this.pool.push({ inst, beacon, base: new THREE.Vector3(), active: false, age: 0, inside: false, obb: makeOBB() });
     }
   }
 
@@ -95,6 +103,15 @@ export class CollectibleSpawner {
       }
       const meshVisible = c.age < blinkFrom || Math.floor((c.age - blinkFrom) / this.f.blinkRate) % 2 === 1;
       for (const m of c.inst.meshes) m.visible = meshVisible;
+      if (c.beacon.group.visible) {
+        // Arcade : l'horloge flotte doucement et un faisceau la signale
+        const up = c.base.clone().normalize();
+        r.position.copy(c.base).addScaledVector(up, (0.05 + 0.04 * Math.sin(c.age * 3)) / this.ctx.planet.scale.x);
+        c.beacon.beam.uniforms.time.value = c.age;
+        const fade = c.age < blinkFrom ? 1 : meshVisible ? 0.6 : 0.2;
+        c.beacon.beam.uniforms.opacity.value = Math.min(1, c.age * 2) * fade;
+        c.beacon.glow.opacity = 0.55 * fade;
+      }
       // OnTriggerEnter (joueur) : son + destruction ; HealthManager soigne
       if (alive && carOBB) {
         const inside = obbOverlap(carOBB, obbFromBox(r, this.box.size, this.box.center, c.obb));
@@ -114,9 +131,19 @@ export class CollectibleSpawner {
     const c = this.pool.find((x) => !x.active) ?? this.pool.reduce((a, b) => (a.age > b.age ? a : b));
     // localSpawnPoint = onUnitSphere × (planet.localScale.x × 0.5 + spawnDistance), puis TransformPoint
     // (les horloges sont enfants de la planète : la position locale suffit)
-    const local = Random.onUnitSphere(new THREE.Vector3()).multiplyScalar(this.ctx.planet.scale.x * 0.5 + this.f.spawnDistance);
+    const dir = Random.onUnitSphere(new THREE.Vector3());
+    const local = dir.clone().multiplyScalar(this.spawnRadius ? this.spawnRadius() : this.ctx.planet.scale.x * 0.5 + this.f.spawnDistance);
     const r = c.inst.root;
     r.position.copy(local);
+    c.base.copy(local);
+    const premium = bool(this.ctx.settings, 'premiumFx');
+    c.beacon.group.visible = premium;
+    if (premium) {
+      c.beacon.group.position.copy(dir).multiplyScalar(local.length() - 0.2 / this.ctx.planet.scale.x);
+      c.beacon.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      c.beacon.group.scale.setScalar(1 / this.ctx.planet.scale.x);
+      r.scale.setScalar(0.5 / this.ctx.planet.scale.x);
+    }
     // transform.up = direction radiale
     r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), local.clone().normalize());
     r.visible = true;
@@ -130,6 +157,12 @@ export class CollectibleSpawner {
   private release(c: Clock): void {
     c.active = false;
     c.inst.root.visible = false;
+    c.beacon.group.visible = false;
+  }
+
+  /** Racines des balises (précompilation). */
+  get beacons(): THREE.Object3D[] {
+    return this.pool.map((c) => c.beacon.group);
   }
 
   /** Positions (espace planète) des horloges actives, pour la mini-carte. */
