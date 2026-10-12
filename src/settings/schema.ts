@@ -1,0 +1,86 @@
+/**
+ * Schéma unique des réglages. Chaque réglage a une valeur « arcade »
+ * (préréglage par défaut, avec les ajouts) et une valeur « original »
+ * (comportement exact du jeu Unity). La page settings.html est générée
+ * à partir de ce tableau ; le jeu lit les valeurs via store.ts.
+ */
+export type SettingType = 'bool' | 'number' | 'select' | 'color' | 'image';
+
+export interface SettingDef {
+  key: string;
+  label: string;
+  group: string;
+  type: SettingType;
+  arcade: number | boolean | string | null;
+  original: number | boolean | string | null;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  options?: { value: string; label: string }[];
+  help?: string;
+}
+
+export const GROUPS = ['Jeu', 'Météores', 'Horloges', 'Caméra', 'Graphismes', 'Audio', 'Contrôles', 'Personnalisation'] as const;
+
+export const SCHEMA: SettingDef[] = [
+  // --- Jeu
+  { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
+  { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
+  { key: 'steerFatigue', label: 'Fatigue de virage', group: 'Jeu', type: 'number', arcade: 0, original: 4, min: 0, max: 10, step: 0.5, unit: 's', help: 'maxDirectionDuration : le braquage s’éteint si on garde la même direction. 0 = désactivé.' },
+  { key: 'maxHealth', label: 'Santé maximale', group: 'Jeu', type: 'number', arcade: 100, original: 100, min: 20, max: 400, step: 10, help: 'HealthManager.maxHealth' },
+  { key: 'craterDamage', label: 'Dégâts d’un cratère', group: 'Jeu', type: 'number', arcade: 10, original: 10, min: 0, max: 50, step: 1 },
+  { key: 'invulnerability', label: 'Invulnérabilité après un choc', group: 'Jeu', type: 'number', arcade: 0.8, original: 0, min: 0, max: 3, step: 0.1, unit: 's' },
+  { key: 'turbo', label: 'Turbo (bouton maintenu)', group: 'Jeu', type: 'bool', arcade: true, original: false },
+  { key: 'stages', label: 'Étapes et objectifs', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Objectifs successifs, la difficulté augmente à chaque étape.' },
+  { key: 'deathAnimation', label: 'Animation de fin', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Explosion et ralenti avant l’écran de fin (l’original fige tout : Time.timeScale = 0).' },
+  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Script ShrinkPlanet présent dans le projet mais non attaché à la scène.' },
+  { key: 'saveRecords', label: 'Enregistrer les records', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'HighScoreManager existe mais n’est jamais appelé dans l’original.' },
+  // --- Météores
+  { key: 'meteorInterval', label: 'Intervalle entre météores', group: 'Météores', type: 'number', arcade: 1.4, original: 1, min: 0.3, max: 4, step: 0.1, unit: 's', help: 'MeteorSpawner : WaitForSeconds(1)' },
+  { key: 'meteorRamp', label: 'Difficulté progressive', group: 'Météores', type: 'bool', arcade: true, original: false },
+  { key: 'meteorSpeed', label: 'Vitesse des météores', group: 'Météores', type: 'number', arcade: 5, original: 5, min: 2, max: 15, step: 0.5, unit: 'u/s' },
+  { key: 'meteorVisible', label: 'Roche visible', group: 'Météores', type: 'bool', arcade: true, original: false, help: 'Dans l’original, le maillage du météore mesure 2 cm : seuls les effets sont visibles.' },
+  { key: 'meteorWarning', label: 'Annonce du point d’impact', group: 'Météores', type: 'bool', arcade: true, original: false },
+  { key: 'meteorHitsCar', label: 'Les météores touchent la voiture', group: 'Météores', type: 'bool', arcade: true, original: false, help: 'Dans l’original, le collider du météore n’est pas un trigger : aucun dégât direct.' },
+  { key: 'meteorDamage', label: 'Dégâts d’un météore', group: 'Météores', type: 'number', arcade: 40, original: 40, min: 0, max: 100, step: 5 },
+  { key: 'craterStyle', label: 'Aspect des cratères', group: 'Météores', type: 'select', arcade: 'decal', original: 'box', options: [
+    { value: 'decal', label: 'Brûlure au sol' }, { value: 'box', label: 'Cube (original)' },
+  ], help: 'Le matériau du cratère manque dans le dépôt Unity.' },
+  { key: 'craterLifetime', label: 'Durée de vie des cratères', group: 'Météores', type: 'number', arcade: 40, original: 0, min: 0, max: 120, step: 5, unit: 's', help: '0 = permanents (original).' },
+  // --- Horloges
+  { key: 'clockInterval', label: 'Intervalle d’apparition', group: 'Horloges', type: 'number', arcade: 5, original: 5, min: 1, max: 20, step: 0.5, unit: 's' },
+  { key: 'clockMax', label: 'Nombre maximal par partie', group: 'Horloges', type: 'number', arcade: 0, original: 10, min: 0, max: 50, step: 1, help: '0 = illimité' },
+  { key: 'clockLifetime', label: 'Durée de vie', group: 'Horloges', type: 'number', arcade: 10, original: 10, min: 3, max: 30, step: 1, unit: 's' },
+  { key: 'clockHeal', label: 'Santé rendue', group: 'Horloges', type: 'number', arcade: 20, original: 20, min: 5, max: 100, step: 5 },
+  // --- Caméra
+  { key: 'cameraTilt', label: 'Inclinaison de la caméra', group: 'Caméra', type: 'number', arcade: 26, original: 0, min: 0, max: 60, step: 1, unit: '°', help: '0 = vue de dessus exacte de l’original' },
+  { key: 'cameraShake', label: 'Secousses (explosions)', group: 'Caméra', type: 'bool', arcade: true, original: true },
+  // --- Graphismes
+  { key: 'quality', label: 'Qualité', group: 'Graphismes', type: 'select', arcade: 'auto', original: 'auto', options: [
+    { value: 'auto', label: 'Adaptative' }, { value: 'high', label: 'Haute' }, { value: 'medium', label: 'Moyenne' }, { value: 'low', label: 'Basse' },
+  ] },
+  { key: 'shadows', label: 'Ombres', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Les lumières Unity n’ont pas d’ombres.' },
+  { key: 'postProcess', label: 'Post-process (aberration, vignette)', group: 'Graphismes', type: 'bool', arcade: true, original: true },
+  { key: 'dynamicLights', label: 'Lumières des météores', group: 'Graphismes', type: 'number', arcade: 3, original: 4, min: 0, max: 6, step: 1, help: 'Nombre de lumières ponctuelles réservées (rechargement nécessaire).' },
+  { key: 'planetDetail', label: 'Relief du sol', group: 'Graphismes', type: 'bool', arcade: true, original: false },
+  { key: 'maxPixelRatio', label: 'Densité de pixels max', group: 'Graphismes', type: 'number', arcade: 2, original: 2, min: 0.5, max: 2, step: 0.25 },
+  { key: 'showFps', label: 'Afficher les FPS', group: 'Graphismes', type: 'bool', arcade: false, original: false },
+  // --- Audio
+  { key: 'musicVolume', label: 'Musique', group: 'Audio', type: 'number', arcade: 0.7, original: 1, min: 0, max: 1, step: 0.05 },
+  { key: 'sfxVolume', label: 'Effets', group: 'Audio', type: 'number', arcade: 1, original: 1, min: 0, max: 1, step: 0.05 },
+  { key: 'loopMusic', label: 'Musique en boucle', group: 'Audio', type: 'bool', arcade: true, original: false },
+  { key: 'extraSounds', label: 'Sons supplémentaires (clic, dérapage)', group: 'Audio', type: 'bool', arcade: true, original: false },
+  // --- Contrôles
+  { key: 'stickSide', label: 'Côté du stick', group: 'Contrôles', type: 'select', arcade: 'left', original: 'right', options: [
+    { value: 'left', label: 'Gauche' }, { value: 'right', label: 'Droite' },
+  ], help: 'Le joystick Unity est en bas à droite.' },
+  { key: 'stickFloating', label: 'Stick flottant', group: 'Contrôles', type: 'bool', arcade: true, original: false },
+  { key: 'haptics', label: 'Vibrations', group: 'Contrôles', type: 'bool', arcade: true, original: false },
+  { key: 'minimap', label: 'Mini-carte', group: 'Contrôles', type: 'bool', arcade: true, original: false },
+  // --- Personnalisation
+  { key: 'carColor', label: 'Couleur de la voiture', group: 'Personnalisation', type: 'color', arcade: '#ff0000', original: '#ff0000', help: 'Matériau « body »' },
+  { key: 'planetImage', label: 'Image du sol de la planète', group: 'Personnalisation', type: 'image', arcade: null, original: null, help: 'Stockée dans IndexedDB sur cet appareil.' },
+];
+
+export type Preset = 'arcade' | 'original';

@@ -1,0 +1,128 @@
+{
+ "textures": {
+  "FS000_Day_04": {
+   "nx": "FS000_Day_04_nx.jpg",
+   "pz": "FS000_Day_04_pz.jpg",
+   "px": "FS000_Day_04_px.jpg",
+   "nz": "FS000_Day_04_nz.jpg",
+   "py": "FS000_Day_04_py.jpg",
+   "ny": "FS000_Day_04_ny.jpg",
+   "ambientLinear": {
+    "sky": [
+     0.28875719354120916,
+     0.6325467589399749,
+     0.7970287171123858
+    ],
+    "equator": [
+     0.3528039279499505,
+     0.7509205366728917,
+     0.8093557108517334
+    ],
+    "ground": [
+     0.5583142184312974,
+     1.0,
+     0.9301108583749814
+    ]
+   }
+  },
+  "AllAxis_Outline": "AllAxis_Outline.png",
+  "Handle_Plain": "Handle_Plain.png",
+  "Fond": "Fond.png",
+  "Grass01_a": "Grass01_a.jpg",
+  "Grass02_a": "Grass02_a.jpg",
+  "Clocks_D": "Clocks_D.jpg"
+ },
+ "fxAtlas": {
+  "cfxr smoke cloud x4": [
+   0.0,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "cfxr spikes impact": [
+   0.5,
+   0.75,
+   0.75,
+   1.0
+  ],
+  "fx_ring": [
+   0.75,
+   0.75,
+   1.0,
+   1.0
+  ],
+  "CFX2_T_Glow": [
+   0.5,
+   0.5,
+   0.75,
+   0.75
+  ],
+  "CFX_T_RayRounded": [
+   0.75,
+   0.5,
+   1.0,
+   0.75
+  ],
+  "cfxr flamme blur": [
+   0.0,
+   0.25,
+   0.125,
+   0.5
+  ],
+  "cfxr ember blur": [
+   0.125,
+   0.375,
+   0.375,
+   0.5
+  ],
+  "fx_dot": [
+   0.125,
+   0.25,
+   0.25,
+   0.375
+  ],
+  "cfxr stretch trait": [
+   0.375,
+   0.375,
+   0.875,
+   0.5
+  ],
+  "cfxr stretch smoke fume": [
+   0.375,
+   0.25,
+   0.875,
+   0.375
+  ]
+ },
+ "audio": {
+  "AccelerationLow": "audio/AccelerationLow.mp3",
+  "PlayerDeath": "audio/PlayerDeath.mp3",
+  "Totyputy": "audio/Totyputy.mp3",
+  "DropPotion02": "audio/DropPotion02.mp3",
+  "Click": "audio/Click.mp3",
+  "Skid": "audio/Skid.mp3",
+  "Joyful Jubilation_1": "audio/Joyful_Jubilation_1.mp3"
+ },
+ "fonts": {
+  "LiberationSans": {
+   "file": "fonts/LiberationSans.ttf",
+   "metrics": {
+    "unitsPerEm": 2048,
+    "yMax": 2007,
+    "yMin": -621,
+    "hheaAscent": 1854,
+    "hheaDescent": -434,
+    "winAscent": 1854,
+    "winDescent": 434,
+    "typoAscender": 1491,
+    "typoDescender": -431,
+    "fixed": true
+   }
+  }
+ },
+ "procedural": [
+  "planet_detail_n.png",
+  "crater.png",
+  "crater_n.png"
+ ]
+}

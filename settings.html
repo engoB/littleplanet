@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1a2a" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <title>Réglages — Ma Petite Planète</title>
+  </head>
+  <body class="settings-page">
+    <header class="settings-header">
+      <a class="button back" href="./index.html">← Jouer</a>
+      <h1>Réglages</h1>
+    </header>
+    <main>
+      <section class="presets">
+        <p>Préréglages : <b>Arcade</b> (par défaut, avec les ajouts) ou <b>Original</b> (comportement exact du jeu Unity). Appliquer un préréglage efface tes valeurs personnalisées.</p>
+        <div class="preset-buttons">
+          <button id="preset-arcade" data-preset="arcade">Arcade</button>
+          <button id="preset-original" data-preset="original">Original</button>
+        </div>
+        <p id="preset-status" class="status"></p>
+      </section>
+      <div id="settings-form"></div>
+      <section class="about">
+        <p id="about"></p>
+      </section>
+    </main>
+    <script type="module" src="/src/settings/page.ts"></script>
+  </body>
+</html>
