@@ -7,6 +7,38 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { unityColorToLinear } from './curves';
 import type { AssetsManifest, MaterialData, UnityProject } from './types';
 
+export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4 } as const;
+
+/** Carte de surface d'une planète, échantillonnée par direction (espace planète). */
+export class Surface {
+  constructor(readonly w: number, readonly h: number, readonly data: Uint8Array) {}
+  /** Classe de sol sous la direction unitaire (x, y, z) (convention du générateur : lat = asin y, lon = atan2(z, x)). */
+  at(x: number, y: number, z: number): number {
+    const lat = Math.asin(Math.max(-1, Math.min(1, y)));
+    const lon = Math.atan2(z, x);
+    const u = Math.min(this.w - 1, Math.max(0, Math.floor(((lon + Math.PI) / (2 * Math.PI)) * this.w)));
+    const v = Math.min(this.h - 1, Math.max(0, Math.floor(((Math.PI / 2 - lat) / Math.PI) * this.h)));
+    return Math.round(this.data[v * this.w + u] / 50);
+  }
+}
+
+async function loadSurface(url: string): Promise<Surface | null> {
+  try {
+    const img = await createImageBitmap(await (await fetch(url)).blob());
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(img, 0, 0);
+    const px = g.getImageData(0, 0, c.width, c.height).data;
+    const out = new Uint8Array(c.width * c.height);
+    for (let i = 0; i < out.length; i++) out[i] = px[i * 4];
+    return new Surface(c.width, c.height, out);
+  } catch {
+    return null;
+  }
+}
+
 export class Assets {
   project!: UnityProject;
   manifest!: AssetsManifest;
@@ -19,6 +51,10 @@ export class Assets {
   /** Cubemaps des planètes toon : couleur et émission. */
   readonly planetCubes = new Map<string, { color: THREE.CubeTexture; emis: THREE.CubeTexture | null }>();
   readonly planetPreviews = new Map<string, string>();
+  /** Ciel doré « au-delà » (planète du Sage). */
+  skyDb: THREE.CubeTexture | null = null;
+  /** Cartes de surface (équirectangulaires, classe = valeur / 50) : eau, lave, glace… */
+  readonly planetSurfaces = new Map<string, Surface>();
   fxAtlas!: THREE.Texture;
   private readonly texLoader = new THREE.TextureLoader();
   /** Texture remplaçant le sol de la planète (réglage d'image perso). */
@@ -87,8 +123,10 @@ export class Assets {
         return c;
       });
     if (manifest.space) void track(cube(manifest.space).then((c) => (this.space = c)));
+    if (manifest.skyDb) void track(cube(manifest.skyDb).then((c) => (this.skyDb = c)));
     for (const [id, files] of Object.entries(manifest.planets ?? {})) {
       this.planetPreviews.set(id, this.url('textures/' + files.preview));
+      if (files.surface) void track(loadSurface(this.url('textures/' + files.surface)).then((sf) => sf && this.planetSurfaces.set(id, sf)));
       void track(
         Promise.all([cube(files), files.e_px ? cube(files, 'e_', false) : Promise.resolve(null)]).then(([color, emis]) => {
           this.planetCubes.set(id, { color, emis });

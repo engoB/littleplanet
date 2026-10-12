@@ -18,7 +18,15 @@ export interface PlanetDef {
   pattern?: string;
   decorColors?: { trunk: string; canopy: string[]; rock: string; house: string; roof: string };
   gameplay: { meteorInterval: number; meteorSpeed: number; clockInterval: number; carSpeed: number; grip: number; craterDamage: number };
-  decor: { trees: number; rocks: number; houses: number };
+  decor: { trees: number; rocks: number; houses: number; palms?: number; mushrooms?: number; pipes?: number; blocks?: number; cubetrees?: number };
+  /** Ciel : espace, ciel doré façon « au-delà », ciel de jour ou celui d'origine. */
+  sky?: 'space' | 'db' | 'day' | 'original';
+  /** Véhicule du préréglage Arcade. */
+  vehicle?: 'original' | 'hover' | 'boat';
+  /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
+  reticle?: string;
+  /** Rendu en gros pixels (filtrage « nearest »). */
+  pixel?: boolean;
 }
 
 export const PLANETS: PlanetDef[] = (data as { planets: PlanetDef[] }).planets;

@@ -22,6 +22,54 @@
         "trees": 0,
         "rocks": 0,
         "houses": 0
+      },
+      "sky": "original",
+      "vehicle": "original"
+    },
+    {
+      "id": "sage",
+      "name": "Planète du Sage",
+      "tagline": "Minuscule planète d'entraînement : route jaune, maison-dôme et ciel doré de l'au-delà.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 0.72,
+      "unlock": null,
+      "atmosphere": "#ffe08a",
+      "sky": "db",
+      "vehicle": "hover",
+      "reticle": "#ff3b2f",
+      "palette": {
+        "light": "#8fe06a",
+        "mid": "#6ccb4c",
+        "dark": "#4fae3c",
+        "path": "#f2cf63",
+        "pathDark": "#c99b3a",
+        "accent1": "#ffffff",
+        "accent2": "#ffef7a",
+        "line": "#2a5a20"
+      },
+      "pattern": "sage",
+      "decorColors": {
+        "trunk": "#8a5a2b",
+        "canopy": [
+          "#3fae3c"
+        ],
+        "rock": "#c8bfae",
+        "house": "#f6f1e2",
+        "roof": "#f6f1e2"
+      },
+      "gameplay": {
+        "meteorInterval": 1.15,
+        "meteorSpeed": 0.9,
+        "clockInterval": 0.9,
+        "carSpeed": 0.95,
+        "grip": 1.0,
+        "craterDamage": 0.9
+      },
+      "decor": {
+        "trees": 1,
+        "rocks": 0,
+        "houses": 1
       }
     },
     {
@@ -67,50 +115,105 @@
         "trees": 3,
         "rocks": 3,
         "houses": 1
-      }
+      },
+      "sky": "space",
+      "vehicle": "hover"
     },
     {
-      "id": "neon",
-      "name": "Néon",
-      "tagline": "Planète nocturne à grille lumineuse : voiture et impacts brillent comme en 1985.",
-      "difficulty": 3,
+      "id": "champi",
+      "name": "Royaume Champignon",
+      "tagline": "Collines rondes, tuyaux verts, champignons à pois et blocs mystère.",
+      "difficulty": 2,
       "style": "toon",
-      "neon": true,
       "radius": 1.0,
       "unlock": null,
-      "atmosphere": "#b04bff",
+      "atmosphere": "#9fe4ff",
+      "sky": "day",
+      "vehicle": "hover",
+      "reticle": "#ff3b2f",
       "palette": {
-        "light": "#2a1650",
-        "mid": "#1d0f3c",
-        "dark": "#130a2a",
-        "path": "#22e8ff",
-        "pathDark": "#ff2bd6",
+        "light": "#7ee05a",
+        "mid": "#5cc840",
+        "dark": "#3ea832",
+        "path": "#e8b878",
+        "pathDark": "#b98448",
         "accent1": "#ffffff",
-        "accent2": "#ffe14d",
-        "line": "#000000"
+        "accent2": "#ffd23a",
+        "line": "#1f5a1a"
       },
-      "pattern": "neon",
+      "pattern": "champi",
       "decorColors": {
-        "trunk": "#1a1030",
+        "trunk": "#f4e6c8",
         "canopy": [
-          "#2a1650"
+          "#e8302a"
         ],
-        "rock": "#2a1a4a",
-        "house": "#1a1030",
-        "roof": "#ff2bd6"
+        "rock": "#c87a3a",
+        "house": "#2fbf3a",
+        "roof": "#ffd23a"
       },
       "gameplay": {
-        "meteorInterval": 0.95,
-        "meteorSpeed": 1.1,
-        "clockInterval": 1.0,
-        "carSpeed": 1.05,
+        "meteorInterval": 1.05,
+        "meteorSpeed": 1.0,
+        "clockInterval": 0.9,
+        "carSpeed": 1.0,
         "grip": 1.0,
         "craterDamage": 1.0
       },
       "decor": {
         "trees": 0,
-        "rocks": 2,
-        "houses": 0
+        "rocks": 0,
+        "houses": 0,
+        "mushrooms": 3,
+        "pipes": 2,
+        "blocks": 2
+      }
+    },
+    {
+      "id": "ocean",
+      "name": "Grand Océan",
+      "tagline": "Une planète-océan semée d'îles : ta voiture devient bateau pirate. Gare aux tourbillons !",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.05,
+      "unlock": null,
+      "atmosphere": "#8fd8ff",
+      "sky": "day",
+      "vehicle": "boat",
+      "reticle": "#ff3b2f",
+      "palette": {
+        "light": "#4cc3f5",
+        "mid": "#2a8fe0",
+        "dark": "#1a62c4",
+        "path": "#f4dc94",
+        "pathDark": "#d9b86a",
+        "accent1": "#ffffff",
+        "accent2": "#7fe08a",
+        "line": "#0a3a7a"
+      },
+      "pattern": "ocean",
+      "decorColors": {
+        "trunk": "#9a6a3a",
+        "canopy": [
+          "#3fbf4a",
+          "#5fd65a"
+        ],
+        "rock": "#b8a88a",
+        "house": "#fff",
+        "roof": "#e04a3a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 0.7,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "palms": 5
       }
     },
     {
@@ -159,7 +262,105 @@
         "trees": 4,
         "rocks": 3,
         "houses": 0
+      },
+      "sky": "space",
+      "vehicle": "hover"
+    },
+    {
+      "id": "cubes",
+      "name": "Monde de Cubes",
+      "tagline": "Tout est carré : herbe, terre, eau et arbres en blocs.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#a8d8ff",
+      "sky": "day",
+      "vehicle": "hover",
+      "reticle": "#ff3b2f",
+      "pixel": true,
+      "palette": {
+        "light": "#79c04a",
+        "mid": "#5fa83a",
+        "dark": "#4b8f2e",
+        "path": "#8b5a2b",
+        "pathDark": "#6e4520",
+        "accent1": "#3b6fd8",
+        "accent2": "#8a8a8a",
+        "line": "#000000"
+      },
+      "pattern": "cubes",
+      "decorColors": {
+        "trunk": "#6b4a2a",
+        "canopy": [
+          "#3f8f2a",
+          "#4fa034"
+        ],
+        "rock": "#8a8a8a",
+        "house": "#b0b0b0",
+        "roof": "#6b4a2a"
+      },
+      "gameplay": {
+        "meteorInterval": 0.9,
+        "meteorSpeed": 1.1,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 1,
+        "houses": 0,
+        "cubetrees": 4
       }
+    },
+    {
+      "id": "neon",
+      "name": "Néon",
+      "tagline": "Planète nocturne à grille lumineuse : voiture et impacts brillent comme en 1985.",
+      "difficulty": 3,
+      "style": "toon",
+      "neon": true,
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#b04bff",
+      "palette": {
+        "light": "#3c2676",
+        "mid": "#2e1c60",
+        "dark": "#22144c",
+        "path": "#22e8ff",
+        "pathDark": "#ff2bd6",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#000000"
+      },
+      "pattern": "neon",
+      "decorColors": {
+        "trunk": "#1a1030",
+        "canopy": [
+          "#2a1650"
+        ],
+        "rock": "#2a1a4a",
+        "house": "#1a1030",
+        "roof": "#ff2bd6"
+      },
+      "gameplay": {
+        "meteorInterval": 0.95,
+        "meteorSpeed": 1.1,
+        "clockInterval": 1.0,
+        "carSpeed": 1.05,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 2,
+        "houses": 0
+      },
+      "reticle": "#ffe14d",
+      "sky": "space",
+      "vehicle": "hover"
     },
     {
       "id": "banquise",
@@ -207,7 +408,9 @@
         "trees": 3,
         "rocks": 4,
         "houses": 0
-      }
+      },
+      "sky": "space",
+      "vehicle": "hover"
     },
     {
       "id": "volcan",
@@ -222,9 +425,9 @@
       },
       "atmosphere": "#ff8a4a",
       "palette": {
-        "light": "#4a3636",
-        "mid": "#382828",
-        "dark": "#241919",
+        "light": "#7a6660",
+        "mid": "#61504a",
+        "dark": "#4a3b36",
         "path": "#ff8a1a",
         "pathDark": "#ffd23a",
         "accent1": "#7a5a50",
@@ -255,7 +458,10 @@
         "trees": 0,
         "rocks": 4,
         "houses": 0
-      }
+      },
+      "reticle": "#7df6ff",
+      "sky": "space",
+      "vehicle": "hover"
     },
     {
       "id": "naine",
@@ -303,7 +509,9 @@
         "trees": 2,
         "rocks": 1,
         "houses": 0
-      }
+      },
+      "sky": "space",
+      "vehicle": "hover"
     }
   ]
 }

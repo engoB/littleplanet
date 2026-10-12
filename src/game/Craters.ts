@@ -82,6 +82,22 @@ export class Craters {
     m.emissive.copy(c ?? new THREE.Color(0, 0, 0));
   }
 
+  private craterMaps: { map: THREE.Texture | null; normal: THREE.Texture | null } | null = null;
+  private whirl: THREE.Texture | null = null;
+  /** Planète-océan : les impacts deviennent des tourbillons (style « decal » seulement). */
+  setWater(water: boolean): void {
+    const m = this.mesh.material as THREE.MeshStandardMaterial;
+    if (this.style !== 'decal' || !m.isMeshStandardMaterial || !m.map) return;
+    this.craterMaps ??= { map: m.map, normal: m.normalMap };
+    this.whirl ??= whirlpoolTexture();
+    const map = water ? this.whirl : this.craterMaps.map;
+    if (m.map !== map) {
+      m.map = map;
+      m.emissiveMap = map;
+    }
+    m.normalScale.setScalar(water ? 0 : 1);
+  }
+
   /** Instantiate(craterPrefab, point, LookRotation(normal)) — point/normale en espace planète. */
   spawn(localPos: THREE.Vector3, localNormal: THREE.Vector3, playSound = true): Crater {
     if (this.list.length >= MAX) this.list.shift();
@@ -149,4 +165,35 @@ export class Craters {
     this.list.length = 0;
     this.mesh.count = 0;
   }
+}
+
+/** Tourbillon d'eau dessiné (spirale bleu foncé → écume blanche, bords transparents). */
+function whirlpoolTexture(): THREE.Texture {
+  const N = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d')!;
+  const img = g.createImageData(N, N);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const dx = (x + 0.5) / N * 2 - 1;
+      const dy = (y + 0.5) / N * 2 - 1;
+      const r = Math.hypot(dx, dy);
+      const a = Math.atan2(dy, dx);
+      const arm = 0.5 + 0.5 * Math.sin(a * 3 + r * 14);
+      const foam = arm > 0.72 ? 1 : 0;
+      const depth = 1 - Math.min(1, r);
+      const i = (y * N + x) * 4;
+      const base = [20 + 60 * (1 - depth), 70 + 90 * (1 - depth), 150 + 70 * (1 - depth)];
+      const w = foam * (0.35 + 0.65 * Math.min(1, r * 1.6));
+      img.data[i] = base[0] + (255 - base[0]) * w;
+      img.data[i + 1] = base[1] + (255 - base[1]) * w;
+      img.data[i + 2] = base[2] + (255 - base[2]) * w;
+      img.data[i + 3] = 255 * Math.max(0, Math.min(1, (1 - r) * 5));
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }

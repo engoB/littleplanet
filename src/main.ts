@@ -5,6 +5,7 @@ import './styles.css';
 import { registerSW } from 'virtual:pwa-register';
 import { Input, vibrate } from './input/input';
 import { TouchButton, VirtualStick } from './input/stick';
+import { TouchZones } from './input/zones';
 import { bindSchemaToProject } from './settings/bindings';
 import { currentPreset, loadImage, loadRecords, loadSettings, settingsFromUrl, submitRecord, type Settings } from './settings/store';
 import { Hud } from './ui/hud';
@@ -36,6 +37,7 @@ async function loadFont(): Promise<void> {
     new FontFace('Liberation', 'url(./fonts/LiberationSans.ttf)'),
     new FontFace('Fredoka', 'url(./fonts/Fredoka-600.woff2)', { weight: '400 600' }),
     new FontFace('Fredoka', 'url(./fonts/Fredoka-700.woff2)', { weight: '700 900' }),
+    new FontFace('Lilita', 'url(./fonts/LilitaOne.woff2)'),
   ];
   await Promise.all(
     faces.map(async (f) => {
@@ -102,6 +104,14 @@ async function main(): Promise<void> {
   const stick = new VirtualStick(stickZone, settings.stickFloating === true, settings.stickSide === 'right' ? 'right' : 'left');
   stick.configure(settings.stickFloating === true, settings.stickSide === 'right' ? 'right' : 'left');
   input.stick = stick;
+  // Commande « écran coupé en deux » (Arcade) ou joystick
+  const zonesMode = settings.controlMode !== 'stick';
+  const zones = new TouchZones($('touch-zones'));
+  zones.enabled = zonesMode;
+  $('touch-zones').hidden = !zonesMode;
+  stickZone.hidden = zonesMode;
+  input.zones = zonesMode ? zones : null;
+  if (zonesMode) input.stick = null;
   const turboBtn = new TouchButton(hud.turboBtn);
   input.turboButton = turboBtn;
   hud.turboBtn.hidden = settings.turbo !== true;
@@ -115,6 +125,9 @@ async function main(): Promise<void> {
   let pixelRatio = Math.min(Number(settings.maxPixelRatio), window.devicePixelRatio || 1);
   if (quality === 'low') pixelRatio = Math.min(pixelRatio, 1);
   if (quality === 'medium') pixelRatio = Math.min(pixelRatio, 1.5);
+  // Mobile en qualité auto : départ à 1,5 (la boucle monte si le 60 Hz tient)
+  const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  if (quality === 'auto' && coarse) pixelRatio = Math.min(pixelRatio, 1.5);
   const resize = () => {
     // Taille réelle du canvas (100lvh) : pas de bande vide en bas de l'écran
     const w = Math.max(1, canvas.clientWidth || window.innerWidth);
@@ -214,7 +227,7 @@ async function main(): Promise<void> {
     input.reset();
     hud.clearMessages();
     hud.show(true);
-    stick.layout();
+    if (!zonesMode) stick.layout();
     screens.show(null);
     world.startGame();
     hud.setObjective(settings.stages === true ? world.stages.text : '');
@@ -289,6 +302,8 @@ async function main(): Promise<void> {
   let fpsN = 0;
   let slow = 0;
   let fast = 0;
+  let ceiling = Infinity;
+  let degraded = false;
   const maxPR = Math.min(Number(settings.maxPixelRatio), window.devicePixelRatio || 1);
   const items: MapItem[] = [];
   const center = new THREE.Vector3();
@@ -325,21 +340,33 @@ async function main(): Promise<void> {
     if (fpsAcc >= 1) {
       const fps = fpsN / fpsAcc;
       hud.setFps(settings.showFps === true ? fps : null);
-      if (quality === 'auto' && !paused) {
-        if (fps < 45) {
+      if (quality === 'auto' && !paused && document.visibilityState === 'visible') {
+        // Objectif 60 Hz : sous 54 i/s pendant 2 s on baisse la qualité ; au-dessus
+        // de 58 pendant 6 s on remonte, sans dépasser le palier qui a déjà ramé
+        if (fps < 54) {
           slow++;
           fast = 0;
-        } else if (fps > 57) {
+        } else if (fps > 58) {
           fast++;
           slow = 0;
-        }
-        if (slow >= 2 && pixelRatio > 1) {
-          pixelRatio = Math.max(1, pixelRatio - 0.25);
-          world.setEffectsScale(0.7);
-          resize();
+        } else {
           slow = 0;
-        } else if (fast >= 6 && pixelRatio < maxPR) {
-          pixelRatio = Math.min(maxPR, pixelRatio + 0.25);
+          fast = 0;
+        }
+        if (slow >= 2) {
+          slow = 0;
+          if (pixelRatio > 1) {
+            ceiling = pixelRatio - 0.25;
+            pixelRatio = Math.max(1, pixelRatio - 0.25);
+            world.setEffectsScale(0.75);
+            resize();
+          } else if (!degraded) {
+            degraded = true;
+            world.setMsaa(0);
+            world.setEffectsScale(0.5);
+          }
+        } else if (fast >= 6 && pixelRatio < Math.min(maxPR, ceiling)) {
+          pixelRatio = Math.min(maxPR, ceiling, pixelRatio + 0.25);
           resize();
           fast = 0;
         }

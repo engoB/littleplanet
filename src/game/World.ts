@@ -4,7 +4,7 @@
  * et exécute les scripts portés dans l'ordre Update puis LateUpdate.
  */
 import * as THREE from 'three';
-import type { Assets } from '../unity/assets';
+import { SURF, type Assets } from '../unity/assets';
 import { AudioManager, type AudioSourceLite } from '../unity/audio';
 import { CameraShaker } from '../unity/cfxr';
 import { unityColorToLinear } from '../unity/curves';
@@ -32,6 +32,8 @@ import { atmosphere, planetToonMaterial, toToon } from './toon';
 import { Starfield } from './Starfield';
 import { VehicleController, type VehicleControllerFields } from './VehicleController';
 import { VehicleDistanceTracker } from './VehicleDistanceTracker';
+import { animateVehicle, buildBoat, buildHover, type VehicleRig } from './vehicles';
+import * as fxp from './fxParticles';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -108,11 +110,23 @@ export class World implements GameContext {
   private engineOriginal: AudioSourceLite | null = null;
   /** Style courant : dessin animé (planètes Arcade) ou original. */
   private toon = false;
+  /** Véhicules Arcade (voiture volante, bateau) et effets de surface. */
+  private rigs!: { hover: VehicleRig; boat: VehicleRig };
+  private rig3d: VehicleRig | null = null;
+  private splash!: ParticleSystem;
+  private wake!: ParticleSystem;
+  private embers!: ParticleSystem;
+  private thrusters: ParticleSystem[] = [];
+  private surfaceFx: ParticleSystem[] = [];
+  private surface = 0;
+  private splashSoundCd = 0;
 
   constructor(readonly assets: Assets, public settings: Settings, canvas: HTMLCanvasElement, events: WorldEvents) {
     this.events = events;
     const quality = String(settings.quality);
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low', powerPreference: 'high-performance', preserveDrawingBuffer: false });
+    // Avec le post-process, l'anticrénelage se fait dans la cible intermédiaire :
+    // inutile de payer un MSAA sur le framebuffer final (bande passante mobile)
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low' && !bool(settings, 'postProcess'), powerPreference: 'high-performance', preserveDrawingBuffer: false });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping; // URP sans tonemapping dans le profil
     this.renderer.shadowMap.enabled = bool(settings, 'shadows');
@@ -144,7 +158,9 @@ export class World implements GameContext {
     // --- post-process (Volume de la scène)
     const volNode = this.findRoot(this.gameData, 'Postprocess');
     const vol = volNode ? getComponent<{ type: string; id: number; profile: { components: Record<string, VolumeComponent> } }>(volNode, 'Volume') : undefined;
-    this.post = new PostProcess(this.renderer, vol?.profile?.components, quality === 'high' || quality === 'auto' ? 4 : 0);
+    // MSAA : 4 sur ordinateur, 2 sur mobile (écrans denses), aucun en qualité basse
+    const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    this.post = new PostProcess(this.renderer, vol?.profile?.components, quality === 'low' ? 0 : quality === 'medium' || coarse ? 2 : 4);
     this.post.enabled = bool(settings, 'postProcess');
     this.shaker.enabled = bool(settings, 'cameraShake');
     this.carBox = { size: [1, 1, 1], center: [0, 0, 0] };
@@ -246,6 +262,27 @@ export class World implements GameContext {
       const toon = Array.isArray(std) ? std.map(toonOf) : toonOf(std);
       this.carMats.push({ mesh: m, std, toon });
     });
+    // Véhicules Arcade : construits une fois, affichés selon la planète
+    this.rigs = { hover: buildHover(), boat: buildBoat() };
+    const atlas = a.manifest.fxAtlas;
+    for (const r of [this.rigs.hover, this.rigs.boat]) {
+      r.group.visible = false;
+      this.car.add(r.group);
+    }
+    for (const em of this.rigs.hover.emitters) {
+      em.rotation.y = Math.PI; // +Z de l'émetteur vers l'arrière
+      this.thrusters.push(this.particles.add(fxp.thruster(em, atlas)));
+    }
+    const surfEm = new THREE.Object3D();
+    surfEm.position.set(0, 0.15, -1.2);
+    surfEm.rotation.x = -Math.PI / 2; // +Z vers le ciel
+    this.car.add(surfEm);
+    this.splash = this.particles.add(fxp.splash(surfEm, atlas));
+    this.embers = this.particles.add(fxp.embers(surfEm, atlas));
+    const wakeEm = this.rigs.boat.emitters[0];
+    wakeEm.rotation.x = -Math.PI / 2;
+    this.wake = this.particles.add(fxp.wake(wakeEm, atlas));
+    this.surfaceFx = [this.splash, this.embers, this.wake];
     // Fumée et feu selon les dégâts (systèmes des prefabs météores réutilisés)
     const smokeNode = findNode(a.project.prefabs['meteor 2 '] ?? a.project.prefabs['meteor3'], 'Smoke');
     const fireNode = findNode(a.project.prefabs['meteor 1'], 'CFXR Fire');
@@ -368,8 +405,9 @@ export class World implements GameContext {
       const u = this.planetToonMat.userData.planetUniforms;
       u.planetCube.value = cubes.color;
       u.planetEmis.value = cubes.emis ?? cubes.color;
-      if (def.neon) u.emisColor.value.setRGB(1.9, 1.9, 1.9);
-      else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.85 : 0);
+      // Néon et lave : lueur modérée pour que voiture, cratères et réticules restent lisibles
+      if (def.neon) u.emisColor.value.setRGB(0.8, 0.8, 0.8);
+      else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.55 : 0);
       u.rimColor.value.set(def.atmosphere);
       this.planetMesh.material = this.planetToonMat;
     } else {
@@ -379,15 +417,19 @@ export class World implements GameContext {
     (this.atmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
     (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon ? 0.3 : 0.6;
     if (this.haloRoot) this.haloRoot.visible = !premium;
-    this.scene.background = premium && this.assets.space ? this.assets.space : this.assets.skybox;
-    this.scene.backgroundIntensity = premium ? (def.neon ? 0.55 : 0.8) : 1;
+    const sky = premium ? def.sky ?? 'space' : 'original';
+    this.scene.background =
+      sky === 'space' && this.assets.space ? this.assets.space
+      : sky === 'db' && this.assets.skyDb ? this.assets.skyDb
+      : this.assets.skybox;
+    this.scene.backgroundIntensity = sky === 'space' ? (def.neon ? 0.55 : 0.8) : sky === 'db' ? 0.62 : sky === 'original' ? 1 : 0.95;
     this.scene.environment = this.dayEnvironment;
     this.decor.build(def, this.planetRadius(), def.radius);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
     const neon = this.toon && !!def.neon;
-    this.ambient.intensity = this.toon ? (neon ? 0.42 : 1.15) : 0;
+    this.ambient.intensity = this.toon ? (neon ? 0.95 : 1.15) : 0;
     this.ambient.color.set(neon ? 0x8a6aff : 0xc4dcff);
     this.ambient.groundColor.set(neon ? 0x2a1040 : 0x6a5a6a);
     // En cel-shading, un flash ponctuel devient un aplat : il est atténué (sauf Néon)
@@ -411,6 +453,16 @@ export class World implements GameContext {
       }
     }
     this.craters.setGlow(neon ? new THREE.Color(0x22e8ff).multiplyScalar(2.5) : null);
+    this.meteors.setReticleColor(def.reticle ?? 0xff2e0d);
+    this.craters.setWater(premium && def.id === 'ocean');
+    // Véhicule : voiture d'origine, voiture volante ou bateau (préréglage Arcade)
+    const kind = premium ? def.vehicle ?? 'original' : 'original';
+    this.rig3d = kind === 'hover' ? this.rigs.hover : kind === 'boat' ? this.rigs.boat : null;
+    this.rigs.hover.group.visible = this.rig3d === this.rigs.hover;
+    this.rigs.boat.group.visible = this.rig3d === this.rigs.boat;
+    for (const c of this.carMats) c.mesh.visible = !this.rig3d;
+    for (const t of this.thrusters) t.stop(true);
+    for (const f of this.surfaceFx) f.stop(true);
     for (const c of this.carMats) c.mesh.material = this.toon ? c.toon : c.std;
     this.stars.points.visible = premium;
     this.rig.heightScale = premium ? Math.max(0.75, def.radius) : 1;
@@ -471,6 +523,7 @@ export class World implements GameContext {
     this.meteors.speedMul = g.meteorSpeed;
     this.vehicle.steerSpeed = num(s, 'steerSpeed');
     this.vehicle.fatigue = num(s, 'steerFatigue');
+    this.vehicle.fatigueHold = Math.min(num(s, 'steerFatigueHold') || 0, Math.max(0, num(s, 'steerFatigue') - 0.2));
     this.health.maxHealth = num(s, 'maxHealth');
     this.health.invulnerabilityTime = num(s, 'invulnerability');
     this.clocks.spawnRate = num(s, 'clockInterval') * g.clockInterval;
@@ -499,6 +552,7 @@ export class World implements GameContext {
     this.mode = 'menu';
     Time.timeScale = 1;
     this.car.visible = false;
+    for (const f of [...this.surfaceFx, ...this.thrusters]) f.stop(true);
     this.meteors.clear();
     this.clocks.start();
     this.craters.clear();
@@ -778,10 +832,49 @@ export class World implements GameContext {
       this.fire.rateScale = smokeOn && hurt > 0.65 ? 1 : 0;
       if (this.fire.rateScale > 0 && !this.fire.playing) this.fire.play();
     }
+    this.surfaceEffects(dt, alive);
     // Son moteur : hauteur selon le turbo ; dérapage selon le braquage
     if (this.engine === this.engineOriginal) this.engine?.setPitch(0.65 * (this.turboActive ? 1.35 : 1));
     else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.planetDef.gameplay.carSpeed);
     if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5);
+  }
+
+  /** Animation du véhicule Arcade et effets selon le sol (eau, lave). */
+  private surfaceEffects(dt: number, alive: boolean): void {
+    const fx = bool(this.settings, 'premiumFx');
+    const up = _v.copy(this.car.position).sub(this.planet.position).normalize();
+    const down = up.clone().negate();
+    for (const f of this.surfaceFx) f.gravityDir = down;
+    // Sol sous la voiture : direction dans l'espace du maillage de la planète
+    const sf = fx ? this.assets.planetSurfaces.get(this.planetDef.id) : undefined;
+    if (sf) {
+      const local = this.planetMesh.worldToLocal(this.car.getWorldPosition(new THREE.Vector3())).normalize();
+      this.surface = sf.at(local.x, local.y, local.z);
+    } else this.surface = SURF.GROUND;
+    const r = this.rig3d;
+    if (r) {
+      animateVehicle(r, Time.time, this.vehicle.steer, this.turboActive);
+      for (const t of this.thrusters) {
+        t.gravityDir = down;
+        t.rateScale = r === this.rigs.hover && alive ? (this.turboActive ? 2.2 : 1) : 0;
+        if (t.rateScale > 0 && !t.playing) t.play();
+      }
+    }
+    const boat = r === this.rigs.boat;
+    const set = (ps: ParticleSystem, k: number) => {
+      ps.rateScale = alive ? k : 0;
+      if (ps.rateScale > 0 && !ps.playing) ps.play();
+    };
+    const water = this.surface === SURF.WATER;
+    // Voiture (ou voiture volante qui rase l'eau) : éclaboussures ; bateau : sillage d'écume
+    set(this.splash, water ? (boat ? 0.35 : 1) * (this.turboActive ? 1.6 : 1) : 0);
+    set(this.wake, boat ? (water ? 1 : 0.2) * (this.turboActive ? 1.5 : 1) : 0);
+    set(this.embers, this.surface === SURF.LAVA && !boat ? 1 : 0);
+    this.splashSoundCd -= dt;
+    if (water && !boat && alive && this.splashSoundCd <= 0 && bool(this.settings, 'extraSounds')) {
+      this.splashSoundCd = 0.45;
+      this.audio.playOneShot('sfx_whoosh', 0.12, 1.6 + Math.random() * 0.3);
+    }
   }
 
   private updateSun(): void {
@@ -860,6 +953,11 @@ export class World implements GameContext {
   /** Qualité adaptative : densité d'émission des particules. */
   setEffectsScale(k: number): void {
     ParticleSystem.emissionScale = k;
+  }
+
+  /** Qualité adaptative : MSAA du rendu intermédiaire. */
+  setMsaa(n: number): void {
+    this.post.setSamples(n);
   }
 
   /** Graine aléatoire (tests déterministes). */

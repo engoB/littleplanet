@@ -42,6 +42,10 @@ const scenarios = [
   { name: 'planets', query: 'preset=arcade&unlockAll=1&planet=volcan', run: async (page) => page.evaluate(() => __mpp.showPlanets()) },
   { name: 'prairie-8s', query: 'preset=arcade&planet=prairie', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 0.8; __mpp.step(480, 1 / 60, 0.3); }) },
   { name: 'emeraude', query: 'preset=arcade&planet=emeraude&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.2); }) },
+  { name: 'sage', query: 'preset=arcade&planet=sage&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.3); }) },
+  { name: 'champi', query: 'preset=arcade&planet=champi&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.3); }) },
+  { name: 'ocean-boat', query: 'preset=arcade&planet=ocean&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(260, 1 / 60, 0.25); }) },
+  { name: 'cubes', query: 'preset=arcade&planet=cubes&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.4); }) },
   { name: 'banquise', query: 'preset=arcade&planet=banquise&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.6); }) },
   { name: 'volcan-damage', query: 'preset=arcade&planet=volcan&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 25; __mpp.step(400, 1 / 60, 0.2); }) },
   { name: 'naine', query: 'preset=arcade&planet=naine&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.1); }) },
@@ -91,7 +95,7 @@ for (const r of results) for (const e of r.errors) console.log(r.name, e);
 await browser.close();
 server.close();
 
-// --- Test fonctionnel du stick (pointer events) : vitesse max dès 85 % de la course
+// --- Test fonctionnel des deux zones tactiles (pointer events) + bouton turbo
 {
   const b2 = await chromium.launch({ executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const srv = createServer(async (req, res) => {
@@ -103,23 +107,26 @@ server.close();
   await page.goto(`http://localhost:${srv.address().port}/index.html?test=1&touch=1&preset=arcade`);
   await page.waitForFunction(() => window.__mppReady === true, null, { timeout: 120000 });
   await page.evaluate(() => __mpp.play());
-  // Joystick fixe en bas à gauche : on touche le centre de sa base
-  const r = await page.evaluate(() => {
-    const b = document.querySelector('.stick-base').getBoundingClientRect();
-    return { x: b.left + b.width / 2, y: b.top + b.height / 2, radius: b.width / 2, left: b.left, bottom: innerHeight - b.bottom };
+  const read = () => page.evaluate(() => { __mpp.input.update(0.5); return [+__mpp.input.horizontal.toFixed(3), __mpp.input.turbo]; });
+  const press = async (x, y) => { await page.mouse.move(x, y); await page.mouse.down(); const v = await read(); await page.mouse.up(); await read(); return v; };
+  const left = await press(150, 220);
+  const right = await press(750, 160);
+  const after = await read();
+  // Bouton turbo (moitié droite) : turbo sans virage
+  const t = await page.evaluate(() => { const b = document.getElementById('btn-turbo').getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+  const turbo = await press(t.x, t.y);
+  // HUD : la barre de vie ne chevauche jamais le chrono (paysage et portrait)
+  const overlap = async () => page.evaluate(() => {
+    const a = document.querySelector('.hud-left').getBoundingClientRect();
+    const c = document.querySelector('.hud-center').getBoundingClientRect();
+    return a.right > c.left + 1 && a.bottom > c.top;
   });
-  console.log('Base du stick : gauche', Math.round(r.left), 'px, bas', Math.round(r.bottom), 'px, rayon', Math.round(r.radius), 'px');
-  await page.mouse.move(r.x, r.y);
-  await page.mouse.down();
-  const vals = [];
-  for (const k of [0.4, 0.85, 1.5, 3]) {
-    await page.mouse.move(r.x + r.radius * k, r.y);
-    vals.push(await page.evaluate(() => { __mpp.input.update(0); return +__mpp.input.horizontal.toFixed(3); }));
-  }
-  await page.mouse.up();
-  const after = await page.evaluate(() => { __mpp.input.update(0); return __mpp.input.horizontal; });
-  const ok = vals[0] > 0.4 && vals[0] < 0.55 && vals[1] >= 0.999 && vals[3] === 1 && after === 0 && r.left < 120 && r.bottom < 60;
-  console.log('Stick :', vals, 'relâché →', after, ok ? 'OK' : 'ÉCHEC');
+  const o1 = await overlap();
+  await page.setViewportSize({ width: 360, height: 760 });
+  await page.waitForTimeout(200);
+  const o2 = await overlap();
+  const ok = left[0] === -1 && right[0] === 1 && after[0] === 0 && turbo[0] === 0 && turbo[1] === true && !o1 && !o2;
+  console.log('Zones : gauche', left, 'droite', right, 'relâché', after, 'turbo', turbo, 'chevauchement HUD', o1, o2, ok ? 'OK' : 'ÉCHEC');
   await b2.close();
   srv.close();
   if (!ok) process.exitCode = 1;

@@ -264,11 +264,20 @@ def main() -> None:
             fonts[f'Fredoka-{w}'] = {'file': f'fonts/Fredoka-{w}.woff2', 'weight': w,
                                      'metrics': check_font(src, os.path.join(out, 'fonts', f'Fredoka-{w}.woff2'), 'woff2')}
         shutil.copy(os.path.join(fk, '..', 'LICENSE'), os.path.join(out, 'fonts', 'OFL-Fredoka.txt'))
-    make_icons(assets, out)
+    # Police « jeu mobile » épaisse pour le chrono et les chiffres (Lilita One, SIL OFL)
+    lk = os.path.join(HERE, '..', '.cache', 'lilita', 'package', 'files')
+    if os.path.isdir(lk):
+        fonts['LilitaOne'] = {'file': 'fonts/LilitaOne.woff2', 'weight': 400,
+                              'metrics': check_font(os.path.join(lk, 'lilita-one-latin-400-normal.woff2'), os.path.join(out, 'fonts', 'LilitaOne.woff2'), 'woff2')}
+        shutil.copy(os.path.join(lk, '..', 'LICENSE'), os.path.join(out, 'fonts', 'OFL-LilitaOne.txt'))
+    # Icônes : rendues par le moteur (tools/render_icon.mjs + icon_compose.py) ;
+    # l'icône Unity ne sert que si aucune icône n'existe encore
+    if not os.path.exists(os.path.join(out, 'icons', 'icon-512.png')):
+        make_icons(assets, out)
     print('Planètes et ciel')
     planets = procedural_planets.main(os.path.join(HERE, '..', 'src', 'game', 'planets.json'), os.path.join(out, 'textures'))
     manifest = {'textures': tex, 'fxAtlas': atlas, 'audio': audio, 'fonts': fonts,
-                'planets': planets['planets'], 'space': planets['space'],
+                'planets': planets['planets'], 'space': planets['space'], 'skyDb': planets['skyDb'],
                 'procedural': ['planet_detail_n.png', 'crater.png', 'crater_n.png']}
     with open(os.path.join(out, 'data', 'assets.json'), 'w', encoding='utf-8') as fh:
         json.dump(manifest, fh, ensure_ascii=False, indent=1)

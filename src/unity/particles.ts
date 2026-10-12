@@ -95,6 +95,8 @@ export class ParticleSystem {
   static emissionScale = 1;
   /** Multiplicateur d'émission propre au système (fumée selon les dégâts). */
   rateScale = 1;
+  /** Direction de la gravité (monde) : −Y par défaut ; sur une planète, vers son centre. */
+  gravityDir: THREE.Vector3 | null = null;
 
   constructor(readonly obj: THREE.Object3D, readonly d: ParticleData, r: ParticleRendererData, look: SpriteLook) {
     this.p = new Particles(Math.max(1, Math.min(d.main.maxParticles, 256)));
@@ -275,7 +277,8 @@ export class ParticleSystem {
     if (p.n === 0) return;
     const grav = evalMinMax(d.main.gravity, 0, 0.5) * GRAVITY;
     // Gravité : axe −Y monde, ramené dans l'espace local si besoin
-    _v.set(0, -grav, 0);
+    if (this.gravityDir) _v.copy(this.gravityDir).multiplyScalar(grav);
+    else _v.set(0, -grav, 0);
     if (!d.worldSpace && grav !== 0) {
       this.obj.getWorldQuaternion(_q).invert();
       _v.applyQuaternion(_q).multiplyScalar(1 / this.worldScale());
@@ -458,16 +461,15 @@ export class ParticleManager {
   private readonly buf: ParticleBuffers;
   private readonly geo: THREE.BufferGeometry;
   private readonly mat: THREE.ShaderMaterial;
-  private order: Uint32Array;
-  private depth: Float32Array;
+  private keys: Float64Array;
   private tmp: ParticleBuffers;
 
   constructor(atlas: THREE.Texture, cap = 3000) {
+    cap = Math.min(cap, 4096); // l'index tient sur 12 bits dans la clé de tri
     const mk = (n: number) => new Float32Array(cap * n);
     this.buf = { cap, pos: mk(3), vel: mk(3), col: mk(4), rect: mk(4), misc: mk(4) };
     this.tmp = { cap, pos: mk(3), vel: mk(3), col: mk(4), rect: mk(4), misc: mk(4) };
-    this.order = new Uint32Array(cap);
-    this.depth = new Float32Array(cap);
+    this.keys = new Float64Array(Math.min(cap, 4096));
     this.geo = new THREE.BufferGeometry();
     const attr = (a: Float32Array, n: number) => new THREE.BufferAttribute(a, n).setUsage(THREE.DynamicDrawUsage);
     this.geo.setAttribute('position', attr(this.buf.pos, 3));
@@ -510,21 +512,28 @@ export class ParticleManager {
       n = s.write(t, n);
     }
     const cx = camera.matrixWorld.elements[12], cy = camera.matrixWorld.elements[13], cz = camera.matrixWorld.elements[14];
+    // Tri de l'arrière vers l'avant sans comparateur JS : clé = profondeur
+    // quantifiée (inversée) × 4096 + index, triée par le tri natif des tableaux typés
+    const keys = this.keys;
     for (let i = 0; i < n; i++) {
-      this.order[i] = i;
       const dx = t.pos[i * 3] - cx, dy = t.pos[i * 3 + 1] - cy, dz = t.pos[i * 3 + 2] - cz;
-      this.depth[i] = dx * dx + dy * dy + dz * dz;
+      const q = Math.min(1048575, Math.floor((dx * dx + dy * dy + dz * dz) * 1000));
+      keys[i] = (1048575 - q) * 4096 + i;
     }
-    const ord = this.order.subarray(0, n);
-    ord.sort((a, b) => this.depth[b] - this.depth[a]);
+    keys.subarray(0, n).sort();
     const b = this.buf;
+    const tp = t.pos, tv = t.vel, tc = t.col, tr = t.rect, tm = t.misc;
+    const bp = b.pos, bv = b.vel, bc = b.col, br = b.rect, bm = b.misc;
     for (let j = 0; j < n; j++) {
-      const i = ord[j];
-      b.pos.set(t.pos.subarray(i * 3, i * 3 + 3), j * 3);
-      b.vel.set(t.vel.subarray(i * 3, i * 3 + 3), j * 3);
-      b.col.set(t.col.subarray(i * 4, i * 4 + 4), j * 4);
-      b.rect.set(t.rect.subarray(i * 4, i * 4 + 4), j * 4);
-      b.misc.set(t.misc.subarray(i * 4, i * 4 + 4), j * 4);
+      const i = keys[j] % 4096;
+      const i3 = i * 3, j3 = j * 3, i4 = i * 4, j4 = j * 4;
+      bp[j3] = tp[i3]; bp[j3 + 1] = tp[i3 + 1]; bp[j3 + 2] = tp[i3 + 2];
+      bv[j3] = tv[i3]; bv[j3 + 1] = tv[i3 + 1]; bv[j3 + 2] = tv[i3 + 2];
+      for (let k = 0; k < 4; k++) {
+        bc[j4 + k] = tc[i4 + k];
+        br[j4 + k] = tr[i4 + k];
+        bm[j4 + k] = tm[i4 + k];
+      }
     }
     for (const name of ['position', 'vel', 'pcol', 'rect', 'misc']) {
       const a = this.geo.getAttribute(name) as THREE.BufferAttribute;

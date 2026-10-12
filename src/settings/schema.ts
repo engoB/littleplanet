@@ -27,7 +27,8 @@ export const SCHEMA: SettingDef[] = [
   // --- Jeu
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
-  { key: 'steerFatigue', label: 'Fatigue de virage', group: 'Jeu', type: 'number', arcade: 0, original: 4, min: 0, max: 10, step: 0.5, unit: 's', help: 'maxDirectionDuration : le braquage s’éteint si on garde la même direction. 0 = désactivé.' },
+  { key: 'steerFatigue', label: 'Fatigue de virage', group: 'Jeu', type: 'number', arcade: 3.4, original: 4, min: 0, max: 10, step: 0.5, unit: 's', help: 'maxDirectionDuration : le braquage s’éteint si on garde la même direction. 0 = désactivé.' },
+  { key: 'steerFatigueHold', label: 'Virage à pleine force pendant', group: 'Jeu', type: 'number', arcade: 1.6, original: 0, min: 0, max: 5, step: 0.1, unit: 's', help: 'Puis la voiture repart en ligne droite. 0 = atténuation dès le début (original).' },
   { key: 'maxHealth', label: 'Santé maximale', group: 'Jeu', type: 'number', arcade: 100, original: 100, min: 20, max: 400, step: 10, help: 'HealthManager.maxHealth' },
   { key: 'craterDamage', label: 'Dégâts d’un cratère', group: 'Jeu', type: 'number', arcade: 10, original: 10, min: 0, max: 50, step: 1 },
   { key: 'invulnerability', label: 'Invulnérabilité après un choc', group: 'Jeu', type: 'number', arcade: 0.8, original: 0, min: 0, max: 3, step: 0.1, unit: 's' },
@@ -85,6 +86,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'orientation', label: 'Orientation de l’écran', group: 'Contrôles', type: 'select', arcade: 'auto', original: 'landscape', options: [
     { value: 'auto', label: 'Libre (portrait ou paysage)' }, { value: 'landscape', label: 'Paysage' }, { value: 'portrait', label: 'Portrait' },
   ], help: 'L’APK Unity est en paysage (LandscapeLeft).' },
+  { key: 'controlMode', label: 'Commande tactile', group: 'Contrôles', type: 'select', arcade: 'zones', original: 'stick', options: [
+    { value: 'zones', label: 'Écran coupé en deux (gauche / droite)' }, { value: 'stick', label: 'Joystick' },
+  ] },
   { key: 'stickSide', label: 'Côté du stick', group: 'Contrôles', type: 'select', arcade: 'left', original: 'right', options: [
     { value: 'left', label: 'Gauche' }, { value: 'right', label: 'Droite' },
   ], help: 'Le joystick Unity est en bas à droite.' },

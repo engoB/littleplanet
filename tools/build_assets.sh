@@ -28,6 +28,9 @@ python3 -m pip install -q -r tools/requirements.txt
 if [ ! -d "$CACHE/package/files" ]; then
   (cd "$CACHE" && npm pack @fontsource/fredoka@5.3.0 >/dev/null && tar xzf fontsource-fredoka-5.3.0.tgz)
 fi
+if [ ! -d "$CACHE/lilita/package/files" ]; then
+  (cd "$CACHE" && npm pack @fontsource/lilita-one@5.3.0 >/dev/null && mkdir -p lilita && tar xzf fontsource-lilita-one-5.3.0.tgz -C lilita)
+fi
 command -v ffmpeg >/dev/null || { echo "ffmpeg est requis (conversion des sons)"; exit 1; }
 
 mkdir -p public/data
