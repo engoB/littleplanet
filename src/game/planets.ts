@@ -16,15 +16,17 @@ export interface PlanetDef {
   atmosphere: string;
   palette?: Record<string, string>;
   pattern?: string;
-  decorColors?: { trunk: string; canopy: string[]; rock: string; house: string; roof: string };
+  decorColors?: { trunk: string; canopy: string[]; rock: string; house: string; roof: string; [extra: string]: string | string[] | undefined };
   gameplay: { meteorInterval: number; meteorSpeed: number; clockInterval: number; carSpeed: number; grip: number; craterDamage: number };
-  decor: { trees: number; rocks: number; houses: number; palms?: number; mushrooms?: number; pipes?: number; blocks?: number; cubetrees?: number };
+  decor: { trees: number; rocks: number; houses: number; [kind: string]: number | undefined };
   /** Ciel : espace, ciel doré façon « au-delà », ciel de jour ou celui d'origine. */
   sky?: 'space' | 'db' | 'day' | 'original';
   /** Véhicule du préréglage Arcade. */
-  vehicle?: 'original' | 'hover' | 'boat';
+  vehicle?: 'original' | 'hover';
   /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
   reticle?: string;
+  /** Hill Valley : traînées de feu au sol en turbo. */
+  fireTrail?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */
   pixel?: boolean;
 }

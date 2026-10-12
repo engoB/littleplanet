@@ -7,7 +7,8 @@ import { Input, vibrate } from './input/input';
 import { TouchButton, VirtualStick } from './input/stick';
 import { TouchZones } from './input/zones';
 import { bindSchemaToProject } from './settings/bindings';
-import { currentPreset, loadImage, loadRecords, loadSettings, settingsFromUrl, submitRecord, type Settings } from './settings/store';
+import { currentPreset, loadImage, loadRecords, loadSettings, saveSetting, settingsFromUrl, submitRecord, type Settings } from './settings/store';
+import { SCHEMA } from './settings/schema';
 import { Hud } from './ui/hud';
 import { Minimap, type MapItem } from './ui/minimap';
 import { setupOrientation } from './ui/orientation';
@@ -58,6 +59,8 @@ async function main(): Promise<void> {
   await assets.loadData();
   bindSchemaToProject(assets.project);
   const settings: Settings = settingsFromUrl(loadSettings());
+  // Paramètres d'URL (tests) : les bascules du menu ne sont pas enregistrées
+  const urlOverride = new URLSearchParams(location.search).has('preset');
   const preset = params.get('preset') ?? currentPreset();
   document.body.classList.toggle('original', preset === 'original');
   // Image perso du sol (IndexedDB)
@@ -88,6 +91,10 @@ async function main(): Promise<void> {
     message: (t, k) => hud.message(t, k),
     gameOver: (stats) => onGameOver(stats),
     turbo: (l, a) => hud.turbo(l, a),
+    stage: (n, label) => {
+      hud.stageBanner(n, label);
+      vibrate([30, 40, 30], settings.haptics === true);
+    },
   });
 
   const audioP = world.audio.loadAll('./', assets.manifest.audio);
@@ -115,6 +122,8 @@ async function main(): Promise<void> {
   const turboBtn = new TouchButton(hud.turboBtn);
   input.turboButton = turboBtn;
   hud.turboBtn.hidden = settings.turbo !== true;
+  // Santé : anneau au sol (Arcade) ou barre du HUD (Original)
+  (document.querySelector('.health') as HTMLElement).hidden = settings.healthDisplay === 'ring';
   $('minimap').hidden = settings.minimap !== true;
   const click = () => {
     if (settings.extraSounds === true) world.audio.playOneShot('Click', 0.6);
@@ -230,7 +239,7 @@ async function main(): Promise<void> {
     if (!zonesMode) stick.layout();
     screens.show(null);
     world.startGame();
-    hud.setObjective(settings.stages === true ? world.stages.text : '');
+    hud.setObjective(settings.stages === true ? world.stages.label : '', world.stages.stage, world.stages.objective.kind, 0);
   };
   const setPause = (p: boolean) => {
     if (world.mode !== 'play' && world.mode !== 'dying') return;
@@ -239,12 +248,52 @@ async function main(): Promise<void> {
     screens.show(p ? 'menu-pause' : null);
     world.setPaused(p);
   };
+  // --- Modes de jeu : bascules rapides (mêmes réglages que la page Réglages)
+  const modeDefs = SCHEMA.filter((d) => d.group === 'Modes de jeu');
+  const updateModes = () => {
+    const on = modeDefs.filter((d) => settings[d.key] === true && d.key !== 'planetShrink').map((d) => d.label);
+    $('modes-summary').textContent = on.length ? `Modes : ${on.join(' · ')}` : 'Modes de jeu : classique';
+    $('btn-modes').classList.toggle('active', on.length > 0);
+  };
+  function renderModes(): void {
+    const list = $('modes-list');
+    list.innerHTML = '';
+    for (const d of modeDefs) {
+      const b = document.createElement('button');
+      b.className = 'mode-card';
+      b.setAttribute('role', 'switch');
+      const sync = () => {
+        b.classList.toggle('on', settings[d.key] === true);
+        b.setAttribute('aria-checked', String(settings[d.key] === true));
+      };
+      b.innerHTML = `<span class="mode-text"><b></b><small></small></span><span class="mode-switch"><i></i></span>`;
+      b.querySelector('b')!.textContent = d.label;
+      b.querySelector('small')!.textContent = d.help ?? '';
+      b.addEventListener('click', () => {
+        click();
+        settings[d.key] = settings[d.key] !== true;
+        // Zen et Mort subite s'excluent
+        if (d.key === 'modeZen' && settings.modeZen) settings.modeSuddenDeath = false;
+        if (d.key === 'modeSuddenDeath' && settings.modeSuddenDeath) settings.modeZen = false;
+        for (const k of ['modeZen', 'modeSuddenDeath', d.key]) if (!urlOverride) saveSetting(k, settings[k]);
+        world.applySettings(settings);
+        renderModes();
+        updateModes();
+      });
+      sync();
+      list.appendChild(b);
+    }
+  }
+  updateModes();
+
   function onGameOver(stats: { distance: number; time: number; stage: number; clocks: number }): void {
     let rank = 0;
-    if (settings.saveRecords === true) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
+    // Modes « faciles » ou au score différent : pas de record
+    const noRecord = settings.modeZen === true || settings.modeInfiniteTurbo === true || settings.modeTimeAttack === true;
+    if (settings.saveRecords === true && !noRecord) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
     const best = settings.saveRecords === true ? loadRecords()[0]?.distance ?? null : null;
     screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original');
-    const unlocked = isOriginal ? [] : recordDistance(world.planetDef.id, stats.distance);
+    const unlocked = isOriginal || noRecord ? [] : recordDistance(world.planetDef.id, stats.distance);
     const un = $('over-unlock');
     un.hidden = unlocked.length === 0;
     un.textContent = unlocked.length ? `Nouvelle planète débloquée : ${unlocked.map((p) => p.name).join(', ')} !` : '';
@@ -265,6 +314,11 @@ async function main(): Promise<void> {
   on('btn-pause-planets', showPlanets);
   on('btn-over-planets', showPlanets);
   on('btn-help', () => screens.show('menu-help'));
+  on('btn-modes', () => {
+    renderModes();
+    screens.show('menu-modes');
+  });
+  on('btn-modes-back', () => screens.show('menu-main'));
   on('btn-help-back', () => screens.show('menu-main'));
   on('btn-pause', () => setPause(true));
   on('btn-resume', () => setPause(false));
@@ -316,9 +370,10 @@ async function main(): Promise<void> {
     if (!paused && !portrait) world.step(dt, input);
     world.render();
     if (world.mode === 'play' || world.mode === 'dying') {
-      hud.setChrono(world.chrono);
+      const ta = settings.modeTimeAttack === true;
+      hud.setChrono(ta ? world.timeLeft : world.chrono, ta);
       hud.setDistance(world.tracker.totalDistance, preset === 'original');
-      if (settings.stages === true) hud.setObjective(world.stages.text);
+      if (settings.stages === true) hud.setObjective(world.stages.label, world.stages.stage, world.stages.objective.kind, world.stages.progress01);
       if (settings.minimap === true) {
         items.length = 0;
         world.planet.updateMatrixWorld();

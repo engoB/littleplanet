@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { unityColorToLinear } from './curves';
 import type { AssetsManifest, MaterialData, UnityProject } from './types';
 
-export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4 } as const;
+export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4, GRASS: 5 } as const;
 
 /** Carte de surface d'une planète, échantillonnée par direction (espace planète). */
 export class Surface {

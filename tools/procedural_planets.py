@@ -72,7 +72,34 @@ def hexc(h: str) -> np.ndarray:
     return np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)], dtype=np.float64) / 255
 
 
-SURF_GROUND, SURF_WATER, SURF_LAVA, SURF_ICE, SURF_PATH = 0, 1, 2, 3, 4
+SURF_GROUND, SURF_WATER, SURF_LAVA, SURF_ICE, SURF_PATH, SURF_GRASS = 0, 1, 2, 3, 4, 5
+
+
+def sphere_points(n: int, seed: int) -> np.ndarray:
+    """n directions aléatoires (graine fixe)."""
+    p = np.random.default_rng(seed).normal(size=(n, 3))
+    return p / np.linalg.norm(p, axis=-1, keepdims=True)
+
+
+def voronoi(d: np.ndarray, pts: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Cellule la plus proche et écart angulaire à la frontière (0 sur les bords)."""
+    dots = d.reshape(-1, 3) @ pts.T
+    part = np.argpartition(-dots, 1, axis=1)[:, :2]
+    a = np.take_along_axis(dots, part, 1)
+    order = np.argsort(-a, axis=1)
+    part = np.take_along_axis(part, order, 1)
+    a = np.take_along_axis(a, order, 1)
+    edge = np.arccos(np.clip(a[:, 1], -1, 1)) - np.arccos(np.clip(a[:, 0], -1, 1))
+    return part[:, 0].reshape(d.shape[:-1]), edge.reshape(d.shape[:-1])
+
+
+def spots(d: np.ndarray, pts: np.ndarray, radii: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Disques sur la sphère : indice du disque touché (-1 sinon) et distance normalisée au centre."""
+    ang = np.arccos(np.clip(d.reshape(-1, 3) @ pts.T, -1, 1)) / radii[None, :]
+    i = np.argmin(ang, axis=1)
+    r = ang[np.arange(len(i)), i]
+    i = np.where(r < 1, i, -1)
+    return i.reshape(d.shape[:-1]), r.reshape(d.shape[:-1])
 
 
 def pattern(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -207,6 +234,133 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         cls = np.where(water, 30, np.where(sand, 31, cls))
         surf[water] = SURF_WATER
         surf[(dirt > 0.62) & ~water & ~sand] = SURF_PATH
+    elif kind == 'petitprince':
+        # Astéroïde B 612 : sable doré, dunes douces, petits cratères ronds
+        dune = np.sin(d @ np.array([2.0, 9.0, 3.0]) * 3 + 6 * nz.fbm(d * 2 + 4, 3))
+        paint(dune > 0.75, pal['light'], 5, smooth(0.72, 0.8, dune) * 0.6)
+        pts = sphere_points(9, 612)
+        rad = np.random.default_rng(613).uniform(0.09, 0.18, 9)
+        ci, cr = spots(d, pts, rad)
+        hit = ci >= 0
+        paint(hit & (cr > 0.72), pal['pathDark'], 10, (smooth(0.7, 0.78, cr) * smooth(1.0, 0.94, cr)) * hit * 0.9)
+        paint(hit & (cr <= 0.72), pal['path'], 11, smooth(0.74, 0.66, cr) * hit * 0.8)
+    elif kind == 'candy':
+        # Glaçage rose, rivière de chocolat, gros bonbons ronds et vermicelles
+        axis = np.array([0.3, 0.8, 0.5])
+        axis /= np.linalg.norm(axis)
+        band = np.abs(d @ axis + 0.07 * np.sin(d @ np.array([0.0, 2.0, 9.0]) * 0.9)) + 0.02 * (nz.fbm(d * 3, 2) - 0.5)
+        paint(band < 0.12, pal['pathDark'], 10, smooth(0.125, 0.112, band))
+        paint(band < 0.1, pal['path'], 11, smooth(0.104, 0.094, band))
+        ribbon = smooth(0.02, 0.0, np.abs(band - 0.05)) * (band < 0.1)
+        col = col * (1 - 0.35 * ribbon[..., None]) + 0.35 * ribbon[..., None] * np.array([0.75, 0.5, 0.35])
+        surf[band < 0.1] = SURF_PATH
+        candies = ['#ff3b4e', '#ff9a1f', '#ffe14d', '#3fd65a', '#3a8bff', '#a54dff']
+        pts = sphere_points(70, 77)
+        ci, cr = spots(d, pts, np.full(70, 0.07))
+        ok = (ci >= 0) & (band > 0.14)
+        for k, c in enumerate(candies):
+            m = ok & (ci % len(candies) == k)
+            paint(m, c, 30 + k, smooth(1.0, 0.9, cr) * m)
+        # Reflet blanc en haut à gauche de chaque bonbon
+        paint(ok & (cr < 0.35), '#ffffff', 36, smooth(0.35, 0.2, cr) * ok * 0.55)
+        cell = np.floor(d * 70)
+        hh = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
+        hh = hh - np.floor(hh)
+        cen = (cell + 0.5) / 70
+        dist = np.linalg.norm(d - cen / np.linalg.norm(cen, axis=-1, keepdims=True), axis=-1)
+        spr = (dist < 0.0045) & (hh < 0.07) & (cls <= 2)
+        for k, c in enumerate(candies):
+            m = spr & (np.floor(hh * 100) % 6 == k)
+            paint(m, c, 40 + k, m * 0.9)
+    elif kind == 'futur':
+        # Banlieue des années 50/80 : pelouses, rues en damier (asphalte, trottoirs, tirets jaunes)
+        lat = np.arcsin(np.clip(d[..., 1], -1, 1))
+        lon = np.arctan2(d[..., 2], d[..., 0])
+        step = np.radians(30)
+        dl = np.abs((lat / step + 0.5) % 1 - 0.5) * step
+        dm = np.abs((lon / step + 0.5) % 1 - 0.5) * step * np.cos(lat)
+        dm = np.where(np.abs(d[..., 1]) > 0.93, 9, dm)  # pas de méridiens aux pôles
+        road = np.minimum(dl, dm)
+        paint(road < 0.075, pal['accent2'], 10, smooth(0.077, 0.07, road))  # trottoir
+        paint(road < 0.06, pal['path'], 11, smooth(0.062, 0.056, road))  # asphalte
+        surf[road < 0.06] = SURF_PATH
+        dash_l = (dl < 0.005) & (np.sin(lon * 60) > 0.2) & (dl <= dm)
+        dash_m = (dm < 0.005) & (np.sin(lat * 60) > 0.2) & (dm < dl)
+        paint(dash_l | dash_m, pal['pathDark'], 12)
+        # Parterres de fleurs et allées dans les pâtés de maisons
+        bed = nz.fbm(d * 6 + 20, 2)
+        paint((bed > 0.7) & (road > 0.09), '#4f9a3a', 13, smooth(0.7, 0.72, bed) * (road > 0.09))
+    elif kind == 'comte':
+        # Bocage : champs en patchwork bordés de haies, chemins creux, mare
+        pts = sphere_points(46, 1937)
+        cell, edge = voronoi(d, pts)
+        fields = [pal['light'], pal['mid'], pal['accent2'], pal['dark'], '#c8dc6a', '#9fd060', '#e6c55a']
+        h = (cell * 7919) % len(fields)
+        for k, c in enumerate(fields):
+            m = h == k
+            col = np.where(m[..., None], hexc(c) * (0.97 + 0.06 * (nz.fbm(d * 18 + k, 2)[..., None] - 0.5)), col)
+        # Sillons dans les champs dorés
+        furrow = np.sin(d @ np.array([31.0, 17.0, 23.0]) + cell) > 0.6
+        col = np.where(((h == 2) | (h == 6))[..., None] & furrow[..., None], col * 0.9, col)
+        cls = (h + 50).astype(int)
+        paint(edge < 0.022, pal['pathDark'], 10, smooth(0.024, 0.016, edge))  # haies
+        lane = np.abs(d @ (np.array([0.2, 0.9, 0.4]) / np.linalg.norm([0.2, 0.9, 0.4])) + 0.06 * np.sin(d[..., 0] * 7)) 
+        paint(lane < 0.05, pal['path'], 11, smooth(0.052, 0.045, lane))
+        surf[lane < 0.05] = SURF_PATH
+        pond = nz.fbm(d * 3 + 400, 3)
+        paint(pond > 0.74, '#5fb4e6', 12, smooth(0.74, 0.75, pond))
+        surf[pond > 0.74] = SURF_WATER
+    elif kind == 'herbes':
+        # Route de départ : herbe claire, hautes herbes en touffes, routes de terre, mares
+        tall = nz.fbm(d * 3.6 + 500, 3)
+        tg = tall > 0.6
+        blades = np.sin(d @ np.array([0.0, 140.0, 0.0]) + np.sin(d @ np.array([90.0, 0.0, 70.0])) * 2.0)
+        bcol = np.where((blades > 0.3)[..., None], hexc(pal['dark']), hexc(pal['accent2']))
+        a = smooth(0.6, 0.615, tall)[..., None]
+        col = col * (1 - a) + bcol * a
+        cls = np.where(tg, 5, cls)
+        surf[tg] = SURF_GRASS
+        for ax, w in ((np.array([0.1, 0.3, 0.95]), 0.085), (np.array([0.9, 0.2, -0.3]), 0.07)):
+            ax = ax / np.linalg.norm(ax)
+            band = np.abs(d @ ax) + 0.03 * (nz.fbm(d * 4 + ax[0] * 9, 2) - 0.5)
+            paint(band < w, pal['pathDark'], 10, smooth(w + 0.006, w - 0.004, band))
+            paint(band < w - 0.014, pal['path'], 11, smooth(w - 0.012, w - 0.02, band))
+            surf[band < w - 0.014] = SURF_PATH
+        pond = nz.fbm(d * 2.6 + 700, 3)
+        paint(pond > 0.73, '#bfe8ff', 12, smooth(0.728, 0.735, pond))
+        paint(pond > 0.74, '#3f9ce8', 13, smooth(0.74, 0.75, pond))
+        surf[pond > 0.74] = SURF_WATER
+    elif kind == 'enchante':
+        # Royaume enchanté : prairies émeraude, prés de fleurs roses, douves bleues, allée dorée
+        mead = nz.fbm(d * 2.8 + 800, 3)
+        paint(mead > 0.62, pal['accent2'], 5, smooth(0.62, 0.64, mead) * 0.85)
+        w = np.abs(d @ np.array([0.0, 1.0, 0.0]) - 0.35 + 0.05 * np.sin(d[..., 0] * 9) * np.cos(d[..., 2] * 7))
+        paint(w < 0.07, '#d8f4ff', 10, smooth(0.072, 0.064, w))
+        paint(w < 0.055, '#4aa8ff', 11, smooth(0.057, 0.05, w))
+        surf[w < 0.055] = SURF_WATER
+        band = np.abs(d @ np.array([0.0, 0.0, 1.0]) + 0.04 * (nz.fbm(d * 4, 2) - 0.5))
+        paint(band < 0.06, pal['pathDark'], 12, smooth(0.064, 0.056, band))
+        paint(band < 0.046, pal['path'], 13, smooth(0.049, 0.043, band))
+        surf[(band < 0.046) & (w >= 0.055)] = SURF_PATH
+    elif kind == 'nuages':
+        # Papier peint de chambre d'enfant : ciel bleu et gros nuages blancs dessinés
+        pts = sphere_points(46, 1995)
+        c = np.zeros(d.shape[:-1])
+        rng = np.random.default_rng(1996)
+        for i in range(46):
+            # Nuage = trois bulles (centre + deux côtés), ombre bleutée en dessous
+            base = pts[i]
+            t = np.cross(base, [0, 1, 0])
+            t = t / (np.linalg.norm(t) + 1e-9)
+            r = rng.uniform(0.09, 0.15)
+            for off, rr in ((0, 1.0), (-1.1, 0.75), (1.1, 0.7), (0.5, 0.8)):
+                cen = base + t * off * r + (np.array([0, 1, 0]) - base * base[1]) * (0.35 * r if off == 0.5 else 0)
+                cen = cen / np.linalg.norm(cen)
+                ang = np.arccos(np.clip(d @ cen, -1, 1))
+                c = np.maximum(c, smooth(r * rr, r * rr * 0.92, ang))
+        shadow = np.zeros_like(c)
+        paint(c > 0.5, pal['accent1'], 10, c * 0.98)
+        cls = np.where(c > 0.5, 10, 0)
     elif kind == 'naine':
         sv = np.sin(d[..., 1] * 18 + 3 * nz.fbm(d * 3, 2))
         paint(sv > 0.55, pal['path'], 10, smooth(0.5, 0.62, sv))
@@ -216,7 +370,8 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
     h = h - np.floor(h)
     center = (cell + 0.5) / 34
     dist = np.linalg.norm(d - center / np.linalg.norm(center, axis=-1, keepdims=True), axis=-1)
-    density = {'prairie': 0.05, 'emeraude': 0.02, 'banquise': 0.03, 'volcan': 0.0, 'naine': 0.05, 'ocean': 0.0, 'cubes': 0.0, 'sage': 0.04, 'champi': 0.05}.get(kind, 0.03)
+    density = {'prairie': 0.05, 'emeraude': 0.02, 'banquise': 0.03, 'volcan': 0.0, 'naine': 0.05, 'ocean': 0.0, 'cubes': 0.0, 'sage': 0.04, 'champi': 0.05,
+               'petitprince': 0.02, 'candy': 0.0, 'futur': 0.02, 'comte': 0.03, 'herbes': 0.04, 'enchante': 0.08, 'nuages': 0.0}.get(kind, 0.03)
     dots = (dist < 0.009) & (h < density) & (cls <= 2)
     soft = smooth(0.009, 0.004, dist) * 0.85
     paint(dots & (h < density / 2), pal['accent1'], 20, soft * (dots & (h < density / 2)))
@@ -362,12 +517,13 @@ def sky_db(out: str, size: int = 256) -> dict:
     return files
 
 
-def main(src: str, out: str) -> dict:
+def main(src: str, out: str, only: list[str] | None = None) -> dict:
+    """Génère tout, ou seulement les planètes `only` (le ciel n'est alors pas régénéré)."""
     os.makedirs(out, exist_ok=True)
     data = json.load(open(src, encoding='utf-8'))
-    result = {'space': space(out), 'skyDb': sky_db(out), 'planets': {}}
+    result = {'planets': {}} if only else {'space': space(out), 'skyDb': sky_db(out), 'planets': {}}
     for pl in data['planets']:
-        if pl.get('style') == 'toon':
+        if pl.get('style') == 'toon' and (not only or pl['id'] in only):
             result['planets'][pl['id']] = planet(pl, out)
     return result
 

@@ -16,48 +16,78 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Onze planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
+Seize planètes décrites dans un fichier unique, `src/game/planets.json`, lu par
 le générateur de textures et par le jeu. En Arcade, **la planète rétrécit**
 au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra s'adapte** : proche
 de la voiture tant que la planète est grosse, elle recule pour la montrer en
 entier quand elle devient petite.
 
-Plusieurs planètes s'inspirent d'univers de dessins animés et de jeux très
+Beaucoup s'inspirent d'univers de dessins animés, de films et de jeux très
 connus, avec un style évident mais sans reprendre de personnage ni de logo :
 
-| Planète | Difficulté | Véhicule | Particularité |
+| Planète | Difficulté | Inspiration | Particularité |
 |---|---|---|---|
-| Planète d'origine | ★★ | voiture Unity | la planète Unity, telle quelle |
-| Planète du Sage | ★★ | voiture volante | minuscule planète d'entraînement, route jaune, maison-dôme, ciel doré « au-delà » |
-| Prairie | ★ | voiture volante | route de terre, maison-dôme ; météores plus lents et plus rares |
-| Royaume Champignon | ★★ | voiture volante | collines rondes, tuyaux verts, champignons à pois, blocs « ? » flottants |
-| Grand Océan | ★★★ | **bateau pirate** | océan semé d'îles à palmiers, sillage d'écume, impacts en **tourbillons** ; adhérence 0,7 |
-| Émeraude | ★★★ | voiture volante | étangs : **éclaboussures** en les traversant ; météores plus rapides |
-| Monde de Cubes | ★★★ | voiture volante | tout en blocs : herbe, terre, eau, arbres carrés |
-| Néon | ★★★ | voiture volante | planète nocturne à grille lumineuse (lueur adoucie pour rester lisible) |
-| Banquise | ★★★ | voiture volante | sol gelé : la voiture glisse (adhérence 0,35) |
-| Volcan | ★★★★ | voiture volante | rivières de lave (braises en roulant dessus) ; pluie de météores, cratères ×1,5 |
-| Naine | ★★★★★ | voiture volante | rayon 0,7 : tout arrive très vite |
+| Planète d'origine | ★★ | — | la planète Unity, telle quelle (voiture Unity) |
+| Planète du Sage | ★★ | Dragon Ball | minuscule, route jaune, maison-dôme, ciel doré « au-delà » |
+| Prairie | ★ | — | route de terre, maison-dôme ; météores lents et rares |
+| La Comté | ★ | les hobbits | **collines-terriers à porte ronde**, champs en patchwork, haies, chemins creux, mares |
+| Route des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), routes de terre, bâtiments au toit rouge, balles rouge et blanc |
+| Royaume Champignon | ★★ | Mario | tuyaux verts, champignons à pois, blocs « ? » |
+| Planète Bonbons | ★★ | Candy Crush | glaçage rose, rivière de chocolat, gros bonbons, sucettes, boules de gomme |
+| Chambre de Jouets | ★★★ | Pixar | papier peint ciel et nuages, cubes à lettres, balle jaune à étoile, lampe de bureau |
+| Royaume Enchanté | ★★ | Disney | château aux flèches bleues, prés en fleurs, douves, allée dorée, ciel étoilé |
+| Grand Océan | ★★★ | One Piece | océan semé d'îles à palmiers, sillage d'écume, impacts en **tourbillons** ; adhérence 0,7 |
+| Émeraude | ★★★ | — | étangs : **éclaboussures** en les traversant ; météores plus rapides |
+| Monde de Cubes | ★★★ | Minecraft | tout en blocs |
+| Hill Valley | ★★★ | Retour vers le futur | banlieue en damier, tour de l'horloge (10 h 04) ; en turbo, **« 88 mph ! »** et deux traînées de feu |
+| Astéroïde B 612 | ★★★★ | Le Petit Prince | minuscule (rayon 0,62), sable doré, petits cratères, rose sous sa cloche, volcans, baobabs |
+| Banquise | ★★★ | — | sol gelé : la voiture glisse (adhérence 0,35) |
+| Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
 
-Émeraude, Banquise, Volcan et Naine se débloquent en parcourant 100 m sur la
-planète précédente (réglage « Toutes les planètes débloquées » pour tout
-ouvrir). Records par planète.
+Néon et Volcan ont été retirées (peu lisibles en jeu). Émeraude, Banquise et
+Naine se débloquent en parcourant 100 m sur la planète précédente (réglage
+« Toutes les planètes débloquées » pour tout ouvrir). Records par planète.
 
 Chaque planète a une **carte de surface** générée avec ses textures (sol, eau,
-lave, glace, chemin) : le jeu sait sur quoi roule la voiture et déclenche
-éclaboussures, sillage ou braises. Les réticules d'impact prennent une couleur
-lisible sur chaque sol (jaune sur Néon, cyan sur Volcan).
+lave, glace, chemin, hautes herbes) : le jeu sait sur quoi roule la voiture et
+déclenche éclaboussures, sillage, braises ou brins d'herbe.
 
-### Véhicules (préréglage Arcade)
+### Modes de jeu (bouton « Modes » du menu, ou page Réglages)
 
-- **Voiture volante** : coque en goutte blanche à bande rouge, bulle de
-  cockpit, petites ailes, deux réacteurs arrière lumineux (jets de particules,
-  plus intenses en turbo), coussin anti-gravité ; flotte et s'incline dans les
-  virages (inspiration aéro-voitures des dessins animés japonais).
-- **Bateau pirate** (Grand Océan) : coque en bois, voile gonflée à emblème,
-  figure de proue, lanterne ; tangue et laisse un sillage d'écume.
-- La boîte de collision reste celle de la voiture d'origine : le gameplay ne
-  change pas. Préréglage Original : voiture Unity.
+Cumulables :
+
+| Mode | Effet |
+|---|---|
+| Mort subite | le moindre choc est fatal |
+| Zen | aucun dégât, météores plus rares (pas de record) |
+| Contre-la-montre | 60 s au départ, chaque horloge ajoute 5 s, fin à 0 (pas de record) |
+| Tempête de météores | deux fois plus de météores, 30 % plus rapides |
+| Turbo infini | la jauge ne se vide jamais (pas de record) |
+| Commandes inversées | gauche et droite échangées |
+| Planète qui rétrécit | activé par défaut en Arcade |
+
+### Véhicule (préréglage Arcade)
+
+Voiture volante (inspiration aéro-voitures des dessins animés japonais) :
+coque blanche compacte à bandes rouges, bulle de cockpit avec pilote, **quatre
+patins anti-gravité lumineux aux coins** (silhouette de voiture vue de
+dessus), aileron, deux réacteurs arrière (jets de particules, plus forts en
+turbo). Elle flotte et s'incline dans les virages. La boîte de collision reste
+celle de la voiture d'origine : le gameplay ne change pas.
+
+### HUD Arcade
+
+- **Santé** : anneau segmenté au sol autour du véhicule (vert → jaune →
+  rouge, clignote sous 30 %, flash blanc à chaque choc, traînée claire de la
+  part perdue). Réglage « Affichage de la santé » pour revenir à la barre.
+- **Objectif** : bannière sous le chrono (pastille d'étape, icône, texte en
+  gros, barre de progression) et grande annonce « Étape N » au centre quand
+  une étape est réussie.
+- **Turbo** : bouton au centre vide (sous le pouce) entouré d'un **anneau de
+  flammes** qui représente la jauge ; jauge vide → turbo verrouillé jusqu'au
+  relâchement et 20 % de recharge (plus de turbo par à-coups).
+- Les cratères ne font plus dévier le véhicule (réglage « Les cratères font
+  dévier », désactivé par défaut).
 
 ### Style graphique Arcade
 
@@ -141,7 +171,8 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Ombres | oui | non (aucune lumière Unity n'en projette) |
 | Style dessin animé, ciel spatial, réticules, balises des horloges | oui | non |
 | Bloom + étalonnage | oui | non (bloom inactif dans le profil URP) |
-| Cratères qui dévient la voiture | oui (25 à 60°, au hasard) | non |
+| Cratères qui dévient la voiture | non (réglable) | non |
+| Santé | anneau au sol autour du véhicule | barre (Slider) |
 | Fumée puis feu selon les dégâts | oui | non |
 | Moteur | boucle procédurale, volume 0,45, hauteur selon la vitesse | `AccelerationLow`, volume 0,052, hauteur 0,65 |
 | Sons ajoutés (explosions, chocs, sifflement, turbo, carillon) | oui | non |
@@ -150,7 +181,8 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Caméra | adaptative, 6,2 u au-dessus, 30° | fixe, 12 u, vue de dessus |
 | Commande tactile | deux demi-écrans (gauche / droite) | stick fixe, en bas à droite |
 | Virage maintenu | pleine force 1,6 s puis retour en ligne droite (3,4 s) | `maxDirectionDuration` 4 s |
-| Véhicule | voiture volante (bateau sur l'Océan) | voiture Unity |
+| Véhicule | voiture volante | voiture Unity |
+| Modes de jeu (mort subite, zen, contre-la-montre…) | au choix | non |
 | Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
 
 ---
@@ -242,8 +274,8 @@ Appliquées par `tools/export_scene.py` et `src/unity/math.ts` :
   dans l'original ; les records ne sont enregistrés qu'en Arcade (réglable).
 - **Musique** : dans l'original elle ne boucle pas (99 s) ; option en Arcade.
 - **Skybox** : convertie en 6 faces 512 px ; visible autour du halo.
-- **Véhicules** : la voiture volante et le bateau sont des ajouts Arcade
-  construits en code ; la voiture Unity reste celle du préréglage Original.
+- **Véhicule** : la voiture volante est un ajout Arcade construit en code ;
+  la voiture Unity reste celle du préréglage Original.
 - **Commandes tactiles** : l'APK utilise des boutons ; Arcade utilise deux
   demi-écrans, Original un stick.
 - Le collider de la voiture reste aligné sur le rayon **non mis à l'échelle**
@@ -302,7 +334,8 @@ Prérequis : Python 3.10+, `ffmpeg`, accès réseau pour télécharger FBX2glTF
 - mesures écrites dans `tests/out/metrics.json` (distance, santé, cratères,
   météores, particules, appels de dessin…) ;
 - test fonctionnel des **deux zones** (pointer events) : moitié gauche → −1,
-  moitié droite → +1, relâché → 0, bouton turbo → turbo sans virage ;
+  moitié droite → +1, relâché → 0, bouton turbo → turbo sans virage,
+  **vrai clic sur le bouton pause** (il doit passer au-dessus des zones) ;
   vérification que la barre de vie ne chevauche jamais le chrono (paysage
   et portrait).
 

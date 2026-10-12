@@ -27,13 +27,14 @@ import { MeteorSpawner, type MeteorSpawnerFields } from './Meteors';
 import { RotatePlanet, ShrinkPlanet } from './RotatePlanet';
 import { Stages } from './Stages';
 import { Decor } from './Decor';
-import { planetById, type PlanetDef } from './planets';
+import { PLANETS, planetById, type PlanetDef } from './planets';
 import { atmosphere, planetToonMaterial, toToon } from './toon';
 import { Starfield } from './Starfield';
 import { VehicleController, type VehicleControllerFields } from './VehicleController';
 import { VehicleDistanceTracker } from './VehicleDistanceTracker';
-import { animateVehicle, buildBoat, buildHover, type VehicleRig } from './vehicles';
+import { animateVehicle, buildHover, type VehicleRig } from './vehicles';
 import * as fxp from './fxParticles';
+import { HealthRing } from './HealthRing';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -42,6 +43,8 @@ export interface WorldEvents {
   message(text: string, kind?: 'good' | 'bad' | 'info'): void;
   gameOver(stats: { distance: number; time: number; stage: number; clocks: number }): void;
   turbo(level: number, active: boolean): void;
+  /** Étape réussie : numéro de la nouvelle étape et son objectif. */
+  stage?(next: number, label: string): void;
 }
 
 const _v = new THREE.Vector3();
@@ -85,6 +88,9 @@ export class World implements GameContext {
   clocksCollected = 0;
   turboLevel = 1;
   private turboActive = false;
+  private turboLocked = false;
+  /** Contre-la-montre : temps restant (s). */
+  timeLeft = 60;
   private dyingTime = 0;
   private gameData: SceneData;
   private menuData: SceneData;
@@ -111,7 +117,7 @@ export class World implements GameContext {
   /** Style courant : dessin animé (planètes Arcade) ou original. */
   private toon = false;
   /** Véhicules Arcade (voiture volante, bateau) et effets de surface. */
-  private rigs!: { hover: VehicleRig; boat: VehicleRig };
+  private rigs!: { hover: VehicleRig };
   private rig3d: VehicleRig | null = null;
   private splash!: ParticleSystem;
   private wake!: ParticleSystem;
@@ -120,6 +126,9 @@ export class World implements GameContext {
   private surfaceFx: ParticleSystem[] = [];
   private surface = 0;
   private splashSoundCd = 0;
+  private healthRing!: HealthRing;
+  private leaves!: ParticleSystem;
+  private fireTrails: ParticleSystem[] = [];
 
   constructor(readonly assets: Assets, public settings: Settings, canvas: HTMLCanvasElement, events: WorldEvents) {
     this.events = events;
@@ -232,6 +241,7 @@ export class World implements GameContext {
     this.atmo.visible = false;
     this.planet.add(this.atmo);
     this.decor = new Decor(this.planet);
+    this.decor.prepare(PLANETS);
     const rp = getComponent<{ type: string; id: number; fields: { rotationSpeed: number } }>(this.findRoot(this.menuData, 'Planet')!, 'RotatePlanet');
     this.rotatePlanet = new RotatePlanet(this.planet, rp?.fields.rotationSpeed ?? 10);
     this.shrink = new ShrinkPlanet(this.planet);
@@ -262,10 +272,12 @@ export class World implements GameContext {
       const toon = Array.isArray(std) ? std.map(toonOf) : toonOf(std);
       this.carMats.push({ mesh: m, std, toon });
     });
+    // Jauge de santé au sol autour du véhicule (unités locales de la voiture)
+    this.healthRing = new HealthRing(this.car, 2.3);
     // Véhicules Arcade : construits une fois, affichés selon la planète
-    this.rigs = { hover: buildHover(), boat: buildBoat() };
+    this.rigs = { hover: buildHover() };
     const atlas = a.manifest.fxAtlas;
-    for (const r of [this.rigs.hover, this.rigs.boat]) {
+    for (const r of [this.rigs.hover]) {
       r.group.visible = false;
       this.car.add(r.group);
     }
@@ -279,10 +291,22 @@ export class World implements GameContext {
     this.car.add(surfEm);
     this.splash = this.particles.add(fxp.splash(surfEm, atlas));
     this.embers = this.particles.add(fxp.embers(surfEm, atlas));
-    const wakeEm = this.rigs.boat.emitters[0];
+    // Sillage d'écume quand le véhicule rase l'eau
+    const wakeEm = new THREE.Object3D();
+    wakeEm.position.set(0, 0.1, -1.5);
     wakeEm.rotation.x = -Math.PI / 2;
+    this.car.add(wakeEm);
     this.wake = this.particles.add(fxp.wake(wakeEm, atlas));
-    this.surfaceFx = [this.splash, this.embers, this.wake];
+    this.leaves = this.particles.add(fxp.splash(surfEm, atlas, [0.35, 0.85, 0.3, 1]));
+    // Deux traînées de feu derrière les patins arrière (Hill Valley)
+    for (const sx of [-1, 1]) {
+      const fe = new THREE.Object3D();
+      fe.position.set(sx * 0.82, 0.05, -0.9);
+      fe.rotation.x = -Math.PI / 2;
+      this.car.add(fe);
+      this.fireTrails.push(this.particles.add(fxp.fireTrail(fe, atlas)));
+    }
+    this.surfaceFx = [this.splash, this.embers, this.wake, this.leaves, ...this.fireTrails];
     // Fumée et feu selon les dégâts (systèmes des prefabs météores réutilisés)
     const smokeNode = findNode(a.project.prefabs['meteor 2 '] ?? a.project.prefabs['meteor3'], 'Smoke');
     const fireNode = findNode(a.project.prefabs['meteor 1'], 'CFXR Fire');
@@ -368,13 +392,18 @@ export class World implements GameContext {
       const hs = num(this.settings, 'clockHeal');
       this.health.heal(Number.isFinite(hs) ? hs : heal);
       this.clocksCollected++;
+      if (bool(this.settings, 'modeTimeAttack')) {
+        this.timeLeft += 5;
+        this.events.message('+5 s', 'good');
+      }
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.6);
       this.events.message(`+${Number.isFinite(hs) ? hs : heal} ❤`, 'good');
     };
     this.health.onChange = (hp, max, d) => this.events.health(hp, max, d);
     this.health.onDie = () => this.triggerGameOver();
     this.stages.onComplete = (n) => {
-      this.events.message(`Étape ${n} réussie !`, 'good');
+      if (this.events.stage) this.events.stage(n + 1, this.stages.label);
+      else this.events.message(`Étape ${n} réussie !`, 'good');
       this.health.heal(10);
     };
     this.applySettings(s);
@@ -457,9 +486,8 @@ export class World implements GameContext {
     this.craters.setWater(premium && def.id === 'ocean');
     // Véhicule : voiture d'origine, voiture volante ou bateau (préréglage Arcade)
     const kind = premium ? def.vehicle ?? 'original' : 'original';
-    this.rig3d = kind === 'hover' ? this.rigs.hover : kind === 'boat' ? this.rigs.boat : null;
+    this.rig3d = kind === 'hover' ? this.rigs.hover : null;
     this.rigs.hover.group.visible = this.rig3d === this.rigs.hover;
-    this.rigs.boat.group.visible = this.rig3d === this.rigs.boat;
     for (const c of this.carMats) c.mesh.visible = !this.rig3d;
     for (const t of this.thrusters) t.stop(true);
     for (const f of this.surfaceFx) f.stop(true);
@@ -520,13 +548,13 @@ export class World implements GameContext {
     const g = this.planetDef.gameplay;
     this.vehicle.speed = num(s, 'carSpeed') * g.carSpeed;
     this.vehicle.grip = g.grip;
-    this.meteors.speedMul = g.meteorSpeed;
+    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1);
     this.vehicle.steerSpeed = num(s, 'steerSpeed');
     this.vehicle.fatigue = num(s, 'steerFatigue');
     this.vehicle.fatigueHold = Math.min(num(s, 'steerFatigueHold') || 0, Math.max(0, num(s, 'steerFatigue') - 0.2));
     this.health.maxHealth = num(s, 'maxHealth');
     this.health.invulnerabilityTime = num(s, 'invulnerability');
-    this.clocks.spawnRate = num(s, 'clockInterval') * g.clockInterval;
+    this.clocks.spawnRate = num(s, 'clockInterval') * g.clockInterval * (bool(s, 'modeTimeAttack') ? 0.6 : 1);
     this.clocks.maxSpawns = num(s, 'clockMax');
     this.clocks.lifetime = num(s, 'clockLifetime');
     this.rig.tilt = num(s, 'cameraTilt');
@@ -598,6 +626,7 @@ export class World implements GameContext {
     this.car.visible = true;
     this.vehicle.reset();
     this.health.start();
+    this.healthRing.reset();
     this.tracker.start();
     this.meteors.clear();
     this.craters.clear();
@@ -607,6 +636,8 @@ export class World implements GameContext {
     this.chrono = 0;
     this.clocksCollected = 0;
     this.turboLevel = 1;
+    this.turboLocked = false;
+    this.timeLeft = 60;
     this.dyingTime = 0;
     this.stages.start();
     this.updateDifficulty();
@@ -666,6 +697,8 @@ export class World implements GameContext {
   }
 
   private damage(points: number, label: string): void {
+    if (bool(this.settings, 'modeZen')) return;
+    if (bool(this.settings, 'modeSuddenDeath')) points = Math.max(points, this.health.currentHealth);
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.8, 0.9 + Math.random() * 0.2);
@@ -716,6 +749,8 @@ export class World implements GameContext {
       interval *= Math.max(0.35, 1 - this.chrono / 240);
       aim = 0.3;
     }
+    if (bool(s, 'modeStorm')) interval *= 0.5;
+    if (bool(s, 'modeZen')) interval *= 1.6;
     this.meteors.interval = interval;
     this.meteors.aim = this.aimOverride ?? (bool(s, 'meteorRamp') || bool(s, 'stages') ? aim : 0);
   }
@@ -732,8 +767,19 @@ export class World implements GameContext {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
     } else if (this.mode === 'play' || this.mode === 'dying') {
-      if (this.mode === 'play') this.chrono += realDt;
-      this.gameplay(dt, input);
+      if (this.mode === 'play') {
+        this.chrono += realDt;
+        if (bool(this.settings, 'modeTimeAttack')) {
+          this.timeLeft -= realDt;
+          if (this.timeLeft <= 0) {
+            this.timeLeft = 0;
+            this.events.message('Temps écoulé !', 'bad');
+            this.triggerGameOver();
+          }
+        }
+      }
+      const h = bool(this.settings, 'modeMirror') ? -input.horizontal : input.horizontal;
+      this.gameplay(dt, { horizontal: h, turbo: input.turbo });
       if (this.mode === 'dying') {
         this.dyingTime += realDt;
         if (this.dyingTime > 1.6) this.finishGameOver();
@@ -756,12 +802,18 @@ export class World implements GameContext {
     const s = this.settings;
     const alive = this.mode === 'play';
     // Turbo (maintenu) : jauge qui se vide et se recharge
-    const wantTurbo = alive && bool(s, 'turbo') && input.turbo && this.turboLevel > 0.02;
-    if (wantTurbo) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
-    else this.turboLevel = Math.min(1, this.turboLevel + dt / 6);
+    // Jauge vide : turbo verrouillé jusqu'au relâchement et 20 % de recharge
+    // (sinon il se relance par à-coups tant qu'on garde le doigt dessus)
+    if (this.turboLevel <= 0.001) this.turboLocked = true;
+    if (this.turboLocked && !input.turbo && this.turboLevel >= 0.2) this.turboLocked = false;
+    const infinite = bool(s, 'modeInfiniteTurbo');
+    const wantTurbo = alive && bool(s, 'turbo') && input.turbo && !this.turboLocked;
+    if (wantTurbo && !infinite) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
+    else if (!wantTurbo) this.turboLevel = Math.min(1, this.turboLevel + dt / 6);
     if (wantTurbo !== this.turboActive) {
       this.turboActive = wantTurbo;
       if (wantTurbo && bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.7);
+      if (wantTurbo && this.planetDef.fireTrail) this.events.message('88 mph !', 'info');
     }
     this.events.turbo(this.turboLevel, this.turboActive);
     this.vehicle.speedMultiplier = this.turboActive ? 1.7 : 1;
@@ -833,6 +885,9 @@ export class World implements GameContext {
       if (this.fire.rateScale > 0 && !this.fire.playing) this.fire.play();
     }
     this.surfaceEffects(dt, alive);
+    this.healthRing.mesh.visible = String(s.healthDisplay) === 'ring' && this.mode !== 'menu';
+    this.healthRing.set(this.health.currentHealth / Math.max(1, this.health.maxHealth));
+    this.healthRing.update(dt, Time.time);
     // Son moteur : hauteur selon le turbo ; dérapage selon le braquage
     if (this.engine === this.engineOriginal) this.engine?.setPitch(0.65 * (this.turboActive ? 1.35 : 1));
     else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.planetDef.gameplay.carSpeed);
@@ -860,18 +915,19 @@ export class World implements GameContext {
         if (t.rateScale > 0 && !t.playing) t.play();
       }
     }
-    const boat = r === this.rigs.boat;
     const set = (ps: ParticleSystem, k: number) => {
       ps.rateScale = alive ? k : 0;
       if (ps.rateScale > 0 && !ps.playing) ps.play();
     };
     const water = this.surface === SURF.WATER;
     // Voiture (ou voiture volante qui rase l'eau) : éclaboussures ; bateau : sillage d'écume
-    set(this.splash, water ? (boat ? 0.35 : 1) * (this.turboActive ? 1.6 : 1) : 0);
-    set(this.wake, boat ? (water ? 1 : 0.2) * (this.turboActive ? 1.5 : 1) : 0);
-    set(this.embers, this.surface === SURF.LAVA && !boat ? 1 : 0);
+    set(this.splash, water ? (this.turboActive ? 1.6 : 1) : 0);
+    set(this.wake, water ? (this.turboActive ? 1.4 : 0.8) : 0);
+    set(this.embers, this.surface === SURF.LAVA ? 1 : 0);
+    set(this.leaves, this.surface === SURF.GRASS ? 0.7 : 0);
+    for (const f of this.fireTrails) set(f, this.planetDef.fireTrail && this.turboActive && fx ? 1 : 0);
     this.splashSoundCd -= dt;
-    if (water && !boat && alive && this.splashSoundCd <= 0 && bool(this.settings, 'extraSounds')) {
+    if (water && alive && this.splashSoundCd <= 0 && bool(this.settings, 'extraSounds')) {
       this.splashSoundCd = 0.45;
       this.audio.playOneShot('sfx_whoosh', 0.12, 1.6 + Math.random() * 0.3);
     }
@@ -913,7 +969,7 @@ export class World implements GameContext {
     // Chaque style de planète (toon / original) est compilé une fois
     const keep = this.planetDef;
     if (bool(this.settings, 'premiumFx')) {
-      this.applyPlanet(planetById('volcan'));
+      this.applyPlanet(planetById('prairie'));
       await this.compileAll();
     }
     this.applyPlanet(planetById('origine'));

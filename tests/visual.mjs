@@ -39,19 +39,25 @@ const browser = await chromium.launch({
 
 const scenarios = [
   { name: 'menu', query: 'preset=arcade&planet=prairie', run: async () => {} },
-  { name: 'planets', query: 'preset=arcade&unlockAll=1&planet=volcan', run: async (page) => page.evaluate(() => __mpp.showPlanets()) },
+  { name: 'planets', query: 'preset=arcade&unlockAll=1&planet=futur', run: async (page) => page.evaluate(() => __mpp.showPlanets()) },
   { name: 'prairie-8s', query: 'preset=arcade&planet=prairie', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 0.8; __mpp.step(480, 1 / 60, 0.3); }) },
   { name: 'emeraude', query: 'preset=arcade&planet=emeraude&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.2); }) },
   { name: 'sage', query: 'preset=arcade&planet=sage&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.3); }) },
   { name: 'champi', query: 'preset=arcade&planet=champi&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.3); }) },
-  { name: 'ocean-boat', query: 'preset=arcade&planet=ocean&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(260, 1 / 60, 0.25); }) },
+  { name: 'ocean', query: 'preset=arcade&planet=ocean&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(260, 1 / 60, 0.25); }) },
+  { name: 'comte', query: 'preset=arcade&planet=comte', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.2); }) },
+  { name: 'herbes', query: 'preset=arcade&planet=herbes', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.25); }) },
+  { name: 'candy', query: 'preset=arcade&planet=candy', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 30; __mpp.step(300, 1 / 60, 0.3); }) },
+  { name: 'pixar', query: 'preset=arcade&planet=pixar', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.35); }) },
+  { name: 'disney', query: 'preset=arcade&planet=disney', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, -0.3); }) },
+  { name: 'futur-turbo', query: 'preset=arcade&planet=futur', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.2); __mpp.step(50, 1 / 60, 0.2, true); }) },
+  { name: 'petitprince', query: 'preset=arcade&planet=petitprince', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.3); }) },
+  { name: 'time-attack', query: 'preset=arcade&planet=prairie&modeTimeAttack=1&modeStorm=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(3200, 1 / 60, 0.3); }) },
   { name: 'cubes', query: 'preset=arcade&planet=cubes&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.4); }) },
   { name: 'banquise', query: 'preset=arcade&planet=banquise&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.6); }) },
-  { name: 'volcan-damage', query: 'preset=arcade&planet=volcan&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 25; __mpp.step(400, 1 / 60, 0.2); }) },
   { name: 'naine', query: 'preset=arcade&planet=naine&unlockAll=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.1); }) },
-  { name: 'neon', query: 'preset=arcade&planet=neon', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 0.9; __mpp.step(330, 1 / 60, 0.25); }) },
   { name: 'shrink-late', query: 'preset=arcade&planet=prairie&maxHealth=4000&meteorInterval=3', run: async (page) => page.evaluate(() => { __mpp.play(); for (let i = 0; i < 40; i++) __mpp.step(240, 1 / 60, Math.sin(i) * 0.5); }) },
-  { name: 'menu-portrait', viewport: { width: 400, height: 860 }, query: 'preset=arcade&planet=neon', run: async () => {} },
+  { name: 'menu-portrait', viewport: { width: 400, height: 860 }, query: 'preset=arcade&planet=disney', run: async () => {} },
   { name: 'portrait', viewport: { width: 420, height: 860 }, query: 'preset=arcade&planet=prairie&orientation=auto', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.2); }) },
   { name: 'arcade-impact', query: 'preset=arcade&planet=prairie&meteorInterval=0.4', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.aimOverride = 1; __mpp.step(200, 1 / 60, 0); }) },
   { name: 'original-6s', query: 'preset=original', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(360, 1 / 60, 0.35); }) },
@@ -122,11 +128,16 @@ server.close();
     return a.right > c.left + 1 && a.bottom > c.top;
   });
   const o1 = await overlap();
+  // Bouton pause : vrai clic au doigt (il doit passer au-dessus des zones tactiles)
+  const pb = await page.evaluate(() => { const b = document.getElementById('btn-pause').getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+  await page.mouse.click(pb.x, pb.y);
+  const paused = await page.evaluate(() => !document.getElementById('menu-pause').hidden);
+  await page.evaluate(() => document.getElementById('btn-resume').click());
   await page.setViewportSize({ width: 360, height: 760 });
   await page.waitForTimeout(200);
   const o2 = await overlap();
-  const ok = left[0] === -1 && right[0] === 1 && after[0] === 0 && turbo[0] === 0 && turbo[1] === true && !o1 && !o2;
-  console.log('Zones : gauche', left, 'droite', right, 'relâché', after, 'turbo', turbo, 'chevauchement HUD', o1, o2, ok ? 'OK' : 'ÉCHEC');
+  const ok = left[0] === -1 && right[0] === 1 && after[0] === 0 && turbo[0] === 0 && turbo[1] === true && !o1 && !o2 && paused;
+  console.log('Zones : gauche', left, 'droite', right, 'relâché', after, 'turbo', turbo, 'chevauchement HUD', o1, o2, 'pause au doigt', paused, ok ? 'OK' : 'ÉCHEC');
   await b2.close();
   srv.close();
   if (!ok) process.exitCode = 1;

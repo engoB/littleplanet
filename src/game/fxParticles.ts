@@ -39,10 +39,10 @@ function base(over: Partial<Omit<ParticleData, 'main' | 'shape'>> & { main: Part
 
 const renderer = (mode = 0, maxSize = 0.3): ParticleRendererData => ({ type: 'ParticleSystemRenderer', id: 0, materials: [], renderMode: mode, velocityScale: 0.06, lengthScale: 1.2, maxParticleSize: maxSize });
 
-/** Éclaboussures d'eau (gouttes qui jaillissent et retombent). */
-export function splash(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
+/** Éclaboussures d'eau (gouttes qui jaillissent et retombent) ; avec `c`, brins d'herbe. */
+export function splash(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>, c: [number, number, number, number] = [0.85, 0.95, 1, 0.95]): ParticleSystem {
   const d = base({
-    main: { lifetime: rnd(0.35, 0.7), speed: rnd(2.2, 3.6), size: rnd(0.05, 0.11), gravity: k(0.9), color: col([0.85, 0.95, 1, 0.95]) },
+    main: { lifetime: rnd(0.35, 0.7), speed: rnd(2.2, 3.6), size: rnd(0.05, 0.11), gravity: k(0.9), color: col(c) },
     shape: { type: 4, angle: 35, radius: 0.25 },
     emission: { enabled: true, rate: k(70), rateOverDistance: k(0), bursts: [] },
     colorOverLifetime: { enabled: true, gradient: fade([[0, 1, 1, 1], [1, 0.8, 0.95, 1]], [[0, 1], [0.7, 0.9], [1, 0]]) },
@@ -89,4 +89,18 @@ export function embers(obj: THREE.Object3D, atlas: Record<string, [number, numbe
   });
   const look: SpriteLook = { rect: atlas.fx_dot, additive: true, tint: [2, 1.4, 0.8], hidden: false };
   return new ParticleSystem(obj, d, renderer(1, 0.15), look);
+}
+
+/** Traînées de feu au sol (Hill Valley, turbo) : flammes immobiles qui se consument. */
+export function fireTrail(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
+  const d = base({
+    main: { lifetime: rnd(0.6, 0.9), speed: rnd(0.05, 0.2), size: rnd(0.28, 0.4), gravity: k(-0.08), color: col([1, 0.7, 0.25, 1]), maxParticles: 220, rotation: rnd(0, 6.28) },
+    shape: { type: 4, angle: 10, radius: 0.02 },
+    emission: { enabled: true, rate: k(150), rateOverDistance: k(0), bursts: [] },
+    sizeOverLifetime: { enabled: true, curve: curve([[0, 0.6], [0.3, 1], [1, 0.3]]) },
+    colorOverLifetime: { enabled: true, gradient: fade([[0, 1, 1, 0.8], [0.5, 1, 0.5, 0.1], [1, 0.6, 0.15, 0.05]], [[0, 1], [0.7, 0.8], [1, 0]]) },
+  });
+  const tex = atlas.CFX2_T_Glow ?? atlas.fx_dot;
+  const look: SpriteLook = { rect: tex, additive: true, tint: [2.4, 1.3, 0.5], hidden: false };
+  return new ParticleSystem(obj, d, renderer(0, 0.5), look);
 }

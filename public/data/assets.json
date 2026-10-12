@@ -235,22 +235,6 @@
    "surface": "planet_cubes_surface.png",
    "preview": "planet_cubes_preview.png"
   },
-  "neon": {
-   "px": "planet_neon_px.jpg",
-   "e_px": "planet_neon_e_px.jpg",
-   "nx": "planet_neon_nx.jpg",
-   "e_nx": "planet_neon_e_nx.jpg",
-   "py": "planet_neon_py.jpg",
-   "e_py": "planet_neon_e_py.jpg",
-   "ny": "planet_neon_ny.jpg",
-   "e_ny": "planet_neon_e_ny.jpg",
-   "pz": "planet_neon_pz.jpg",
-   "e_pz": "planet_neon_e_pz.jpg",
-   "nz": "planet_neon_nz.jpg",
-   "e_nz": "planet_neon_e_nz.jpg",
-   "surface": "planet_neon_surface.png",
-   "preview": "planet_neon_preview.png"
-  },
   "banquise": {
    "px": "planet_banquise_px.jpg",
    "nx": "planet_banquise_nx.jpg",
@@ -261,22 +245,6 @@
    "surface": "planet_banquise_surface.png",
    "preview": "planet_banquise_preview.png"
   },
-  "volcan": {
-   "px": "planet_volcan_px.jpg",
-   "e_px": "planet_volcan_e_px.jpg",
-   "nx": "planet_volcan_nx.jpg",
-   "e_nx": "planet_volcan_e_nx.jpg",
-   "py": "planet_volcan_py.jpg",
-   "e_py": "planet_volcan_e_py.jpg",
-   "ny": "planet_volcan_ny.jpg",
-   "e_ny": "planet_volcan_e_ny.jpg",
-   "pz": "planet_volcan_pz.jpg",
-   "e_pz": "planet_volcan_e_pz.jpg",
-   "nz": "planet_volcan_nz.jpg",
-   "e_nz": "planet_volcan_e_nz.jpg",
-   "surface": "planet_volcan_surface.png",
-   "preview": "planet_volcan_preview.png"
-  },
   "naine": {
    "px": "planet_naine_px.jpg",
    "nx": "planet_naine_nx.jpg",
@@ -286,6 +254,76 @@
    "nz": "planet_naine_nz.jpg",
    "surface": "planet_naine_surface.png",
    "preview": "planet_naine_preview.png"
+  },
+  "comte": {
+   "px": "planet_comte_px.jpg",
+   "nx": "planet_comte_nx.jpg",
+   "py": "planet_comte_py.jpg",
+   "ny": "planet_comte_ny.jpg",
+   "pz": "planet_comte_pz.jpg",
+   "nz": "planet_comte_nz.jpg",
+   "surface": "planet_comte_surface.png",
+   "preview": "planet_comte_preview.png"
+  },
+  "herbes": {
+   "px": "planet_herbes_px.jpg",
+   "nx": "planet_herbes_nx.jpg",
+   "py": "planet_herbes_py.jpg",
+   "ny": "planet_herbes_ny.jpg",
+   "pz": "planet_herbes_pz.jpg",
+   "nz": "planet_herbes_nz.jpg",
+   "surface": "planet_herbes_surface.png",
+   "preview": "planet_herbes_preview.png"
+  },
+  "candy": {
+   "px": "planet_candy_px.jpg",
+   "nx": "planet_candy_nx.jpg",
+   "py": "planet_candy_py.jpg",
+   "ny": "planet_candy_ny.jpg",
+   "pz": "planet_candy_pz.jpg",
+   "nz": "planet_candy_nz.jpg",
+   "surface": "planet_candy_surface.png",
+   "preview": "planet_candy_preview.png"
+  },
+  "pixar": {
+   "px": "planet_pixar_px.jpg",
+   "nx": "planet_pixar_nx.jpg",
+   "py": "planet_pixar_py.jpg",
+   "ny": "planet_pixar_ny.jpg",
+   "pz": "planet_pixar_pz.jpg",
+   "nz": "planet_pixar_nz.jpg",
+   "surface": "planet_pixar_surface.png",
+   "preview": "planet_pixar_preview.png"
+  },
+  "disney": {
+   "px": "planet_disney_px.jpg",
+   "nx": "planet_disney_nx.jpg",
+   "py": "planet_disney_py.jpg",
+   "ny": "planet_disney_ny.jpg",
+   "pz": "planet_disney_pz.jpg",
+   "nz": "planet_disney_nz.jpg",
+   "surface": "planet_disney_surface.png",
+   "preview": "planet_disney_preview.png"
+  },
+  "futur": {
+   "px": "planet_futur_px.jpg",
+   "nx": "planet_futur_nx.jpg",
+   "py": "planet_futur_py.jpg",
+   "ny": "planet_futur_ny.jpg",
+   "pz": "planet_futur_pz.jpg",
+   "nz": "planet_futur_nz.jpg",
+   "surface": "planet_futur_surface.png",
+   "preview": "planet_futur_preview.png"
+  },
+  "petitprince": {
+   "px": "planet_petitprince_px.jpg",
+   "nx": "planet_petitprince_nx.jpg",
+   "py": "planet_petitprince_py.jpg",
+   "ny": "planet_petitprince_ny.jpg",
+   "pz": "planet_petitprince_pz.jpg",
+   "nz": "planet_petitprince_nz.jpg",
+   "surface": "planet_petitprince_surface.png",
+   "preview": "planet_petitprince_preview.png"
   }
  },
  "space": {
