@@ -14,7 +14,7 @@ const _d = new THREE.Vector3();
 export interface MapItem {
   /** Direction depuis le centre de la planète (monde). */
   pos: THREE.Vector3;
-  kind: 'clock' | 'meteor' | 'crater';
+  kind: 'clock' | 'meteor' | 'crater' | 'star';
 }
 
 export class Minimap {
@@ -61,7 +61,7 @@ export class Minimap {
     _f.set(0, 0, 1).applyQuaternion(car.quaternion);
     _r.set(1, 0, 0).applyQuaternion(car.quaternion);
     // Dans three (main droite), le +X local de la voiture est à sa gauche
-    const order: MapItem['kind'][] = ['crater', 'meteor', 'clock'];
+    const order: MapItem['kind'][] = ['crater', 'meteor', 'clock', 'star'];
     for (const kind of order) {
       for (const it of items) {
         if (it.kind !== kind) continue;
@@ -69,7 +69,7 @@ export class Minimap {
         const ang = Math.acos(Math.max(-1, Math.min(1, _d.dot(_up))));
         const az = Math.atan2(-_d.dot(_r), _d.dot(_f));
         const far = ang > this.range;
-        if (far && kind !== 'clock') continue;
+        if (far && kind !== 'clock' && kind !== 'star') continue;
         const rr = (Math.min(ang, this.range) / this.range) * (R - (far ? 9 * this.dpr : 4 * this.dpr));
         const x = Math.sin(az) * rr;
         const y = -Math.cos(az) * rr;
@@ -85,6 +85,26 @@ export class Minimap {
           c.beginPath();
           c.arc(x, y, (3 + 2 * p) * this.dpr, 0, Math.PI * 2);
           c.stroke();
+        } else if (kind === 'star') {
+          // Étoile de lancement : étoile dorée (au bord si lointaine), pulsante
+          const p = 1 + 0.25 * Math.sin(time * 8);
+          c.save();
+          c.translate(x, y);
+          c.scale(p * this.dpr, p * this.dpr);
+          c.fillStyle = '#ffd23a';
+          c.strokeStyle = '#7a4a00';
+          c.lineWidth = 1.2;
+          c.beginPath();
+          for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+            const r = i % 2 ? 3.2 : 7.5;
+            if (i === 0) c.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          c.closePath();
+          c.fill();
+          c.stroke();
+          c.restore();
         } else if (far) {
           // flèche au bord vers la cible lointaine
           c.save();

@@ -27,7 +27,13 @@
         </div>
         <div class="hud-center">
           <div id="chrono">0:00</div>
-          <div id="objective" hidden></div>
+          <div id="objective" hidden>
+            <span class="obj-stage"><small>étape</small><b id="obj-stage">1</b></span>
+            <span class="obj-main">
+              <span class="obj-line"><span id="obj-ico" class="obj-ico"></span><span id="obj-text"></span></span>
+              <span class="obj-bar"><i id="obj-fill"></i></span>
+            </span>
+          </div>
         </div>
         <div class="hud-right">
           <div id="distance" class="outline">0 m</div>
@@ -35,9 +41,10 @@
         </div>
       </div>
       <div id="messages"></div>
+      <div id="stage-banner" hidden><div class="sb-title" id="sb-title">Étape 2</div><div class="sb-sub" id="sb-sub"></div></div>
       <div id="touch-zones"></div>
       <div id="stick-zone"></div>
-      <button id="btn-turbo" aria-label="Turbo (maintenir)"><span id="turbo-fill"></span><span class="turbo-label">turbo</span></button>
+      <button id="btn-turbo" aria-label="Turbo (maintenir)"><canvas id="turbo-ring" width="160" height="160"></canvas><span class="turbo-label">turbo</span></button>
       <div id="fps" hidden></div>
     </div>
 
@@ -53,6 +60,7 @@
           <span class="chip-change">Changer</span>
         </button>
         <button id="btn-play" class="btn-primary"><span class="play-ico"></span>Jouer</button>
+        <button id="btn-modes" class="modes-chip arcade-only" aria-label="Modes de jeu"><span class="modes-ico"></span><span id="modes-summary">Modes de jeu : classique</span></button>
         <div class="home-row">
           <button id="btn-help" class="btn-glass">Comment jouer</button>
           <a id="btn-settings" class="btn-glass" href="./settings.html">Réglages</a>
@@ -72,13 +80,23 @@
       </div>
     </section>
 
+    <section id="menu-modes" class="screen panel-screen" hidden>
+      <div class="panel glass modes-panel">
+        <h2>Modes de jeu</h2>
+        <p class="modes-hint">Cumulables. Zen, Turbo infini et Contre-la-montre n'enregistrent pas de record.</p>
+        <div id="modes-list" class="modes-list"></div>
+        <button id="btn-modes-back" class="btn-primary">C'est parti !</button>
+      </div>
+    </section>
+
     <section id="menu-help" class="screen panel-screen" hidden>
       <div class="panel glass">
         <h2>Comment jouer</h2>
         <ul class="help">
-          <li><b>Ta voiture avance toute seule</b> sur la petite planète : dirige-la avec le <b>stick</b> (ou ← → / A D, ou la manette).</li>
+          <li><b>Ta voiture avance toute seule</b> sur la petite planète : appuie sur la <b>moitié gauche</b> ou <b>droite</b> de l'écran pour tourner (ou ← → / A D, ou la manette).</li>
           <li>Des <b>météores</b> tombent sans cesse : chaque impact laisse un <b>cratère</b>. Rouler dedans fait perdre de la santé.</li>
           <li>Ramasse les <b>horloges</b> pour regagner de la santé.</li>
+          <li class="arcade-only">Ta <b>santé</b> est l'anneau lumineux au sol autour du véhicule.</li>
           <li class="arcade-only">Les <b>anneaux rouges</b> annoncent les impacts ; la <b>mini-carte</b> montre horloges et météores.</li>
           <li class="arcade-only">Maintiens <b>TURBO</b> (ou Espace) pour accélérer quelques secondes.</li>
           <li class="arcade-only">Remplis les <b>objectifs d'étape</b> : la difficulté augmente à chaque étape.</li>

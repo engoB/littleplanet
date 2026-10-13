@@ -27,9 +27,316 @@
       "vehicle": "original"
     },
     {
+      "id": "galaxie",
+      "name": "Voyage galactique",
+      "tagline": "Une galaxie de petites planètes : fonce sur l'étoile de lancement pour sauter de planète en planète !",
+      "difficulty": 3,
+      "style": "galaxy",
+      "radius": 0.8,
+      "unlock": null,
+      "atmosphere": "#ffe08a",
+      "sky": "space",
+      "vehicle": "hover",
+      "galaxy": [
+        "sage",
+        "candy",
+        "petitprince",
+        "comte",
+        "pixar",
+        "naine",
+        "herbes",
+        "disney"
+      ],
+      "gameplay": {
+        "meteorInterval": 1.25,
+        "meteorSpeed": 0.95,
+        "clockInterval": 0.9,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0
+      }
+    },
+    {
+      "id": "circuit",
+      "name": "Stade Champignon",
+      "tagline": "La planète du grand circuit : pelouse de stade, tuyaux, accélérateurs et cubes bonus partout.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 1.6,
+      "unlock": null,
+      "atmosphere": "#bfe8ff",
+      "sky": "day",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#7ad85a",
+        "mid": "#6ccb4c",
+        "dark": "#5cc84a",
+        "path": "#909090",
+        "pathDark": "#505050",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#202020"
+      },
+      "pattern": "circuit",
+      "decorColors": {
+        "trunk": "#7a5230",
+        "canopy": [
+          "#3fae3c",
+          "#4fbf45"
+        ],
+        "rock": "#b9b2a4",
+        "house": "#3fbf3a",
+        "roof": "#e8433a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.15,
+        "meteorSpeed": 0.95,
+        "clockInterval": 0.95,
+        "carSpeed": 1.05,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 7,
+        "rocks": 0,
+        "houses": 0,
+        "pipes": 3
+      },
+      "kart": {
+        "boosts": 6,
+        "items": 5,
+        "ramps": 2
+      }
+    },
+    {
+      "id": "wario",
+      "name": "Stade de Terre",
+      "tagline": "Boue et bosses sous les projecteurs, murs de pneus et tremplins pour s'envoler.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.5,
+      "unlock": null,
+      "atmosphere": "#ffd08a",
+      "sky": "space",
+      "vehicle": "hover",
+      "reticle": "#ffe14d",
+      "palette": {
+        "light": "#6a4428",
+        "mid": "#5a3a22",
+        "dark": "#4a2e1a",
+        "path": "#909090",
+        "pathDark": "#505050",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#202020"
+      },
+      "pattern": "wario",
+      "decorColors": {
+        "trunk": "#9aa3ad",
+        "canopy": [
+          "#222"
+        ],
+        "rock": "#6a4428",
+        "house": "#fff",
+        "roof": "#ffe14d"
+      },
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.05,
+        "clockInterval": 1.0,
+        "carSpeed": 1.08,
+        "grip": 0.85,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "floodlights": 5,
+        "tirestacks": 8
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 4,
+        "ramps": 5
+      }
+    },
+    {
+      "id": "fantome",
+      "name": "Lac Fantôme",
+      "tagline": "Une eau violette semée de radeaux de planches, lanternes flottantes et petits fantômes.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.3,
+      "unlock": null,
+      "atmosphere": "#b8a0ff",
+      "sky": "space",
+      "vehicle": "hover",
+      "reticle": "#7dff6a",
+      "emis": 0.6,
+      "palette": {
+        "light": "#2e2858",
+        "mid": "#26214a",
+        "dark": "#1c1838",
+        "path": "#909090",
+        "pathDark": "#505050",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#202020"
+      },
+      "pattern": "fantome",
+      "decorColors": {
+        "trunk": "#3a2e3a",
+        "canopy": [
+          "#4a3a5a"
+        ],
+        "rock": "#3a3450",
+        "house": "#f6f4ff",
+        "roof": "#7a5aff",
+        "lantern": [
+          "#8affd8",
+          "#c09aff",
+          "#ffd36a"
+        ]
+      },
+      "gameplay": {
+        "meteorInterval": 1.05,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "ghosts": 5,
+        "lanterns": 8,
+        "deadtrees": 4
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 5,
+        "ramps": 0
+      }
+    },
+    {
+      "id": "bowser",
+      "name": "Forteresse de Lave",
+      "tagline": "Pavés de pierre, fissures de lave, blocs écraseurs et torches sous un ciel rouge.",
+      "difficulty": 4,
+      "style": "toon",
+      "radius": 1.4,
+      "unlock": null,
+      "atmosphere": "#ff8a5a",
+      "sky": "red",
+      "vehicle": "hover",
+      "reticle": "#7df6ff",
+      "emis": 0.55,
+      "palette": {
+        "light": "#4a4248",
+        "mid": "#3a3438",
+        "dark": "#2e2a2e",
+        "path": "#909090",
+        "pathDark": "#505050",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#202020"
+      },
+      "pattern": "bowser",
+      "decorColors": {
+        "trunk": "#3a3438",
+        "canopy": [
+          "#555"
+        ],
+        "rock": "#5a5258",
+        "house": "#8a8690",
+        "roof": "#8a1a1a"
+      },
+      "gameplay": {
+        "meteorInterval": 0.8,
+        "meteorSpeed": 1.15,
+        "clockInterval": 1.1,
+        "carSpeed": 1.08,
+        "grip": 1.0,
+        "craterDamage": 1.2
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "thwomps": 4,
+        "torches": 6
+      },
+      "kart": {
+        "boosts": 4,
+        "items": 4,
+        "ramps": 3
+      }
+    },
+    {
+      "id": "arcenciel",
+      "name": "Arc-en-ciel Céleste",
+      "tagline": "Des dalles arc-en-ciel lumineuses au milieu des étoiles, accélérateurs et cubes bonus.",
+      "difficulty": 5,
+      "style": "toon",
+      "radius": 1.7,
+      "unlock": null,
+      "atmosphere": "#c8a0ff",
+      "sky": "space",
+      "vehicle": "hover",
+      "reticle": "#ffffff",
+      "emis": 0.7,
+      "palette": {
+        "light": "#1a1450",
+        "mid": "#110e38",
+        "dark": "#07061e",
+        "path": "#909090",
+        "pathDark": "#505050",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#202020"
+      },
+      "pattern": "arcenciel",
+      "decorColors": {
+        "trunk": "#fff",
+        "canopy": [
+          "#ffe14d"
+        ],
+        "rock": "#fff",
+        "house": "#fff",
+        "roof": "#ffe14d"
+      },
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.1,
+        "clockInterval": 1.0,
+        "carSpeed": 1.1,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "stars": 10
+      },
+      "kart": {
+        "boosts": 7,
+        "items": 6,
+        "ramps": 0
+      }
+    },
+    {
       "id": "sage",
       "name": "Planète du Sage",
-      "tagline": "Minuscule planète d'entraînement : route jaune, maison-dôme et ciel doré de l'au-delà.",
+      "tagline": "Minuscule planète d'entraînement : prés dorés, maison-dôme et ciel doré de l'au-delà.",
       "difficulty": 2,
       "style": "toon",
       "radius": 0.72,
@@ -75,7 +382,7 @@
     {
       "id": "prairie",
       "name": "Prairie",
-      "tagline": "Herbe tendre, route de terre et petite maison ronde. Idéale pour débuter.",
+      "tagline": "Herbe tendre, clairières et petite maison ronde. Idéale pour débuter.",
       "difficulty": 1,
       "style": "toon",
       "radius": 1.0,
@@ -118,6 +425,112 @@
       },
       "sky": "space",
       "vehicle": "hover"
+    },
+    {
+      "id": "comte",
+      "name": "La Comté",
+      "tagline": "Collines rondes percées de portes, champs en patchwork et haies : la campagne la plus paisible.",
+      "difficulty": 1,
+      "style": "toon",
+      "radius": 1.1,
+      "unlock": null,
+      "atmosphere": "#bff0a0",
+      "sky": "day",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#9be06a",
+        "mid": "#7cc95a",
+        "dark": "#5aab48",
+        "path": "#d9b77a",
+        "pathDark": "#4f8a3a",
+        "accent1": "#ffffff",
+        "accent2": "#e8d66a",
+        "line": "#2a5a20"
+      },
+      "pattern": "comte",
+      "decorColors": {
+        "trunk": "#7a5230",
+        "canopy": [
+          "#4fa83f",
+          "#3f9a3a"
+        ],
+        "rock": "#b9b2a4",
+        "house": "#6fc04f",
+        "roof": "#4f9a3a",
+        "door": [
+          "#2f8a3a",
+          "#f2c84a",
+          "#d9542f"
+        ],
+        "window": "#ffe9a0"
+      },
+      "gameplay": {
+        "meteorInterval": 1.3,
+        "meteorSpeed": 0.85,
+        "clockInterval": 0.85,
+        "carSpeed": 0.95,
+        "grip": 1.0,
+        "craterDamage": 0.8
+      },
+      "decor": {
+        "trees": 3,
+        "rocks": 0,
+        "houses": 0,
+        "hills": 4
+      }
+    },
+    {
+      "id": "herbes",
+      "name": "Prairie des Herbes Hautes",
+      "tagline": "Hautes herbes qui frémissent, mares, centres au toit rouge et balles rouge et blanc.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#aef0ff",
+      "sky": "day",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#8fe36a",
+        "mid": "#74d35a",
+        "dark": "#2f8f3a",
+        "path": "#f0d08a",
+        "pathDark": "#c9a25a",
+        "accent1": "#ffffff",
+        "accent2": "#4fbf45",
+        "line": "#2a5a20"
+      },
+      "pattern": "herbes",
+      "decorColors": {
+        "trunk": "#7a5230",
+        "canopy": [
+          "#2f9a4a",
+          "#3fae52"
+        ],
+        "rock": "#b9b2a4",
+        "house": "#f6f1e2",
+        "roof": "#e8433a",
+        "grass": [
+          "#3fae45",
+          "#2f9a3a"
+        ]
+      },
+      "gameplay": {
+        "meteorInterval": 1.1,
+        "meteorSpeed": 1.0,
+        "clockInterval": 0.95,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 2,
+        "rocks": 0,
+        "houses": 0,
+        "cabins": 2,
+        "tallgrass": 10,
+        "balls": 3
+      }
     },
     {
       "id": "champi",
@@ -169,16 +582,169 @@
       }
     },
     {
+      "id": "candy",
+      "name": "Planète Bonbons",
+      "tagline": "Glaçage rose, flaques de chocolat, sucettes géantes et bonbons qui brillent.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#ffb8e6",
+      "sky": "db",
+      "vehicle": "hover",
+      "reticle": "#7a2cff",
+      "palette": {
+        "light": "#ffd3ea",
+        "mid": "#ffbfe0",
+        "dark": "#ffa8d4",
+        "path": "#7a4426",
+        "pathDark": "#5a2e18",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#7a2c5a"
+      },
+      "pattern": "candy",
+      "decorColors": {
+        "trunk": "#ffffff",
+        "canopy": [
+          "#ff3b4e",
+          "#ff9a1f",
+          "#3fd65a",
+          "#3a8bff",
+          "#a54dff",
+          "#ffe14d"
+        ],
+        "rock": "#ff7ab8",
+        "house": "#fff",
+        "roof": "#ff3b4e"
+      },
+      "gameplay": {
+        "meteorInterval": 1.1,
+        "meteorSpeed": 1.0,
+        "clockInterval": 0.9,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "lollipops": 5,
+        "gumdrops": 6
+      }
+    },
+    {
+      "id": "pixar",
+      "name": "Chambre de Jouets",
+      "tagline": "Une planète papier peint ciel et nuages, cubes à lettres, balle à étoile et lampe de bureau.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#bfe6ff",
+      "sky": "day",
+      "vehicle": "hover",
+      "reticle": "#ff2e0d",
+      "palette": {
+        "light": "#7cc6ff",
+        "mid": "#6ab9f5",
+        "dark": "#5aa8ea",
+        "path": "#ffffff",
+        "pathDark": "#dceeff",
+        "accent1": "#ffffff",
+        "accent2": "#ffffff",
+        "line": "#2a4a7a"
+      },
+      "pattern": "nuages",
+      "decorColors": {
+        "trunk": "#9aa3ad",
+        "canopy": [
+          "#ff4a3a",
+          "#3a8bff",
+          "#ffd23a",
+          "#3fbf5a"
+        ],
+        "rock": "#ffd23a",
+        "house": "#fff",
+        "roof": "#3a6bff"
+      },
+      "gameplay": {
+        "meteorInterval": 0.95,
+        "meteorSpeed": 1.05,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "toyblocks": 6,
+        "luxoballs": 2,
+        "lamps": 1
+      }
+    },
+    {
+      "id": "disney",
+      "name": "Royaume Enchanté",
+      "tagline": "Château de conte de fées aux flèches bleues, prés en fleurs et lacs sous les étoiles.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 1.05,
+      "unlock": null,
+      "atmosphere": "#c9b8ff",
+      "sky": "space",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#7fe0a8",
+        "mid": "#62cf92",
+        "dark": "#4ab87e",
+        "path": "#ffe08a",
+        "pathDark": "#e0b04a",
+        "accent1": "#ffffff",
+        "accent2": "#ffb6e0",
+        "line": "#2a5a40"
+      },
+      "pattern": "enchante",
+      "decorColors": {
+        "trunk": "#8a5a3b",
+        "canopy": [
+          "#ffb6e0",
+          "#ff9ad0",
+          "#fff0f8"
+        ],
+        "rock": "#d8d0f0",
+        "house": "#fff6fb",
+        "roof": "#3a7bff"
+      },
+      "gameplay": {
+        "meteorInterval": 1.05,
+        "meteorSpeed": 1.0,
+        "clockInterval": 0.95,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 4,
+        "rocks": 0,
+        "houses": 0,
+        "castles": 1
+      }
+    },
+    {
       "id": "ocean",
       "name": "Grand Océan",
-      "tagline": "Une planète-océan semée d'îles : ta voiture devient bateau pirate. Gare aux tourbillons !",
+      "tagline": "Une planète-océan semée d'îles à palmiers : rase les vagues en voiture volante. Gare aux tourbillons !",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.05,
       "unlock": null,
       "atmosphere": "#8fd8ff",
       "sky": "day",
-      "vehicle": "boat",
+      "vehicle": "hover",
       "reticle": "#ff3b2f",
       "palette": {
         "light": "#4cc3f5",
@@ -316,51 +882,104 @@
       }
     },
     {
-      "id": "neon",
-      "name": "Néon",
-      "tagline": "Planète nocturne à grille lumineuse : voiture et impacts brillent comme en 1985.",
+      "id": "futur",
+      "name": "Hill Valley",
+      "tagline": "Pelouses, places pavées et tour de l'horloge. À fond de turbo, le véhicule laisse deux traînées de feu !",
       "difficulty": 3,
       "style": "toon",
-      "neon": true,
       "radius": 1.0,
       "unlock": null,
-      "atmosphere": "#b04bff",
+      "atmosphere": "#ffd08a",
+      "sky": "day",
+      "vehicle": "hover",
+      "fireTrail": true,
       "palette": {
-        "light": "#3c2676",
-        "mid": "#2e1c60",
-        "dark": "#22144c",
-        "path": "#22e8ff",
-        "pathDark": "#ff2bd6",
+        "light": "#8ed86a",
+        "mid": "#79c95a",
+        "dark": "#62b04c",
+        "path": "#5a5f6a",
+        "pathDark": "#ffd23a",
         "accent1": "#ffffff",
-        "accent2": "#ffe14d",
-        "line": "#000000"
+        "accent2": "#d9d4c8",
+        "line": "#2a2a2a"
       },
-      "pattern": "neon",
+      "pattern": "futur",
       "decorColors": {
-        "trunk": "#1a1030",
+        "trunk": "#7a5230",
         "canopy": [
-          "#2a1650"
+          "#3f9a3a",
+          "#4fae45"
         ],
-        "rock": "#2a1a4a",
-        "house": "#1a1030",
-        "roof": "#ff2bd6"
+        "rock": "#b9b2a4",
+        "house": "#f6f1e2",
+        "roof": "#c24a3a",
+        "tower": "#e8dcc0",
+        "clock": "#ffffff"
       },
       "gameplay": {
-        "meteorInterval": 0.95,
+        "meteorInterval": 0.9,
         "meteorSpeed": 1.1,
         "clockInterval": 1.0,
-        "carSpeed": 1.05,
+        "carSpeed": 1.15,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 3,
+        "rocks": 0,
+        "houses": 2,
+        "clocktowers": 1
+      }
+    },
+    {
+      "id": "petitprince",
+      "name": "Astéroïde B 612",
+      "tagline": "Minuscule astéroïde de sable doré : une rose sous sa cloche, deux volcans et des baobabs à surveiller.",
+      "difficulty": 4,
+      "style": "toon",
+      "radius": 0.62,
+      "unlock": null,
+      "atmosphere": "#ffe7a8",
+      "sky": "space",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#f6dc8e",
+        "mid": "#eccb72",
+        "dark": "#ddb35a",
+        "path": "#cfa04a",
+        "pathDark": "#b98a3a",
+        "accent1": "#fff6d0",
+        "accent2": "#ffd36a",
+        "line": "#7a5a20"
+      },
+      "pattern": "petitprince",
+      "decorColors": {
+        "trunk": "#9a6a42",
+        "canopy": [
+          "#4f9a3a"
+        ],
+        "rock": "#b98a3a",
+        "house": "#fff",
+        "roof": "#e8433a",
+        "rose": "#e8233a",
+        "volcano": "#8a5a3a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.15,
+        "meteorSpeed": 0.9,
+        "clockInterval": 0.95,
+        "carSpeed": 0.85,
         "grip": 1.0,
         "craterDamage": 1.0
       },
       "decor": {
         "trees": 0,
-        "rocks": 2,
-        "houses": 0
-      },
-      "reticle": "#ffe14d",
-      "sky": "space",
-      "vehicle": "hover"
+        "rocks": 0,
+        "houses": 0,
+        "roses": 1,
+        "baobabs": 2,
+        "volcanoes": 2
+      }
     },
     {
       "id": "banquise",
@@ -413,57 +1032,6 @@
       "vehicle": "hover"
     },
     {
-      "id": "volcan",
-      "name": "Volcan",
-      "tagline": "Roche brûlante et rivières de lave. Pluie de météores, cratères plus douloureux.",
-      "difficulty": 4,
-      "style": "toon",
-      "radius": 1.0,
-      "unlock": {
-        "planet": "banquise",
-        "distance": 100
-      },
-      "atmosphere": "#ff8a4a",
-      "palette": {
-        "light": "#7a6660",
-        "mid": "#61504a",
-        "dark": "#4a3b36",
-        "path": "#ff8a1a",
-        "pathDark": "#ffd23a",
-        "accent1": "#7a5a50",
-        "accent2": "#ff5a1a",
-        "line": "#120a0a"
-      },
-      "pattern": "volcan",
-      "decorColors": {
-        "trunk": "#2a1a14",
-        "canopy": [
-          "#3a2a28",
-          "#4a3430",
-          "#2a1e1c"
-        ],
-        "rock": "#4a3836",
-        "house": "#6a4a40",
-        "roof": "#ff6a2a"
-      },
-      "gameplay": {
-        "meteorInterval": 0.6,
-        "meteorSpeed": 1.35,
-        "clockInterval": 1.2,
-        "carSpeed": 1.1,
-        "grip": 1.0,
-        "craterDamage": 1.5
-      },
-      "decor": {
-        "trees": 0,
-        "rocks": 4,
-        "houses": 0
-      },
-      "reticle": "#7df6ff",
-      "sky": "space",
-      "vehicle": "hover"
-    },
-    {
       "id": "naine",
       "name": "Naine",
       "tagline": "Toute petite planète bonbon : tout arrive très vite.",
@@ -471,7 +1039,7 @@
       "style": "toon",
       "radius": 0.7,
       "unlock": {
-        "planet": "volcan",
+        "planet": "banquise",
         "distance": 100
       },
       "atmosphere": "#ffb0f0",

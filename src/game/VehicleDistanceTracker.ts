@@ -11,6 +11,11 @@ export class VehicleDistanceTracker {
     this.totalDistance = 0;
   }
 
+  /** Recale la position de référence sans compter de distance (téléportation). */
+  resync(): void {
+    this.lastPosition.copy(this.transform.position);
+  }
+
   update(): void {
     this.totalDistance += this.transform.position.distanceTo(this.lastPosition);
     this.lastPosition.copy(this.transform.position);

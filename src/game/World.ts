@@ -27,13 +27,15 @@ import { MeteorSpawner, type MeteorSpawnerFields } from './Meteors';
 import { RotatePlanet, ShrinkPlanet } from './RotatePlanet';
 import { Stages } from './Stages';
 import { Decor } from './Decor';
-import { planetById, type PlanetDef } from './planets';
-import { atmosphere, planetToonMaterial, toToon } from './toon';
+import { PLANETS, planetById, type PlanetDef } from './planets';
+import { atmosphere, planetToonMaterial, toonGradient, toToon } from './toon';
 import { Starfield } from './Starfield';
 import { VehicleController, type VehicleControllerFields } from './VehicleController';
 import { VehicleDistanceTracker } from './VehicleDistanceTracker';
-import { animateVehicle, buildBoat, buildHover, type VehicleRig } from './vehicles';
+import { animateVehicle, buildHover, type VehicleRig } from './vehicles';
 import * as fxp from './fxParticles';
+import { HealthRing } from './HealthRing';
+import { KartProps } from './KartProps';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -42,6 +44,8 @@ export interface WorldEvents {
   message(text: string, kind?: 'good' | 'bad' | 'info'): void;
   gameOver(stats: { distance: number; time: number; stage: number; clocks: number }): void;
   turbo(level: number, active: boolean): void;
+  /** Étape réussie : numéro de la nouvelle étape et son objectif. */
+  stage?(next: number, label: string, title?: string): void;
 }
 
 const _v = new THREE.Vector3();
@@ -85,6 +89,9 @@ export class World implements GameContext {
   clocksCollected = 0;
   turboLevel = 1;
   private turboActive = false;
+  private turboLocked = false;
+  /** Contre-la-montre : temps restant (s). */
+  timeLeft = 60;
   private dyingTime = 0;
   private gameData: SceneData;
   private menuData: SceneData;
@@ -93,7 +100,23 @@ export class World implements GameContext {
   aimOverride: number | null = null;
   private baseCarColor = new THREE.Color();
   // --- planètes (préréglage Arcade)
-  planetDef: PlanetDef = planetById('origine');
+  /** Planète (ou monde) choisie dans le menu. */
+  private selected: PlanetDef = planetById('origine');
+  /** Planète physique courante (une étape du voyage galactique, sinon la planète choisie). */
+  def: PlanetDef = this.selected;
+  get planetDef(): PlanetDef {
+    return this.selected;
+  }
+  set planetDef(d: PlanetDef) {
+    this.selected = d;
+    this.def = this.resolve(d, 0);
+  }
+  /** Étape i d'un voyage galactique (petites planètes), ou la planète elle-même. */
+  private resolve(d: PlanetDef, i: number): PlanetDef {
+    if (d.style !== 'galaxy' || !d.galaxy?.length) return d;
+    const sub = planetById(d.galaxy[i % d.galaxy.length]);
+    return { ...sub, radius: Math.min(sub.radius, d.radius) };
+  }
   private planetMesh!: THREE.Mesh;
   private planetStdMat!: THREE.Material;
   private readonly planetToonMat = planetToonMaterial();
@@ -111,7 +134,7 @@ export class World implements GameContext {
   /** Style courant : dessin animé (planètes Arcade) ou original. */
   private toon = false;
   /** Véhicules Arcade (voiture volante, bateau) et effets de surface. */
-  private rigs!: { hover: VehicleRig; boat: VehicleRig };
+  private rigs!: { hover: VehicleRig };
   private rig3d: VehicleRig | null = null;
   private splash!: ParticleSystem;
   private wake!: ParticleSystem;
@@ -120,6 +143,25 @@ export class World implements GameContext {
   private surfaceFx: ParticleSystem[] = [];
   private surface = 0;
   private splashSoundCd = 0;
+  private healthRing!: HealthRing;
+  private leaves!: ParticleSystem;
+  private fireTrails: ParticleSystem[] = [];
+  // --- circuits
+  private kart!: KartProps;
+  private boostTime = 0;
+  private boostCd = 0;
+  /** Saut (tremplin) : temps restant (s). */
+  private hop = 0;
+  readonly carDir = new THREE.Vector3(0, 1, 0);
+  // --- voyage galactique
+  galaxy: { index: number; arrivalDist: number; star: THREE.Vector3 | null; visited: number } | null = null;
+  launch: { t: number; dur: number; p: THREE.Vector3[]; up0: THREE.Vector3; up1: THREE.Vector3 } | null = null;
+  private satellite!: THREE.Group;
+  private satMat!: THREE.MeshToonMaterial;
+  private satAtmo!: THREE.Mesh;
+  private satDef: PlanetDef | null = null;
+  launchStar!: THREE.Group;
+  private sparkle!: ParticleSystem;
 
   constructor(readonly assets: Assets, public settings: Settings, canvas: HTMLCanvasElement, events: WorldEvents) {
     this.events = events;
@@ -232,6 +274,9 @@ export class World implements GameContext {
     this.atmo.visible = false;
     this.planet.add(this.atmo);
     this.decor = new Decor(this.planet);
+    this.decor.prepare(PLANETS);
+    this.kart = new KartProps(this.planet);
+    this.buildGalaxyObjects();
     const rp = getComponent<{ type: string; id: number; fields: { rotationSpeed: number } }>(this.findRoot(this.menuData, 'Planet')!, 'RotatePlanet');
     this.rotatePlanet = new RotatePlanet(this.planet, rp?.fields.rotationSpeed ?? 10);
     this.shrink = new ShrinkPlanet(this.planet);
@@ -262,10 +307,12 @@ export class World implements GameContext {
       const toon = Array.isArray(std) ? std.map(toonOf) : toonOf(std);
       this.carMats.push({ mesh: m, std, toon });
     });
+    // Jauge de santé au sol autour du véhicule (unités locales de la voiture)
+    this.healthRing = new HealthRing(this.car, 2.3);
     // Véhicules Arcade : construits une fois, affichés selon la planète
-    this.rigs = { hover: buildHover(), boat: buildBoat() };
+    this.rigs = { hover: buildHover() };
     const atlas = a.manifest.fxAtlas;
-    for (const r of [this.rigs.hover, this.rigs.boat]) {
+    for (const r of [this.rigs.hover]) {
       r.group.visible = false;
       this.car.add(r.group);
     }
@@ -279,10 +326,23 @@ export class World implements GameContext {
     this.car.add(surfEm);
     this.splash = this.particles.add(fxp.splash(surfEm, atlas));
     this.embers = this.particles.add(fxp.embers(surfEm, atlas));
-    const wakeEm = this.rigs.boat.emitters[0];
+    // Sillage d'écume quand le véhicule rase l'eau
+    const wakeEm = new THREE.Object3D();
+    wakeEm.position.set(0, 0.1, -1.5);
     wakeEm.rotation.x = -Math.PI / 2;
+    this.car.add(wakeEm);
     this.wake = this.particles.add(fxp.wake(wakeEm, atlas));
-    this.surfaceFx = [this.splash, this.embers, this.wake];
+    this.leaves = this.particles.add(fxp.splash(surfEm, atlas, [0.35, 0.85, 0.3, 1]));
+    // Deux traînées de feu derrière les patins arrière (Hill Valley)
+    for (const sx of [-1, 1]) {
+      const fe = new THREE.Object3D();
+      fe.position.set(sx * 0.82, 0.05, -0.9);
+      fe.rotation.x = -Math.PI / 2;
+      this.car.add(fe);
+      this.fireTrails.push(this.particles.add(fxp.fireTrail(fe, atlas)));
+    }
+    this.sparkle = this.particles.add(fxp.sparkle(this.car, atlas));
+    this.surfaceFx = [this.splash, this.embers, this.wake, this.leaves, ...this.fireTrails, this.sparkle];
     // Fumée et feu selon les dégâts (systèmes des prefabs météores réutilisés)
     const smokeNode = findNode(a.project.prefabs['meteor 2 '] ?? a.project.prefabs['meteor3'], 'Smoke');
     const fireNode = findNode(a.project.prefabs['meteor 1'], 'CFXR Fire');
@@ -354,7 +414,7 @@ export class World implements GameContext {
     this.meteors.onHitCar = (name, at) => {
       this.explosions.spawn(at);
       this.sfxAt('sfx_explosion', at, 1);
-      this.damage(this.health.getDamagePoints(name) * this.planetDef.gameplay.craterDamage, 'Météore !');
+      this.damage(this.health.getDamagePoints(name) * this.def.gameplay.craterDamage, 'Météore !');
     };
     this.meteors.onSpawn = (dir) => {
       // Sifflement si le météore vise les environs de la voiture
@@ -368,13 +428,18 @@ export class World implements GameContext {
       const hs = num(this.settings, 'clockHeal');
       this.health.heal(Number.isFinite(hs) ? hs : heal);
       this.clocksCollected++;
+      if (bool(this.settings, 'modeTimeAttack')) {
+        this.timeLeft += 5;
+        this.events.message('+5 s', 'good');
+      }
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.6);
       this.events.message(`+${Number.isFinite(hs) ? hs : heal} ❤`, 'good');
     };
     this.health.onChange = (hp, max, d) => this.events.health(hp, max, d);
     this.health.onDie = () => this.triggerGameOver();
     this.stages.onComplete = (n) => {
-      this.events.message(`Étape ${n} réussie !`, 'good');
+      if (this.events.stage) this.events.stage(n + 1, this.stages.label);
+      else this.events.message(`Étape ${n} réussie !`, 'good');
       this.health.heal(10);
     };
     this.applySettings(s);
@@ -395,7 +460,7 @@ export class World implements GameContext {
    * ni détruit (pas de recompilation : seuls les uniformes et la visibilité changent).
    */
   applyPlanet(def: PlanetDef): void {
-    this.planetDef = def;
+    this.def = def;
     const premium = bool(this.settings, 'premiumFx');
     this.toon = premium && def.style === 'toon';
     this.planet.scale.setScalar(def.radius);
@@ -407,6 +472,7 @@ export class World implements GameContext {
       u.planetEmis.value = cubes.emis ?? cubes.color;
       // Néon et lave : lueur modérée pour que voiture, cratères et réticules restent lisibles
       if (def.neon) u.emisColor.value.setRGB(0.8, 0.8, 0.8);
+      else if (def.emis) u.emisColor.value.setRGB(def.emis, def.emis, def.emis);
       else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.55 : 0);
       u.rimColor.value.set(def.atmosphere);
       this.planetMesh.material = this.planetToonMat;
@@ -417,14 +483,17 @@ export class World implements GameContext {
     (this.atmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
     (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon ? 0.3 : 0.6;
     if (this.haloRoot) this.haloRoot.visible = !premium;
-    const sky = premium ? def.sky ?? 'space' : 'original';
+    // Voyage galactique : ciel étoilé pour tout le voyage
+    const sky = premium ? (this.selected.style === 'galaxy' ? 'space' : def.sky ?? 'space') : 'original';
     this.scene.background =
       sky === 'space' && this.assets.space ? this.assets.space
       : sky === 'db' && this.assets.skyDb ? this.assets.skyDb
+      : sky === 'red' && this.assets.skyRed ? this.assets.skyRed
       : this.assets.skybox;
     this.scene.backgroundIntensity = sky === 'space' ? (def.neon ? 0.55 : 0.8) : sky === 'db' ? 0.62 : sky === 'original' ? 1 : 0.95;
     this.scene.environment = this.dayEnvironment;
     this.decor.build(def, this.planetRadius(), def.radius);
+    this.kart.build(premium ? def.kart : undefined, this.planetRadius(), def.radius, [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
@@ -457,9 +526,8 @@ export class World implements GameContext {
     this.craters.setWater(premium && def.id === 'ocean');
     // Véhicule : voiture d'origine, voiture volante ou bateau (préréglage Arcade)
     const kind = premium ? def.vehicle ?? 'original' : 'original';
-    this.rig3d = kind === 'hover' ? this.rigs.hover : kind === 'boat' ? this.rigs.boat : null;
+    this.rig3d = kind === 'hover' ? this.rigs.hover : null;
     this.rigs.hover.group.visible = this.rig3d === this.rigs.hover;
-    this.rigs.boat.group.visible = this.rig3d === this.rigs.boat;
     for (const c of this.carMats) c.mesh.visible = !this.rig3d;
     for (const t of this.thrusters) t.stop(true);
     for (const f of this.surfaceFx) f.stop(true);
@@ -517,16 +585,16 @@ export class World implements GameContext {
 
   applySettings(s: Settings): void {
     this.settings = s;
-    const g = this.planetDef.gameplay;
+    const g = this.def.gameplay;
     this.vehicle.speed = num(s, 'carSpeed') * g.carSpeed;
     this.vehicle.grip = g.grip;
-    this.meteors.speedMul = g.meteorSpeed;
+    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1);
     this.vehicle.steerSpeed = num(s, 'steerSpeed');
     this.vehicle.fatigue = num(s, 'steerFatigue');
     this.vehicle.fatigueHold = Math.min(num(s, 'steerFatigueHold') || 0, Math.max(0, num(s, 'steerFatigue') - 0.2));
     this.health.maxHealth = num(s, 'maxHealth');
     this.health.invulnerabilityTime = num(s, 'invulnerability');
-    this.clocks.spawnRate = num(s, 'clockInterval') * g.clockInterval;
+    this.clocks.spawnRate = num(s, 'clockInterval') * g.clockInterval * (bool(s, 'modeTimeAttack') ? 0.6 : 1);
     this.clocks.maxSpawns = num(s, 'clockMax');
     this.clocks.lifetime = num(s, 'clockLifetime');
     this.rig.tilt = num(s, 'cameraTilt');
@@ -558,13 +626,18 @@ export class World implements GameContext {
     this.craters.clear();
     this.explosions.clear();
     this.shaker.clear();
-    this.planet.scale.setScalar(this.planetDef.radius);
+    this.def = this.resolve(this.selected, 0);
+    this.galaxy = null;
+    this.launch = null;
+    this.planet.scale.setScalar(this.def.radius);
     this.planet.quaternion.identity();
     this.rotatePlanet.start();
     this.engine?.stop();
     this.skid?.stop();
     for (const l of this.sceneLights) l.light.intensity = l.menu;
-    this.applyPlanet(this.planetDef);
+    this.applyPlanet(this.def);
+    this.placeSatellite(this.selected.style === 'galaxy' ? this.resolve(this.selected, 1) : null, new THREE.Vector3(0.75, 0.35, -0.55));
+    this.launchStar.visible = false;
     const camNode = this.findRoot(this.menuData, 'Main Camera')!;
     this.rig.tilt = 0;
     this.rig.adaptive = false;
@@ -588,8 +661,15 @@ export class World implements GameContext {
     this.applySettings(this.settings);
     this.planet.quaternion.identity();
     for (const l of this.sceneLights) l.light.intensity = l.game;
-    this.applyPlanet(this.planetDef);
-    this.craters.baseScale = this.planetDef.radius;
+    this.def = this.resolve(this.selected, 0);
+    this.applyPlanet(this.def);
+    this.craters.baseScale = this.def.radius;
+    this.launch = null;
+    this.launchStar.visible = false;
+    this.hop = 0;
+    this.boostTime = 0;
+    this.galaxy = this.selected.style === 'galaxy' ? { index: 0, arrivalDist: 0, star: null, visited: 1 } : null;
+    this.placeSatellite(this.galaxy ? this.resolve(this.selected, 1) : null, new THREE.Vector3(0.2, 0.5, 1));
     const carNode = this.findRoot(this.gameData, 'Cartoon_SportCar_B01')!;
     this.car.position.set(...carNode.position);
     // Hauteur de départ : rayon de la planète choisie (5,011 sur la planète d'origine)
@@ -598,6 +678,7 @@ export class World implements GameContext {
     this.car.visible = true;
     this.vehicle.reset();
     this.health.start();
+    this.healthRing.reset();
     this.tracker.start();
     this.meteors.clear();
     this.craters.clear();
@@ -607,6 +688,8 @@ export class World implements GameContext {
     this.chrono = 0;
     this.clocksCollected = 0;
     this.turboLevel = 1;
+    this.turboLocked = false;
+    this.timeLeft = 60;
     this.dyingTime = 0;
     this.stages.start();
     this.updateDifficulty();
@@ -666,6 +749,8 @@ export class World implements GameContext {
   }
 
   private damage(points: number, label: string): void {
+    if (bool(this.settings, 'modeZen')) return;
+    if (bool(this.settings, 'modeSuddenDeath')) points = Math.max(points, this.health.currentHealth);
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.8, 0.9 + Math.random() * 0.2);
@@ -716,6 +801,8 @@ export class World implements GameContext {
       interval *= Math.max(0.35, 1 - this.chrono / 240);
       aim = 0.3;
     }
+    if (bool(s, 'modeStorm')) interval *= 0.5;
+    if (bool(s, 'modeZen')) interval *= 1.6;
     this.meteors.interval = interval;
     this.meteors.aim = this.aimOverride ?? (bool(s, 'meteorRamp') || bool(s, 'stages') ? aim : 0);
   }
@@ -732,8 +819,20 @@ export class World implements GameContext {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
     } else if (this.mode === 'play' || this.mode === 'dying') {
-      if (this.mode === 'play') this.chrono += realDt;
-      this.gameplay(dt, input);
+      if (this.mode === 'play') {
+        this.chrono += realDt;
+        if (bool(this.settings, 'modeTimeAttack')) {
+          this.timeLeft -= realDt;
+          if (this.timeLeft <= 0) {
+            this.timeLeft = 0;
+            this.events.message('Temps écoulé !', 'bad');
+            this.triggerGameOver();
+          }
+        }
+      }
+      const h = bool(this.settings, 'modeMirror') ? -input.horizontal : input.horizontal;
+      if (this.launch) this.updateLaunch(dt);
+      else this.gameplay(dt, { horizontal: h, turbo: input.turbo });
       if (this.mode === 'dying') {
         this.dyingTime += realDt;
         if (this.dyingTime > 1.6) this.finishGameOver();
@@ -745,9 +844,12 @@ export class World implements GameContext {
     // LateUpdate : caméra
     if (this.mode === 'menu') this.rig.pivot.updateMatrixWorld(true);
     else {
-      this.rig.center.copy(this.planet.position);
-      this.rig.radius = this.planetRadius();
-      this.rig.follow(this.car, realDt);
+      if (this.launch) this.rig.chase(this.car, this.launchUp(), realDt, this.satellite.position);
+      else {
+        this.rig.center.copy(this.planet.position);
+        this.rig.radius = this.planetRadius();
+        this.rig.follow(this.car, realDt);
+      }
     }
     this.updateSun();
   }
@@ -756,36 +858,46 @@ export class World implements GameContext {
     const s = this.settings;
     const alive = this.mode === 'play';
     // Turbo (maintenu) : jauge qui se vide et se recharge
-    const wantTurbo = alive && bool(s, 'turbo') && input.turbo && this.turboLevel > 0.02;
-    if (wantTurbo) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
-    else this.turboLevel = Math.min(1, this.turboLevel + dt / 6);
+    // Jauge vide : turbo verrouillé jusqu'au relâchement et 20 % de recharge
+    // (sinon il se relance par à-coups tant qu'on garde le doigt dessus)
+    if (this.turboLevel <= 0.001) this.turboLocked = true;
+    if (this.turboLocked && !input.turbo && this.turboLevel >= 0.2) this.turboLocked = false;
+    const infinite = bool(s, 'modeInfiniteTurbo');
+    const wantTurbo = alive && bool(s, 'turbo') && input.turbo && !this.turboLocked;
+    if (wantTurbo && !infinite) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
+    else if (!wantTurbo) this.turboLevel = Math.min(1, this.turboLevel + dt / 6);
     if (wantTurbo !== this.turboActive) {
       this.turboActive = wantTurbo;
       if (wantTurbo && bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.7);
+      if (wantTurbo && this.def.fireTrail) this.events.message('88 mph !', 'info');
     }
     this.events.turbo(this.turboLevel, this.turboActive);
-    this.vehicle.speedMultiplier = this.turboActive ? 1.7 : 1;
-    if (bool(s, 'planetShrink')) {
+    // Accélérateurs et tremplins (planètes « kart »)
+    this.boostTime = Math.max(0, this.boostTime - dt);
+    this.boostCd = Math.max(0, this.boostCd - dt);
+    this.hop = Math.max(0, this.hop - dt);
+    this.vehicle.speedMultiplier = (this.turboActive ? 1.7 : 1) * (this.boostTime > 0 ? 1.55 : 1);
+    if (bool(s, 'planetShrink') && !this.galaxy) {
       const dur = num(s, 'shrinkDuration');
       const min = num(s, 'shrinkMin');
       if (dur > 0) {
         // Arcade : rétrécissement continu et progressif jusqu'à la taille minimale
         const x = Math.min(1, Time.time / dur);
         const k = 1 - (1 - min) * x * x * (3 - 2 * x);
-        this.planet.scale.setScalar(this.planetDef.radius * k);
+        this.planet.scale.setScalar(this.def.radius * k);
         const step = Math.floor((1 - k) / ((1 - min) / 4));
         if (step > this.shrinkStep) {
           this.shrinkStep = step;
           if (alive) this.events.message('La planète rétrécit !', 'info');
         }
       } else {
-        this.shrink.minScale = this.planetDef.radius * min;
+        this.shrink.minScale = this.def.radius * min;
         this.shrink.update(Time.time);
       }
     }
     this.planet.updateMatrixWorld(true);
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
-    const radius = bool(s, 'planetShrink') || this.planetDef.id !== 'origine' ? this.planetRadius() : this.planetCollider;
+    const radius = bool(s, 'planetShrink') || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
     if (alive) {
       this.vehicle.update(dt, input.horizontal, this.planet.position, radius);
       this.tracker.update();
@@ -808,8 +920,8 @@ export class World implements GameContext {
         }
         const inside = obbOverlap(this.carOBB, c.obb);
         // Dégâts : damageItems (« Crater » → 10) ou valeur du réglage
-        if (inside && !c.inside && this.health.getDamagePoints(c.name) > 0) {
-          this.damage(Math.round(num(s, 'craterDamage') * this.planetDef.gameplay.craterDamage), 'Cratère');
+        if (inside && !c.inside && this.hop <= 0 && this.health.getDamagePoints(c.name) > 0) {
+          this.damage(Math.round(num(s, 'craterDamage') * this.def.gameplay.craterDamage), 'Cratère');
           if (bool(s, 'craterBump')) {
             // Arcade : déviation aléatoire de 25 à 60° d'un côté ou de l'autre
             this.vehicle.bump((Math.random() < 0.5 ? -1 : 1) * (25 + Math.random() * 35));
@@ -821,6 +933,7 @@ export class World implements GameContext {
     }
     this.clocks.update(dt, alive ? this.carOBB : null, alive);
     if (alive) this.obstacles();
+    if (alive) this.kartEvents(dt);
     // Fumée (puis feu) selon les dégâts
     const hurt = 1 - this.health.currentHealth / Math.max(1, this.health.maxHealth);
     const smokeOn = bool(s, 'damageSmoke') && this.mode !== 'menu';
@@ -833,9 +946,12 @@ export class World implements GameContext {
       if (this.fire.rateScale > 0 && !this.fire.playing) this.fire.play();
     }
     this.surfaceEffects(dt, alive);
+    this.healthRing.mesh.visible = String(s.healthDisplay) === 'ring' && this.mode !== 'menu' && !this.launch;
+    this.healthRing.set(this.health.currentHealth / Math.max(1, this.health.maxHealth));
+    this.healthRing.update(dt, Time.time);
     // Son moteur : hauteur selon le turbo ; dérapage selon le braquage
     if (this.engine === this.engineOriginal) this.engine?.setPitch(0.65 * (this.turboActive ? 1.35 : 1));
-    else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.planetDef.gameplay.carSpeed);
+    else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.def.gameplay.carSpeed);
     if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5);
   }
 
@@ -846,35 +962,266 @@ export class World implements GameContext {
     const down = up.clone().negate();
     for (const f of this.surfaceFx) f.gravityDir = down;
     // Sol sous la voiture : direction dans l'espace du maillage de la planète
-    const sf = fx ? this.assets.planetSurfaces.get(this.planetDef.id) : undefined;
+    const sf = fx && !this.launch ? this.assets.planetSurfaces.get(this.def.id) : undefined;
     if (sf) {
       const local = this.planetMesh.worldToLocal(this.car.getWorldPosition(new THREE.Vector3())).normalize();
+      this.carDir.copy(local);
       this.surface = sf.at(local.x, local.y, local.z);
     } else this.surface = SURF.GROUND;
     const r = this.rig3d;
     if (r) {
-      animateVehicle(r, Time.time, this.vehicle.steer, this.turboActive);
+      animateVehicle(r, Time.time, this.vehicle.steer, this.turboActive || this.boostTime > 0);
+      if (this.hop > 0) {
+        // Saut : parabole (unités locales de la voiture, échelle 0,2)
+        const k = 1 - this.hop / 0.8;
+        r.body.position.y += 4.2 * 4 * k * (1 - k);
+        r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
+      }
       for (const t of this.thrusters) {
         t.gravityDir = down;
-        t.rateScale = r === this.rigs.hover && alive ? (this.turboActive ? 2.2 : 1) : 0;
+        t.rateScale = r === this.rigs.hover && (alive || this.launch) ? (this.turboActive || this.boostTime > 0 || this.launch ? 2.2 : 1) : 0;
         if (t.rateScale > 0 && !t.playing) t.play();
       }
     }
-    const boat = r === this.rigs.boat;
     const set = (ps: ParticleSystem, k: number) => {
       ps.rateScale = alive ? k : 0;
       if (ps.rateScale > 0 && !ps.playing) ps.play();
     };
     const water = this.surface === SURF.WATER;
     // Voiture (ou voiture volante qui rase l'eau) : éclaboussures ; bateau : sillage d'écume
-    set(this.splash, water ? (boat ? 0.35 : 1) * (this.turboActive ? 1.6 : 1) : 0);
-    set(this.wake, boat ? (water ? 1 : 0.2) * (this.turboActive ? 1.5 : 1) : 0);
-    set(this.embers, this.surface === SURF.LAVA && !boat ? 1 : 0);
+    set(this.splash, water ? (this.turboActive ? 1.6 : 1) : 0);
+    set(this.wake, water ? (this.turboActive ? 1.4 : 0.8) : 0);
+    set(this.embers, this.surface === SURF.LAVA ? 1 : 0);
+    set(this.leaves, this.surface === SURF.GRASS ? 0.7 : 0);
+    set(this.sparkle, this.launch ? 2 : 0);
+    for (const f of this.fireTrails) set(f, this.def.fireTrail && this.turboActive && fx ? 1 : 0);
     this.splashSoundCd -= dt;
-    if (water && !boat && alive && this.splashSoundCd <= 0 && bool(this.settings, 'extraSounds')) {
+    if (water && alive && this.splashSoundCd <= 0 && bool(this.settings, 'extraSounds')) {
       this.splashSoundCd = 0.45;
       this.audio.playOneShot('sfx_whoosh', 0.12, 1.6 + Math.random() * 0.3);
     }
+  }
+
+  /** Cubes bonus, accélérateurs, tremplins, étoile de lancement. */
+  private kartEvents(dt: number): void {
+    const s = this.settings;
+    this.kart.update(dt);
+    const R = this.planetRadius();
+    if (bool(s, 'premiumFx') && this.def.kart) {
+      if (this.kart.padAt(this.carDir, 0.42, R) && this.boostCd <= 0) {
+        this.boostTime = 1.1;
+        this.boostCd = 0.6;
+        if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.8, 1.15);
+        this.shaker.start({ enabled: true, delay: 0, duration: 0.25, space: 0, strength: [0.05, 0.05, 0.12], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+      }
+      if (this.kart.collect(this.carDir, 0.42, R)) {
+        this.turboLevel = 1;
+        this.turboLocked = false;
+        this.events.message('Turbo plein !', 'good');
+        if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.6, 1.25);
+      }
+      if (this.hop <= 0 && this.kart.rampAt(this.carDir, 0.34, R)) {
+        this.hop = 0.8;
+        if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.6, 0.8);
+      }
+    }
+    // Voyage galactique : l'étoile de lancement apparaît après 35 m sur la planète
+    const g = this.galaxy;
+    if (!g) return;
+    this.launchStar.rotation.y += dt * 2.5;
+    if (!g.star && this.tracker.totalDistance - g.arrivalDist > 35) {
+      // Face à la planète suivante : le vol part vers l'extérieur
+      g.star = this.satellite.position.clone().sub(this.planet.position).normalize();
+      if (g.star.angleTo(this.carDir) < 0.6) g.star.applyAxisAngle(new THREE.Vector3(1, 0, 0), 0.9);
+      const lift = 0.35;
+      this.launchStar.position.copy(g.star).multiplyScalar((R + lift) / this.planet.scale.x);
+      this.launchStar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), g.star);
+      this.launchStar.scale.setScalar(1 / this.planet.scale.x);
+      this.launchStar.visible = true;
+      this.events.message('★ Étoile de lancement ! Fonce dessus', 'info');
+      if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.7, 0.8);
+    }
+    if (!g.star) return;
+    const dist = g.star.angleTo(this.carDir) * R;
+    // L'étoile attire le véhicule quand il s'approche (sinon il tourne autour sans l'atteindre)
+    if (dist < 2.6) {
+      const to = this.planet.localToWorld(g.star.clone().multiplyScalar(this.planetCollider)).sub(this.car.position);
+      const left = new THREE.Vector3(1, 0, 0).applyQuaternion(this.car.quaternion);
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
+      const a = Math.atan2(to.dot(left), to.dot(fwd));
+      const rate = (2.2 + 2.5 * (1 - dist / 2.6)) * dt;
+      this.car.rotateY(Math.max(-rate, Math.min(rate, a)));
+    }
+    if (dist < 0.75) this.startLaunch();
+  }
+
+  /** Objets du voyage galactique : planète suivante (visuelle) et étoile de lancement. */
+  private buildGalaxyObjects(): void {
+    this.satellite = new THREE.Group();
+    this.satMat = planetToonMaterial();
+    // Même maillage que la planète, même repère relatif à sa racine
+    this.planet.updateMatrixWorld(true);
+    const rel = new THREE.Matrix4().copy(this.planet.matrixWorld).invert().multiply(this.planetMesh.matrixWorld);
+    const m = new THREE.Mesh(this.planetMesh.geometry, this.satMat);
+    m.matrixAutoUpdate = false;
+    m.matrix.copy(rel);
+    this.satAtmo = atmosphere(this.planetCollider);
+    this.satellite.add(m, this.satAtmo);
+    this.satellite.visible = false;
+    this.scene.add(this.satellite);
+    // Étoile dorée à cinq branches, auréole lumineuse
+    const sh = new THREE.Shape();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+      const r = i % 2 ? 0.17 : 0.4;
+      if (i === 0) sh.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else sh.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const starGeo = new THREE.ExtrudeGeometry(sh, { depth: 0.1, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 2 }).translate(0, 0, -0.05);
+    const star = new THREE.Mesh(starGeo, new THREE.MeshToonMaterial({ color: 0xffd23a, gradientMap: toonGradient(), emissive: new THREE.Color(0xb07a10) }));
+    star.position.y = 0.45;
+    const halo = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.6, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.0, 0.6), transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false }));
+    halo.rotation.x = -Math.PI / 2;
+    halo.position.y = -0.3;
+    this.launchStar = new THREE.Group();
+    this.launchStar.add(star, halo);
+    this.launchStar.visible = false;
+    this.planet.add(this.launchStar);
+  }
+
+  /** Planète suivante dans le ciel (ou rien), dans la direction `dir` depuis la planète courante. */
+  private placeSatellite(def: PlanetDef | null, dir: THREE.Vector3): void {
+    this.satDef = def;
+    const cubes = def ? this.assets.planetCubes.get(def.id) : undefined;
+    this.satellite.visible = !!(def && cubes && bool(this.settings, 'premiumFx'));
+    if (!def || !cubes) return;
+    const u = this.satMat.userData.planetUniforms;
+    u.planetCube.value = cubes.color;
+    u.planetEmis.value = cubes.emis ?? cubes.color;
+    u.emisColor.value.setRGB(def.emis ?? 0, def.emis ?? 0, def.emis ?? 0);
+    u.rimColor.value.set(def.atmosphere);
+    (this.satAtmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
+    (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6;
+    this.satellite.scale.setScalar(def.radius);
+    const Rn = this.planetCollider * def.radius;
+    this.satellite.position.copy(this.planet.position).addScaledVector(dir.clone().normalize(), this.planetRadius() + Rn + 10);
+  }
+
+  /** Décollage depuis l'étoile vers la planète suivante (courbe de Bézier). */
+  startLaunch(): void {
+    const g = this.galaxy;
+    if (!g || !this.satDef) return;
+    this.launchStar.visible = false;
+    g.star = null;
+    this.meteors.clear();
+    const p0 = this.car.position.clone();
+    const up0 = p0.clone().sub(this.planet.position).normalize();
+    const Rn = this.planetCollider * this.satDef.radius + this.vehicle.f.desiredDistanceFromSurface;
+    const toSat = this.satellite.position.clone().sub(p0).normalize();
+    // Atterrissage sur la face tournée vers nous, légèrement au-dessus
+    const up1 = this.planet.position.clone().sub(this.satellite.position).normalize().addScaledVector(up0, 0.6).normalize();
+    const p3 = this.satellite.position.clone().addScaledVector(up1, Rn);
+    const span = p0.distanceTo(p3);
+    const p1 = p0.clone().addScaledVector(up0, span * 0.55).addScaledVector(toSat, span * 0.15);
+    const p2 = p3.clone().addScaledVector(up1, span * 0.55);
+    this.launch = { t: 0, dur: 2.4, p: [p0, p1, p2, p3], up0, up1 };
+    this.events.message('Décollage !', 'good');
+    if (bool(this.settings, 'extraSounds')) {
+      this.audio.playOneShot('sfx_whoosh', 1, 0.7);
+      this.audio.playOneShot('sfx_chime', 0.7, 1.4);
+    }
+    this.shaker.start({ enabled: true, delay: 0, duration: 0.35, space: 0, strength: [0.12, 0.12, 0.25], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+  }
+
+  private launchUp(): THREE.Vector3 {
+    const L = this.launch!;
+    const e = Math.min(1, L.t);
+    return L.up0.clone().lerp(L.up1, e * e * (3 - 2 * e)).normalize();
+  }
+
+  /** Vol vers la planète suivante, puis bascule : elle devient la planète courante. */
+  private updateLaunch(dt: number): void {
+    const L = this.launch!;
+    L.t = Math.min(1, L.t + dt / L.dur);
+    const t = L.t < 0.5 ? 2 * L.t * L.t : 1 - Math.pow(-2 * L.t + 2, 2) / 2;
+    const [a, b, c, d] = L.p;
+    const u = 1 - t;
+    const pos = a.clone().multiplyScalar(u * u * u).addScaledVector(b, 3 * u * u * t).addScaledVector(c, 3 * u * t * t).addScaledVector(d, t * t * t);
+    const tan = b.clone().sub(a).multiplyScalar(3 * u * u).addScaledVector(c.clone().sub(b), 6 * u * t).addScaledVector(d.clone().sub(c), 3 * t * t);
+    if (tan.lengthSq() < 1e-8) tan.copy(d).sub(a);
+    tan.normalize();
+    const up = this.launchUp();
+    // Orientation : +Z selon la trajectoire, +Y vers le « haut » interpolé ; tonneau en vol
+    const x = new THREE.Vector3().crossVectors(up, tan).normalize();
+    const y = new THREE.Vector3().crossVectors(tan, x).normalize();
+    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, tan));
+    q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(L.t * Math.PI) * Math.PI * 2 * L.t));
+    this.car.position.copy(pos);
+    this.car.quaternion.copy(q);
+    this.car.updateMatrixWorld(true);
+    this.sparkle.gravityDir = up.clone().negate();
+    // L'aura de la planète d'arrivée s'efface quand la caméra la traverse
+    (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * (1 - Math.min(1, Math.max(0, (L.t - 0.35) / 0.35)));
+    (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * Math.max(0, 1 - L.t / 0.2);
+    if (this.rig3d) animateVehicle(this.rig3d, Time.time, 0, true);
+    this.surfaceEffects(dt, true);
+    this.clocks.update(dt, null, false);
+    this.craters.update(dt, num(this.settings, 'craterLifetime'), false);
+    if (L.t >= 1) this.land();
+  }
+
+  private land(): void {
+    const g = this.galaxy!;
+    const next = this.satDef!;
+    const rel = this.car.position.clone().sub(this.satellite.position);
+    // La planète suivante prend la place de la planète courante (à l'origine)
+    g.index++;
+    g.visited++;
+    this.launch = null;
+    this.applyPlanet(next);
+    this.planet.quaternion.identity();
+    this.planet.updateMatrixWorld(true);
+    this.craters.baseScale = next.radius;
+    this.craters.clear();
+    this.meteors.clear();
+    this.clocks.start();
+    const upN = rel.clone().normalize();
+    this.car.position.copy(this.planet.position).addScaledVector(upN, this.planetRadius() + this.vehicle.f.desiredDistanceFromSurface);
+    // Cap : continuer dans le sens de l'arrivée, tangent à la surface
+    const f = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
+    f.addScaledVector(upN, -f.dot(upN));
+    if (f.lengthSq() < 1e-4) f.set(1, 0, 0).addScaledVector(upN, -upN.x);
+    f.normalize();
+    const x = new THREE.Vector3().crossVectors(upN, f).normalize();
+    this.car.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, upN, f));
+    this.car.updateMatrixWorld(true);
+    this.tracker.resync();
+    g.arrivalDist = this.tracker.totalDistance;
+    this.health.heal(15);
+    this.rig.endChase();
+    this.rig.follow(this.car, 0, true);
+    this.events.stage?.(g.visited, next.name, `Planète ${g.visited}`);
+    // Planète suivante : dans une autre direction du ciel
+    const ang = g.index * 2.4;
+    this.placeSatellite(this.resolve(this.selected, g.index + 1), new THREE.Vector3(Math.cos(ang), 0.6, Math.sin(ang)));
+    this.shaker.start({ enabled: true, delay: 0, duration: 0.3, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+  }
+
+  /** Pilote automatique (tests) : braquage vers l'étoile de lancement. */
+  autoSteer(): number {
+    const target = this.galaxy?.star?.clone();
+    if (!target) return 0;
+    const to = this.planet.localToWorld(target.multiplyScalar(this.planetCollider)).sub(this.car.position);
+    // +X local de la voiture = sa gauche
+    const left = new THREE.Vector3(1, 0, 0).applyQuaternion(this.car.quaternion);
+    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
+    const a = Math.atan2(to.dot(left), to.dot(fwd));
+    return Math.max(-1, Math.min(1, -a * 2.5));
+  }
+
+  /** Position de l'étoile de lancement (espace planète), pour la mini-carte. */
+  get starDir(): THREE.Vector3 | null {
+    return this.galaxy?.star ?? null;
   }
 
   private updateSun(): void {
@@ -911,9 +1258,9 @@ export class World implements GameContext {
    */
   async precompile(): Promise<void> {
     // Chaque style de planète (toon / original) est compilé une fois
-    const keep = this.planetDef;
+    const keep = this.def;
     if (bool(this.settings, 'premiumFx')) {
-      this.applyPlanet(planetById('volcan'));
+      this.applyPlanet(planetById('prairie'));
       await this.compileAll();
     }
     this.applyPlanet(planetById('origine'));

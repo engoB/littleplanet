@@ -61,6 +61,26 @@ export class Stages {
     }
   }
 
+  /** Libellé court de l'objectif (bannière du HUD). */
+  get label(): string {
+    const o = this.objective;
+    const left = Math.max(0, Math.ceil(o.target - o.progress));
+    switch (o.kind) {
+      case 'distance':
+        return `Parcours ${left} m`;
+      case 'clocks':
+        return `Ramasse ${left} horloge${left > 1 ? 's' : ''}`;
+      default:
+        return `Survis ${left} s`;
+    }
+  }
+
+  /** Avancement de l'objectif (0 → 1). */
+  get progress01(): number {
+    const o = this.objective;
+    return Math.max(0, Math.min(1, o.progress / o.target));
+  }
+
   /** Multiplicateur d'intervalle entre météores pour l'étape courante. */
   get intervalFactor(): number {
     return Math.max(0.3, Math.pow(0.86, this.stage - 1));

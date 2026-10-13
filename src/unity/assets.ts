@@ -7,7 +7,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { unityColorToLinear } from './curves';
 import type { AssetsManifest, MaterialData, UnityProject } from './types';
 
-export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4 } as const;
+export const SURF = { GROUND: 0, WATER: 1, LAVA: 2, ICE: 3, PATH: 4, GRASS: 5 } as const;
+/** Valeur du pixel = classe × SURF_SCALE (tools/procedural_planets.py). */
+const SURF_SCALE = 30;
 
 /** Carte de surface d'une planète, échantillonnée par direction (espace planète). */
 export class Surface {
@@ -18,7 +20,7 @@ export class Surface {
     const lon = Math.atan2(z, x);
     const u = Math.min(this.w - 1, Math.max(0, Math.floor(((lon + Math.PI) / (2 * Math.PI)) * this.w)));
     const v = Math.min(this.h - 1, Math.max(0, Math.floor(((Math.PI / 2 - lat) / Math.PI) * this.h)));
-    return Math.round(this.data[v * this.w + u] / 50);
+    return Math.round(this.data[v * this.w + u] / SURF_SCALE);
   }
 }
 
@@ -53,6 +55,8 @@ export class Assets {
   readonly planetPreviews = new Map<string, string>();
   /** Ciel doré « au-delà » (planète du Sage). */
   skyDb: THREE.CubeTexture | null = null;
+  /** Ciel rouge de forteresse. */
+  skyRed: THREE.CubeTexture | null = null;
   /** Cartes de surface (équirectangulaires, classe = valeur / 50) : eau, lave, glace… */
   readonly planetSurfaces = new Map<string, Surface>();
   fxAtlas!: THREE.Texture;
@@ -124,6 +128,8 @@ export class Assets {
       });
     if (manifest.space) void track(cube(manifest.space).then((c) => (this.space = c)));
     if (manifest.skyDb) void track(cube(manifest.skyDb).then((c) => (this.skyDb = c)));
+    if (manifest.skyRed) void track(cube(manifest.skyRed).then((c) => (this.skyRed = c)));
+    if (manifest.galaxyPreview) this.planetPreviews.set('galaxie', this.url('textures/' + manifest.galaxyPreview));
     for (const [id, files] of Object.entries(manifest.planets ?? {})) {
       this.planetPreviews.set(id, this.url('textures/' + files.preview));
       if (files.surface) void track(loadSurface(this.url('textures/' + files.surface)).then((sf) => sf && this.planetSurfaces.set(id, sf)));

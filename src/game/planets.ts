@@ -2,13 +2,14 @@
  * Planètes jouables (src/game/planets.json), déblocage et records par planète.
  */
 import data from './planets.json';
+import type { KartDef } from './KartProps';
 
 export interface PlanetDef {
   id: string;
   name: string;
   tagline: string;
   difficulty: number;
-  style: 'original' | 'toon';
+  style: 'original' | 'toon' | 'galaxy';
   /** Planète nocturne : sol sombre, voiture et impacts lumineux. */
   neon?: boolean;
   radius: number;
@@ -16,15 +17,23 @@ export interface PlanetDef {
   atmosphere: string;
   palette?: Record<string, string>;
   pattern?: string;
-  decorColors?: { trunk: string; canopy: string[]; rock: string; house: string; roof: string };
+  decorColors?: { trunk: string; canopy: string[]; rock: string; house: string; roof: string; [extra: string]: string | string[] | undefined };
   gameplay: { meteorInterval: number; meteorSpeed: number; clockInterval: number; carSpeed: number; grip: number; craterDamage: number };
-  decor: { trees: number; rocks: number; houses: number; palms?: number; mushrooms?: number; pipes?: number; blocks?: number; cubetrees?: number };
+  decor: { trees: number; rocks: number; houses: number; [kind: string]: number | undefined };
   /** Ciel : espace, ciel doré façon « au-delà », ciel de jour ou celui d'origine. */
-  sky?: 'space' | 'db' | 'day' | 'original';
+  sky?: 'space' | 'db' | 'day' | 'original' | 'red';
   /** Véhicule du préréglage Arcade. */
-  vehicle?: 'original' | 'hover' | 'boat';
+  vehicle?: 'original' | 'hover';
   /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
   reticle?: string;
+  /** Planète « kart » : accélérateurs, cubes bonus et tremplins éparpillés (aucune piste). */
+  kart?: KartDef;
+  /** Intensité de la carte d'émission RVB (route arc-en-ciel, lave, lanternes). */
+  emis?: number;
+  /** Voyage galactique : planètes visitées l'une après l'autre. */
+  galaxy?: string[];
+  /** Hill Valley : traînées de feu au sol en turbo. */
+  fireTrail?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */
   pixel?: boolean;
 }

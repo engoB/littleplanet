@@ -21,9 +21,16 @@ export interface SettingDef {
   help?: string;
 }
 
-export const GROUPS = ['Jeu', 'Météores', 'Horloges', 'Caméra', 'Graphismes', 'Audio', 'Contrôles', 'Personnalisation'] as const;
+export const GROUPS = ['Modes de jeu', 'Jeu', 'Météores', 'Horloges', 'Caméra', 'Graphismes', 'Audio', 'Contrôles', 'Personnalisation'] as const;
 
 export const SCHEMA: SettingDef[] = [
+  // --- Modes de jeu (cumulables, activables aussi depuis le menu « Modes »)
+  { key: 'modeSuddenDeath', label: 'Mort subite', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Le moindre choc est fatal.' },
+  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Aucun dégât, météores plus rares : pour se balader (pas de record).' },
+  { key: 'modeTimeAttack', label: 'Contre-la-montre', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: '60 s au départ, chaque horloge ajoute 5 s ; la partie s’arrête à 0 (pas de record).' },
+  { key: 'modeStorm', label: 'Tempête de météores', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Deux fois plus de météores, 30 % plus rapides.' },
+  { key: 'modeInfiniteTurbo', label: 'Turbo infini', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'La jauge ne se vide jamais (pas de record).' },
+  { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
@@ -35,10 +42,13 @@ export const SCHEMA: SettingDef[] = [
   { key: 'turbo', label: 'Turbo (bouton maintenu)', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'stages', label: 'Étapes et objectifs', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Objectifs successifs, la difficulté augmente à chaque étape.' },
   { key: 'deathAnimation', label: 'Animation de fin', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Explosion et ralenti avant l’écran de fin (l’original fige tout : Time.timeScale = 0).' },
-  { key: 'craterBump', label: 'Les cratères font dévier', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Rouler dans un cratère dévie la voiture au hasard.' },
+  { key: 'craterBump', label: 'Les cratères font dévier', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Rouler dans un cratère dévie la voiture au hasard.' },
+  { key: 'healthDisplay', label: 'Affichage de la santé', group: 'Jeu', type: 'select', arcade: 'ring', original: 'bar', options: [
+    { value: 'ring', label: 'Anneau au sol autour du véhicule' }, { value: 'bar', label: 'Barre en haut de l’écran (Slider d’origine)' },
+  ], help: 'La barre du HUD est difficile à regarder en pleine partie.' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en parcourant 100 m sur la précédente.' },
-  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Script ShrinkPlanet présent dans le projet mais non attaché à la scène.' },
+  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Modes de jeu', type: 'bool', arcade: true, original: false, help: 'La planète rapetisse au fil de la partie (script ShrinkPlanet, non attaché dans l’original).' },
   { key: 'shrinkDuration', label: 'Durée du rétrécissement', group: 'Jeu', type: 'number', arcade: 150, original: 0, min: 0, max: 400, step: 10, unit: 's', help: 'Temps pour atteindre la taille minimale. 0 = comportement de ShrinkPlanet.cs (× 0,99 par seconde).' },
   { key: 'shrinkMin', label: 'Taille minimale', group: 'Jeu', type: 'number', arcade: 0.4, original: 0.45, min: 0.2, max: 1, step: 0.05 },
   { key: 'saveRecords', label: 'Enregistrer les records', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'HighScoreManager existe mais n’est jamais appelé dans l’original.' },
