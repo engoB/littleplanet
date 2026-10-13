@@ -17,6 +17,8 @@ interface Item {
   mesh: THREE.Mesh;
   mat: THREE.Material;
   locked: boolean;
+  /** Monuments posés sur la planète (créés à la première apparition). */
+  decorated: boolean;
 }
 
 export class PlanetSelect {
@@ -30,6 +32,8 @@ export class PlanetSelect {
   active = false;
   private t = 0;
   private portrait = false;
+  /** Pose les monuments d'une planète sur son maillage (fourni par le monde). */
+  decorFor: ((def: PlanetDef, mesh: THREE.Mesh) => void) | null = null;
 
   constructor(scene: THREE.Scene, private readonly assets: Assets, private readonly origMat: THREE.Material, geo: THREE.BufferGeometry, geoScale: number) {
     this.group.position.copy(ORIGIN);
@@ -45,7 +49,10 @@ export class PlanetSelect {
 
   /** (Re)construit le carrousel avec la liste des planètes (verrouillées comprises). */
   setPlanets(defs: { def: PlanetDef; locked: boolean }[]): void {
-    for (const it of this.items) this.group.remove(it.mesh);
+    for (const it of this.items) {
+      this.group.remove(it.mesh);
+      it.mesh.traverse((o) => (o as THREE.InstancedMesh).isInstancedMesh && (o as THREE.InstancedMesh).dispose());
+    }
     this.items = defs.map(({ def, locked }) => {
       let mat: THREE.Material;
       const cubes = this.assets.planetCubes.get(def.id);
@@ -56,6 +63,12 @@ export class PlanetSelect {
         u.planetEmis.value = cubes.emis ?? cubes.color;
         u.emisColor.value.setScalar(def.emis ?? (cubes.emis ? 0.5 : 0));
         u.rimColor.value.set(def.atmosphere);
+        if (def.glass && cubes.mask) {
+          u.planetMask.value = cubes.mask;
+          u.glass.value = 1;
+          m.transparent = true;
+          m.side = THREE.DoubleSide;
+        }
         mat = m;
       } else mat = this.origMat;
       if (locked && (mat as THREE.MeshToonMaterial).color) {
@@ -64,7 +77,7 @@ export class PlanetSelect {
       }
       const mesh = new THREE.Mesh(this.geo, mat);
       this.group.add(mesh);
-      return { def, mesh, mat, locked };
+      return { def, mesh, mat, locked, decorated: false };
     });
   }
 
@@ -95,6 +108,10 @@ export class PlanetSelect {
       const a = Math.abs(o);
       it.mesh.visible = a < 4.5;
       if (!it.mesh.visible) continue;
+      if (!it.decorated && !it.locked) {
+        it.decorated = true;
+        this.decorFor?.(it.def, it.mesh);
+      }
       // Arc : la planète du centre avance et grossit, les autres reculent
       const s = (1.45 - Math.min(1, a) * 0.7 - Math.max(0, a - 1) * 0.08) / this.geoScale;
       it.mesh.scale.setScalar(s);

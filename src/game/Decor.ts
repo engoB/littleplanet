@@ -244,6 +244,12 @@ interface KindSpec {
   noYaw?: boolean;
   /** Hauteur de flottement (unités monde). */
   lift?: number;
+  /** Décor animé qui flotte : amplitude de flottement (monde) et rotation (rad/s). */
+  float?: { bob: number; spin?: number };
+  /** Se tourne toujours vers le véhicule (blocs de la forteresse). */
+  face?: boolean;
+  /** Monument emblématique du monde (affiché aussi sur la planète du menu). */
+  monument?: boolean;
 }
 
 /** Visage fâché du bloc écraseur (pierre teintée par instance). */
@@ -421,12 +427,133 @@ function tireStack(): THREE.BufferGeometry {
   return merge([0, 1, 2].map((i) => new THREE.TorusGeometry(0.1, 0.045, 8, 18).rotateX(Math.PI / 2).translate(0, 0.045 + i * 0.085, 0)));
 }
 
+/** Statue géante de l'hoverboard rose (socle de pierre, planche inclinée). */
+function hoverboard(): [THREE.BufferGeometry, THREE.BufferGeometry, THREE.BufferGeometry] {
+  const sh = new THREE.Shape();
+  const w = 0.5;
+  const h = 0.13;
+  sh.moveTo(-w + h, -h);
+  sh.lineTo(w - h, -h);
+  sh.absarc(w - h, 0, h, -Math.PI / 2, Math.PI / 2, false);
+  sh.lineTo(-w + h, h);
+  sh.absarc(-w + h, 0, h, Math.PI / 2, (Math.PI * 3) / 2, false);
+  // Planche posée sur la tranche, inclinée, au sommet d'un mât
+  const tilt = new THREE.Matrix4().makeRotationX(-Math.PI / 2).premultiply(new THREE.Matrix4().makeRotationZ(0.45)).premultiply(new THREE.Matrix4().makeRotationX(-0.35)).premultiply(new THREE.Matrix4().makeTranslation(0, 0.86, 0));
+  const board = new THREE.ExtrudeGeometry(sh, { depth: 0.035, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 }).translate(0, 0, -0.0175).applyMatrix4(tilt);
+  const stripes = merge([
+    new THREE.BoxGeometry(0.16, 0.2, 0.012).translate(-0.18, 0, 0.034),
+    new THREE.BoxGeometry(0.16, 0.2, 0.012).translate(-0.18, 0, -0.034),
+    new THREE.BoxGeometry(0.06, 0.2, 0.012).translate(0.3, 0, 0.034),
+    new THREE.BoxGeometry(0.06, 0.2, 0.012).translate(0.3, 0, -0.034),
+  ]).applyMatrix4(tilt);
+  const base = merge([
+    new THREE.CylinderGeometry(0.2, 0.24, 0.16, 20).translate(0, 0.08, 0),
+    new THREE.CylinderGeometry(0.035, 0.045, 0.7, 10).translate(0, 0.5, 0),
+  ]);
+  return [board, stripes, base];
+}
+
+/** Grande croix de cimetière sur un tertre. */
+function crossGeo(): THREE.BufferGeometry {
+  return merge([
+    new THREE.BoxGeometry(0.075, 0.95, 0.075).translate(0, 0.5, 0),
+    new THREE.BoxGeometry(0.46, 0.075, 0.075).translate(0, 0.7, 0),
+    new THREE.SphereGeometry(0.2, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2).scale(1.3, 0.4, 0.9),
+  ]);
+}
+
+/** Chauve-souris (silhouette plate). */
+function batGeo(): THREE.BufferGeometry {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.04);
+  s.lineTo(0.05, 0.02);
+  s.lineTo(0.12, 0.06);
+  s.lineTo(0.2, 0.0);
+  s.lineTo(0.15, -0.01);
+  s.lineTo(0.12, -0.05);
+  s.lineTo(0.08, -0.02);
+  s.lineTo(0.03, -0.05);
+  s.lineTo(0, -0.03);
+  s.lineTo(-0.03, -0.05);
+  s.lineTo(-0.08, -0.02);
+  s.lineTo(-0.12, -0.05);
+  s.lineTo(-0.15, -0.01);
+  s.lineTo(-0.2, 0.0);
+  s.lineTo(-0.12, 0.06);
+  s.lineTo(-0.05, 0.02);
+  s.closePath();
+  return new THREE.ShapeGeometry(s);
+}
+
+/** Flocon à six branches. */
+function snowflakeGeo(): THREE.BufferGeometry {
+  const gs: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 3; i++) gs.push(new THREE.BoxGeometry(0.32, 0.03, 0.02).rotateZ((i * Math.PI) / 3));
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3;
+    for (const sgn of [-1, 1]) gs.push(new THREE.BoxGeometry(0.07, 0.022, 0.02).rotateZ(a + sgn * 0.8).translate(Math.cos(a) * 0.1, Math.sin(a) * 0.1, 0));
+  }
+  return merge(gs);
+}
+
+/** Bonbon emballé (corps + papillotes). */
+function candyGeo(): [THREE.BufferGeometry, THREE.BufferGeometry] {
+  return [
+    new THREE.SphereGeometry(0.07, 16, 10).scale(1.35, 1, 1),
+    merge([new THREE.ConeGeometry(0.05, 0.09, 10).rotateZ(Math.PI / 2).translate(0.13, 0, 0), new THREE.ConeGeometry(0.05, 0.09, 10).rotateZ(-Math.PI / 2).translate(-0.13, 0, 0)]),
+  ];
+}
+
 const pick = (v: string | string[] | undefined, r: URandom, fallback: string): string =>
   Array.isArray(v) ? v[r.rangeInt(0, v.length)] ?? fallback : v ?? fallback;
 const fixed = (c: string) => () => c;
 
 const KINDS: Record<string, KindSpec> = {
-  houses: { space: 0.5, hit: 0.34, scale: [1, 1], max: 4, parts: [
+  // --- Monuments ajoutés
+  crosses: { space: 0.4, hit: 0.08, scale: [1.4, 1.9], max: 6, monument: true, parts: [
+    { geo: crossGeo, color: (c) => String(c.cross ?? '#8a8496') },
+  ] },
+  hoverboard: { space: 0.7, hit: 0.24, scale: [2.4, 2.4], max: 1, monument: true, parts: [
+    { geo: () => hoverboard()[0], color: fixed('#ff5aa8'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x40102a) }) },
+    { geo: () => hoverboard()[1], color: fixed('#ffe14d') },
+    { geo: () => hoverboard()[2], color: fixed('#b8b2a8') },
+  ] },
+  bigtree: { space: 0.9, hit: 0.4, scale: [3.2, 3.2], max: 1, monument: true, parts: [
+    { geo: () => new THREE.CylinderGeometry(0.03, 0.04, 0.12, 7).translate(0, 0.06, 0), color: (c) => c.trunk },
+    { geo: () => merge([0, 1, 2].map((i) => new THREE.ConeGeometry(0.24 - i * 0.06, 0.26, 12).translate(0, 0.2 + i * 0.16, 0))), color: fixed('#2f8a4a') },
+    { geo: xmasLights, color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.4, 2.4), vertexColors: true }) },
+    { geo: () => star(0.06).translate(0, 0.66, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.1, 0.5), side: THREE.DoubleSide }) },
+  ] },
+  // --- Décorations flottantes (animées)
+  qblocks: { space: 0.4, hit: 0, scale: [1.2, 1.2], max: 8, lift: 1.4, float: { bob: 0.08, spin: 0.6 }, parts: [
+    { geo: () => new THREE.BoxGeometry(0.22, 0.22, 0.22), color: fixed('#ffc21a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), map: questionTexture(), emissive: new THREE.Color(0x3a2a00) }) },
+  ] },
+  coins: { space: 0.3, hit: 0, scale: [1.3, 1.3], max: 12, lift: 1.0, float: { bob: 0.06, spin: 3 }, parts: [
+    { geo: () => merge([new THREE.CylinderGeometry(0.09, 0.09, 0.022, 22).rotateX(Math.PI / 2), new THREE.BoxGeometry(0.025, 0.09, 0.03)]), color: fixed('#ffd23a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x8a6a10) }) },
+  ] },
+  dragonballs: { space: 0.4, hit: 0, scale: [1.6, 1.6], max: 7, lift: 1.3, float: { bob: 0.1, spin: 0.8 }, parts: [
+    { geo: () => new THREE.SphereGeometry(0.1, 20, 14), color: fixed('#ffa21a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x6a3000) }) },
+    { geo: () => merge([star(0.035).translate(0, 0, 0.101), star(0.035).rotateY(Math.PI).translate(0, 0, -0.101)]), color: fixed('#e8233a'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.15, 0.1), side: THREE.DoubleSide }) },
+  ] },
+  balloons: { space: 0.3, hit: 0, scale: [1.2, 1.6], max: 10, lift: 1.3, float: { bob: 0.12, spin: 0.3 }, parts: [
+    { geo: () => merge([new THREE.SphereGeometry(0.12, 18, 12).scale(1, 1.18, 1), new THREE.ConeGeometry(0.025, 0.04, 8).rotateX(Math.PI).translate(0, -0.15, 0)]), color: (c, r) => pick(c.balloon, r, '#ff3b4e') },
+    { geo: () => new THREE.CylinderGeometry(0.003, 0.003, 0.5, 4).translate(0, -0.42, 0), color: fixed('#f4f4f4') },
+  ] },
+  snowflakes: { space: 0.3, hit: 0, scale: [1.2, 1.7], max: 10, lift: 1.3, float: { bob: 0.1, spin: 0.7 }, parts: [
+    { geo: snowflakeGeo, color: fixed('#ffffff'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x6a8aaa) }) },
+  ] },
+  bats: { space: 0.3, hit: 0, scale: [1.2, 1.6], max: 10, lift: 1.4, float: { bob: 0.15, spin: 1.2 }, parts: [
+    { geo: batGeo, color: fixed('#1a1424'), mat: () => new THREE.MeshBasicMaterial({ color: 0x1a1424, side: THREE.DoubleSide }) },
+  ] },
+  candies: { space: 0.3, hit: 0, scale: [1.3, 1.7], max: 10, lift: 1.2, float: { bob: 0.1, spin: 1.5 }, parts: [
+    { geo: () => candyGeo()[0], color: (c, r) => pick(c.canopy, r, '#ff3b8e') },
+    { geo: () => candyGeo()[1], color: fixed('#fff4f8') },
+  ] },
+  skyblocks: { space: 0.4, hit: 0, scale: [1.2, 1.6], max: 8, lift: 1.5, float: { bob: 0.06, spin: 0.2 }, parts: [
+    { geo: () => new THREE.BoxGeometry(0.28, 0.2, 0.28).translate(0, -0.04, 0), color: (c) => c.trunk, flat: true },
+    { geo: () => new THREE.BoxGeometry(0.29, 0.08, 0.29).translate(0, 0.1, 0), color: (c, r) => pick(c.canopy, r, '#4fbf45'), flat: true },
+  ] },
+  houses: { space: 0.5, hit: 0.34, scale: [1, 1], max: 4, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.3, 0.32, 0.26, 18).translate(0, 0.13, 0), color: (c) => c.house },
     { geo: () => new THREE.SphereGeometry(0.33, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.24, 0), color: (c) => c.roof },
     { geo: () => new THREE.BoxGeometry(0.11, 0.17, 0.04).translate(0, 0.085, 0.31), color: (c) => c.trunk },
@@ -438,16 +565,16 @@ const KINDS: Record<string, KindSpec> = {
   rocks: { space: 0.2, hit: 0.13, scale: [0.6, 1.4], max: MAX, parts: [
     { geo: () => new THREE.DodecahedronGeometry(0.16, 0).translate(0, 0.05, 0), color: (c) => c.rock, flat: true },
   ] },
-  palms: { space: 0.3, hit: 0.08, scale: [0.85, 1.25], max: 12, parts: [
+  palms: { space: 0.3, hit: 0.08, scale: [0.85, 1.25], max: 12, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.028, 0.05, 0.58, 7, 4).translate(0, 0.29, 0).applyMatrix4(new THREE.Matrix4().makeShear(0, 0, 0.12, 0, 0, 0)), color: (c) => c.trunk },
     { geo: palmLeaves, color: (c, r) => pick(c.canopy, r, '#3fbf4a') },
   ] },
-  mushrooms: { space: 0.35, hit: 0.12, scale: [0.9, 1.4], max: 12, parts: [
+  mushrooms: { space: 0.35, hit: 0.12, scale: [0.9, 1.4], max: 12, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.07, 0.09, 0.22, 10).translate(0, 0.11, 0), color: (c) => c.trunk },
     { geo: () => new THREE.SphereGeometry(0.24, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.2, 0), color: (c) => c.canopy[0] ?? '#e8302a' },
     { geo: mushroomSpots, color: fixed('#ffffff') },
   ] },
-  pipes: { space: 0.35, hit: 0.17, scale: [1, 1], max: 12, noYaw: true, parts: [
+  pipes: { space: 0.35, hit: 0.17, scale: [1, 1], max: 12, noYaw: true, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.13, 0.13, 0.3, 16).translate(0, 0.15, 0), color: (c) => c.house },
     { geo: () => new THREE.CylinderGeometry(0.17, 0.17, 0.1, 16).translate(0, 0.33, 0), color: (c) => c.house },
   ] },
@@ -455,28 +582,28 @@ const KINDS: Record<string, KindSpec> = {
   blocks: { space: 0.25, hit: 0, scale: [1, 1], max: 12, parts: [
     { geo: () => new THREE.BoxGeometry(0.2, 0.2, 0.2).translate(0, 0.36, 0), color: (c) => c.roof, map: questionTexture },
   ] },
-  cubetrees: { space: 0.28, hit: 0.1, scale: [0.85, 1.25], max: 12, parts: [
+  cubetrees: { space: 0.28, hit: 0.1, scale: [0.85, 1.25], max: 12, monument: true, parts: [
     { geo: () => new THREE.BoxGeometry(0.07, 0.3, 0.07).translate(0, 0.15, 0), color: (c) => c.trunk },
     { geo: () => new THREE.BoxGeometry(0.3, 0.26, 0.3).translate(0, 0.4, 0), color: (c, r) => pick(c.canopy, r, '#3f8f2a'), flat: true },
   ] },
   // --- Astéroïde B 612
-  roses: { space: 0.3, hit: 0.1, scale: [1, 1], max: 2, parts: [
+  roses: { space: 0.3, hit: 0.1, scale: [2, 2], max: 2, monument: true, parts: [
     { geo: () => merge([new THREE.CylinderGeometry(0.012, 0.014, 0.16, 6).translate(0, 0.08, 0), new THREE.SphereGeometry(0.03, 6, 4).scale(1.6, 0.4, 0.8).translate(0.03, 0.07, 0)]), color: fixed('#3f9a3a') },
     { geo: () => merge([0, 1, 2, 3].map((i) => new THREE.SphereGeometry(0.035, 10, 8).translate(Math.cos(i * 1.57) * 0.02, 0.18 + (i === 3 ? 0.02 : 0), Math.sin(i * 1.57) * 0.02))), color: (c) => String(c.rose ?? '#e8233a') },
     { geo: () => new THREE.SphereGeometry(0.1, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.62).scale(1, 1.35, 1).translate(0, 0.02, 0), color: fixed('#d8f4ff'),
       mat: () => new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide }) },
   ] },
-  baobabs: { space: 0.3, hit: 0.1, scale: [0.9, 1.3], max: 6, parts: [
+  baobabs: { space: 0.3, hit: 0.1, scale: [0.9, 1.3], max: 6, monument: true, parts: [
     { geo: baobabTrunk, color: (c) => c.trunk },
     { geo: baobabCanopy, color: (c, r) => pick(c.canopy, r, '#4f9a3a') },
   ] },
-  volcanoes: { space: 0.3, hit: 0.14, scale: [0.9, 1.2], max: 4, parts: [
+  volcanoes: { space: 0.3, hit: 0.14, scale: [1.3, 1.7], max: 4, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.06, 0.18, 0.16, 14).translate(0, 0.08, 0), color: (c) => String(c.volcano ?? '#8a5a3a') },
     { geo: () => new THREE.CircleGeometry(0.055, 14).rotateX(-Math.PI / 2).translate(0, 0.161, 0), color: fixed('#ff7a2a'),
       mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 0.9, 0.3) }) },
   ] },
   // --- Planète Bonbons
-  lollipops: { space: 0.3, hit: 0.08, scale: [0.9, 1.3], max: 12, parts: [
+  lollipops: { space: 0.3, hit: 0.08, scale: [0.9, 1.3], max: 12, monument: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.014, 0.014, 0.34, 8).translate(0, 0.17, 0), color: fixed('#ffffff') },
     { geo: () => new THREE.CylinderGeometry(0.16, 0.16, 0.05, 28).rotateX(Math.PI / 2).translate(0, 0.42, 0), color: (c, r) => pick(c.canopy, r, '#ff3b4e') },
     { geo: lollipopSwirl, color: fixed('#ffffff') },
@@ -485,14 +612,14 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.SphereGeometry(0.12, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.25, 1), color: (c, r) => pick(c.canopy, r, '#3fd65a') },
   ] },
   // --- Hill Valley
-  clocktowers: { space: 0.6, hit: 0.34, scale: [1, 1], max: 1, parts: [
+  clocktowers: { space: 0.6, hit: 0.34, scale: [1.9, 1.9], max: 1, monument: true, parts: [
     { geo: () => merge([new THREE.BoxGeometry(0.62, 0.42, 0.42).translate(0, 0.21, 0), new THREE.BoxGeometry(0.24, 0.36, 0.24).translate(0, 0.6, 0)]), color: (c) => String(c.tower ?? '#e8dcc0') },
     { geo: () => merge([new THREE.ConeGeometry(0.2, 0.22, 4).rotateY(Math.PI / 4).translate(0, 0.89, 0), new THREE.BoxGeometry(0.66, 0.05, 0.46).translate(0, 0.43, 0)]), color: (c) => c.roof },
     { geo: () => new THREE.CircleGeometry(0.09, 24).translate(0, 0.64, 0.122), color: fixed('#ffffff'), map: clockTexture },
     { geo: () => merge([-0.2, -0.07, 0.07, 0.2].map((x) => new THREE.BoxGeometry(0.06, 0.16, 0.02).translate(x, 0.2, 0.212))), color: fixed('#3a4a6a') },
   ] },
   // --- La Comté : collines-terriers à porte ronde
-  hills: { space: 0.5, hit: 0.42, scale: [0.9, 1.15], max: 5, parts: [
+  hills: { space: 0.5, hit: 0.42, scale: [1.1, 1.5], max: 5, monument: true, parts: [
     { geo: () => new THREE.SphereGeometry(0.5, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.5, 1), color: (c) => c.house },
     { geo: () => new THREE.CircleGeometry(0.1, 24).rotateX(-0.5).translate(0, 0.12, 0.445), color: (c, r) => pick(c.door, r, '#2f8a3a') },
     { geo: () => new THREE.RingGeometry(0.1, 0.125, 24).rotateX(-0.5).translate(0, 0.12, 0.443), color: fixed('#7a5230') },
@@ -515,7 +642,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => merge([new THREE.CylinderGeometry(0.022, 0.022, 0.012, 14).rotateX(Math.PI / 2).translate(0, 0.075, 0.076)]), color: fixed('#ffffff') },
   ] },
   // --- Royaume Enchanté
-  castles: { space: 0.7, hit: 0.42, scale: [1, 1], max: 1, parts: [
+  castles: { space: 0.7, hit: 0.42, scale: [1.8, 1.8], max: 1, monument: true, parts: [
     { geo: castleWalls, color: (c) => c.house },
     { geo: castleSpires, color: (c) => c.roof },
     { geo: () => new THREE.BoxGeometry(0.12, 0.16, 0.02).translate(0, 0.08, 0.312), color: fixed('#7a5a8a') },
@@ -535,7 +662,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.TorusGeometry(0.14, 0.03, 8, 32).translate(0, 0.14, 0), color: fixed('#2f6bff') },
     { geo: () => merge([star(0.06).translate(0, 0, 0.141), star(0.06).rotateY(Math.PI).translate(0, 0, -0.141)]).translate(0, 0.14, 0), color: fixed('#ff3a3a') },
   ] },
-  lamps: { space: 0.4, hit: 0.15, scale: [1.6, 1.6], max: 2, parts: [
+  lamps: { space: 0.4, hit: 0.15, scale: [2.8, 2.8], max: 2, monument: true, parts: [
     { geo: lampArms, color: (c) => c.trunk },
     { geo: lampHead, color: (c) => c.trunk, mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), side: THREE.DoubleSide }) },
     { geo: () => new THREE.SphereGeometry(0.035, 10, 8).translate(-0.17, 0.52, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.4, 1.8) }) },
@@ -548,51 +675,51 @@ const KINDS: Record<string, KindSpec> = {
   tirestacks: { space: 0.25, hit: 0.11, scale: [0.9, 1.1], max: 16, parts: [
     { geo: tireStack, color: fixed('#1e1e22') },
   ] },
-  thwomps: { space: 0.4, hit: 0.22, scale: [0.9, 1.1], max: 6, parts: [
+  thwomps: { space: 0.4, hit: 0.22, scale: [1, 1.25], max: 6, lift: 0.3, face: true, float: { bob: 0.08 }, monument: true, parts: [
     { geo: () => new THREE.BoxGeometry(0.4, 0.44, 0.4).translate(0, 0.22, 0), color: fixed('#a8a4b0'), map: angryTexture, flat: true },
   ] },
   torches: { space: 0.3, hit: 0.06, scale: [1, 1.2], max: 10, parts: [
     { geo: () => merge([new THREE.CylinderGeometry(0.03, 0.04, 0.5, 8).translate(0, 0.25, 0), new THREE.CylinderGeometry(0.09, 0.05, 0.08, 10).translate(0, 0.52, 0)]), color: fixed('#3a3438') },
     { geo: () => new THREE.ConeGeometry(0.07, 0.2, 10).translate(0, 0.65, 0), color: fixed('#ff8a2a'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 1.3, 0.3) }) },
   ] },
-  ghosts: { space: 0.3, hit: 0, scale: [0.9, 1.3], max: 8, lift: 0.45, parts: [
+  ghosts: { space: 0.3, hit: 0, scale: [0.9, 1.3], max: 8, lift: 0.6, float: { bob: 0.1, spin: 0.5 }, parts: [
     { geo: ghostBody, color: fixed('#f6f4ff'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x3a3a50) }) },
     { geo: () => merge([-1, 1].map((sx) => new THREE.SphereGeometry(0.022, 8, 6).scale(1, 1.5, 0.6).translate(sx * 0.045, 0.02, 0.12))), color: fixed('#1a1a2a') },
   ] },
-  lanterns: { space: 0.25, hit: 0, scale: [0.9, 1.2], max: 12, lift: 0.55, parts: [
+  lanterns: { space: 0.25, hit: 0, scale: [0.9, 1.2], max: 12, lift: 1.1, float: { bob: 0.1 }, parts: [
     { geo: () => new THREE.SphereGeometry(0.06, 14, 10), color: (c, r) => pick(c.lantern, r, '#8affd8'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.2, 2.2) }) },
   ] },
   deadtrees: { space: 0.3, hit: 0.07, scale: [1, 1.5], max: 8, parts: [
     { geo: deadTree, color: (c) => c.trunk },
   ] },
-  stars: { space: 0.3, hit: 0, scale: [0.9, 1.4], max: 16, lift: 0.5, parts: [
+  stars: { space: 0.3, hit: 0, scale: [1.2, 1.8], max: 16, lift: 1.3, float: { bob: 0.12, spin: 1.2 }, parts: [
     { geo: () => new THREE.ExtrudeGeometry((() => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2 + Math.PI / 2; const rr = i % 2 ? 0.05 : 0.12; if (i === 0) sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); else sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } return sh; })(), { depth: 0.04, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 1 }).translate(0, 0, -0.02),
       color: fixed('#ffe14d'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x8a6a10) }) },
   ] },
   // --- Arc-en-ciel : anneaux dorés à traverser
-  goldrings: { space: 0.6, hit: 0, scale: [1, 1.3], max: 6, parts: [
+  goldrings: { space: 0.6, hit: 0, scale: [1.4, 1.8], max: 6, monument: true, parts: [
     { geo: () => new THREE.TorusGeometry(0.55, 0.055, 10, 48).translate(0, 0.6, 0), color: fixed('#ffc93a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0xb07a10) }) },
   ] },
   // --- Hill Valley : panneau flottant
-  signs: { space: 0.6, hit: 0, scale: [1.3, 1.3], max: 3, lift: 0.9, parts: [
+  signs: { space: 0.6, hit: 0, scale: [1.8, 1.8], max: 3, lift: 1.7, float: { bob: 0.1 }, monument: true, parts: [
     { geo: () => new THREE.BoxGeometry(1.0, 0.56, 0.04), color: fixed('#5a3a22') },
     { geo: () => merge([new THREE.PlaneGeometry(0.96, 0.52).translate(0, 0, 0.022), new THREE.PlaneGeometry(0.96, 0.52).rotateY(Math.PI).translate(0, 0, -0.022)]), color: fixed('#ffffff'), map: hillValleyTexture },
   ] },
   // --- Poudlard
-  hogcastle: { space: 0.8, hit: 0.45, scale: [1.2, 1.2], max: 1, parts: [
+  hogcastle: { space: 0.8, hit: 0.45, scale: [2.4, 2.4], max: 1, monument: true, parts: [
     { geo: () => hogwarts()[0], color: (c) => c.house, flat: true },
     { geo: () => hogwarts()[1], color: (c) => c.roof },
     { geo: () => hogwarts()[2], color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.8) }) },
   ] },
-  hoops: { space: 0.5, hit: 0.05, scale: [0.9, 1.4], max: 6, parts: [
+  hoops: { space: 0.5, hit: 0.05, scale: [1.8, 2.2], max: 6, monument: true, parts: [
     { geo: () => merge([new THREE.CylinderGeometry(0.018, 0.024, 1.0, 8).translate(0, 0.5, 0), new THREE.TorusGeometry(0.16, 0.022, 8, 28).translate(0, 1.16, 0)]), color: (c) => String(c.gold ?? '#ffc93a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x6a4a08) }) },
   ] },
-  candles: { space: 0.25, hit: 0, scale: [0.9, 1.2], max: 16, lift: 1.0, parts: [
+  candles: { space: 0.25, hit: 0, scale: [1.1, 1.5], max: 16, lift: 1.4, float: { bob: 0.08 }, parts: [
     { geo: () => new THREE.CylinderGeometry(0.024, 0.026, 0.13, 10), color: fixed('#fff6e0') },
     { geo: () => new THREE.ConeGeometry(0.018, 0.05, 8).translate(0, 0.09, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 2.2, 0.8) }) },
   ] },
   // --- Ville d'Halloween
-  spiralhill: { space: 0.8, hit: 0.35, scale: [1.3, 1.3], max: 1, parts: [
+  spiralhill: { space: 0.8, hit: 0.35, scale: [2.4, 2.4], max: 1, monument: true, parts: [
     { geo: spiralHill, color: fixed('#5a5468') },
   ] },
   pumpkins: { space: 0.22, hit: 0.1, scale: [0.8, 1.4], max: 14, parts: [
@@ -624,7 +751,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.ConeGeometry(0.014, 0.08, 8).rotateX(Math.PI / 2).translate(0, 0.43, 0.1), color: fixed('#ff8a1a') },
   ] },
   // --- Prairie Meuh Meuh
-  cows: { space: 0.35, hit: 0.14, scale: [0.9, 1.15], max: 10, parts: [
+  cows: { space: 0.35, hit: 0.14, scale: [0.9, 1.15], max: 10, monument: true, parts: [
     { geo: () => merge([new THREE.CapsuleGeometry(0.09, 0.2, 4, 12).rotateX(Math.PI / 2).translate(0, 0.2, 0), new THREE.BoxGeometry(0.11, 0.11, 0.12).translate(0, 0.27, 0.19)]), color: fixed('#ffffff'), map: cowTexture },
     { geo: () => merge([[-0.05, -0.1], [0.05, -0.1], [-0.05, 0.1], [0.05, 0.1]].map(([x, z]) => new THREE.CylinderGeometry(0.018, 0.02, 0.13, 6).translate(x, 0.065, z))), color: fixed('#3a3a3a') },
     { geo: () => merge([new THREE.BoxGeometry(0.09, 0.05, 0.03).translate(0, 0.24, 0.26), new THREE.ConeGeometry(0.012, 0.05, 6).rotateZ(0.7).translate(-0.055, 0.34, 0.18), new THREE.ConeGeometry(0.012, 0.05, 6).rotateZ(-0.7).translate(0.055, 0.34, 0.18)]), color: fixed('#f2b8b0') },
@@ -632,7 +759,7 @@ const KINDS: Record<string, KindSpec> = {
   fences: { space: 0.3, hit: 0.08, scale: [1, 1], max: 12, parts: [
     { geo: () => merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.035, 0.2, 0.035).translate(x, 0.1, 0)).concat([new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.14, 0), new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.07, 0)])), color: (c) => String(c.wood ?? '#a8784a') },
   ] },
-  barn: { space: 0.8, hit: 0.4, scale: [1, 1], max: 1, parts: [
+  barn: { space: 0.8, hit: 0.4, scale: [1.8, 1.8], max: 1, monument: true, parts: [
     { geo: () => new THREE.BoxGeometry(0.72, 0.36, 0.56).translate(0, 0.18, 0), color: (c) => c.house },
     { geo: barnRoof, color: fixed('#6a2a24') },
     { geo: () => merge([new THREE.BoxGeometry(0.24, 0.26, 0.02).translate(0, 0.13, 0.285), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(0.8).translate(0, 0.13, 0.297), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(-0.8).translate(0, 0.13, 0.297)]), color: (c) => c.roof },
@@ -643,7 +770,7 @@ const KINDS: Record<string, KindSpec> = {
 };
 
 /** Ordre de placement : les gros objets d'abord (ils trouvent toujours leur place). */
-const ORDER = ['hogcastle', 'barn', 'spiralhill', 'signs', 'goldrings', 'thwomps', 'floodlights', 'castles', 'clocktowers', 'hills', 'houses', 'cabins', 'lamps', 'volcanoes', 'roses', 'baobabs', 'pipes', 'luxoballs', 'lollipops', 'mushrooms', 'palms', 'trees', 'cubetrees', 'toyblocks', 'gumdrops', 'balls', 'rocks', 'blocks', 'tallgrass', 'tirestacks', 'torches', 'deadtrees', 'ghosts', 'lanterns', 'stars', 'hoops', 'candles', 'pumpkins', 'gravestones', 'xmastrees', 'gifts', 'candycanes', 'snowmen', 'cows', 'fences', 'haybales'];
+const ORDER = ['hogcastle', 'bigtree', 'hoverboard', 'barn', 'spiralhill', 'crosses', 'signs', 'goldrings', 'thwomps', 'floodlights', 'castles', 'clocktowers', 'hills', 'houses', 'cabins', 'lamps', 'volcanoes', 'roses', 'baobabs', 'pipes', 'luxoballs', 'lollipops', 'mushrooms', 'palms', 'trees', 'cubetrees', 'toyblocks', 'gumdrops', 'balls', 'rocks', 'blocks', 'tallgrass', 'tirestacks', 'torches', 'deadtrees', 'ghosts', 'lanterns', 'stars', 'hoops', 'candles', 'pumpkins', 'gravestones', 'xmastrees', 'gifts', 'candycanes', 'snowmen', 'cows', 'fences', 'haybales', 'qblocks', 'coins', 'dragonballs', 'balloons', 'snowflakes', 'bats', 'candies', 'skyblocks'];
 
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();
@@ -652,10 +779,27 @@ const _p = new THREE.Vector3();
 const _s = new THREE.Vector3();
 const _c = new THREE.Color();
 
+/** Instance animée (flotte, tourne, regarde le véhicule). */
+interface Anim {
+  ps: Part[];
+  k: number;
+  dir: THREE.Vector3;
+  yaw: number;
+  sc: number;
+  lift: number;
+  phase: number;
+  spec: KindSpec;
+  /** Cap courant (objets qui regardent le véhicule). */
+  look: number;
+}
+
 export class Decor {
   readonly group = new THREE.Group();
   readonly obstacles: Obstacle[] = [];
   private readonly parts = new Map<string, Part[]>();
+  private anims: Anim[] = [];
+  private radius = 5;
+  private scale = 1;
 
   constructor(parent: THREE.Object3D) {
     parent.add(this.group);
@@ -677,9 +821,20 @@ export class Decor {
     for (const k of ['toyblocksB', 'toyblocksC']) if (defs.some((d) => d.decor.toyblocks)) this.partsOf(k);
   }
 
-  /** Place le décor d'une planète (graine fixe par planète). */
-  build(def: PlanetDef, radius: number, scale: number, avoid?: (dir: THREE.Vector3, margin: number) => boolean): void {
+  /** La planète a-t-elle des monuments (décor du menu) ? */
+  static hasMonuments(def: PlanetDef): boolean {
+    return Object.entries(def.decor).some(([k, n]) => n && (KINDS[k]?.monument || KINDS[k]?.float));
+  }
+
+  /**
+   * Place le décor d'une planète (graine fixe par planète). `monuments` : seulement
+   * les monuments et décorations flottantes (planètes du menu).
+   */
+  build(def: PlanetDef, radius: number, scale: number, avoid?: (dir: THREE.Vector3, margin: number) => boolean, monuments = false, sizeMul = 1): void {
     this.obstacles.length = 0;
+    this.anims = [];
+    this.radius = radius;
+    this.scale = scale;
     for (const ps of this.parts.values()) for (const p of ps) p.mesh.count = 0;
     if (def.style !== 'toon' || !def.decorColors) {
       this.group.visible = false;
@@ -690,12 +845,12 @@ export class Decor {
     const col = def.decorColors;
     const start = new THREE.Vector3(0, 1, 0);
     const placed: { dir: THREE.Vector3; r: number }[] = [];
-    const place = (minDist: number): THREE.Vector3 | null => {
-      for (let tries = 0; tries < 50; tries++) {
+    const place = (minDist: number, flying: boolean): THREE.Vector3 | null => {
+      for (let tries = 0; tries < 60; tries++) {
         const d = rng.onUnitSphere();
-        if (d.angleTo(start) < 0.5) continue; // départ dégagé
+        if (!flying && d.angleTo(start) < 0.5) continue; // départ dégagé
         if (placed.some((o) => o.dir.angleTo(d) * radius < minDist + o.r)) continue;
-        if (avoid?.(d, minDist / radius)) continue; // pas sur la piste
+        if (!flying && avoid?.(d, minDist / radius)) continue; // pas sur la route
         return d;
       }
       return null;
@@ -713,27 +868,26 @@ export class Decor {
       const spec = KINDS[kind];
       const n = Math.min(counts[kind] ?? 0, spec?.max ?? 0);
       if (!spec || n <= 0) continue;
-      const ps = this.partsOf(kind);
+      // Même tirage aléatoire que la planète de jeu, mais seuls les monuments sont posés
+      const skip = monuments && !spec.monument && !spec.float;
+      const ps = skip ? null : this.partsOf(kind);
       for (let i = 0; i < n; i++) {
         const sc = rng.range(spec.scale[0], spec.scale[1]);
-        const d = place(spec.space);
+        const d = place(spec.space * Math.max(1, sc * 0.8), !!spec.float && !spec.face);
         if (!d) break;
         const yaw = spec.noYaw ? 0 : rng.range(0, Math.PI * 2);
         const tint = rng.range(0.93, 1.07);
-        _q.setFromUnitVectors(UP, d);
-        _q2.setFromAxisAngle(UP, yaw);
-        _q.multiply(_q2);
-        // Taille constante en unités monde malgré l'échelle de la planète
-        _p.copy(d).multiplyScalar((radius + (spec.lift ?? 0) - 0.01) / scale);
-        _s.setScalar(sc / scale);
-        _m.compose(_p, _q, _s);
-        spec.parts.forEach((s, j) => {
+        const colors = spec.parts.map((p) => p.color(col, rng));
+        placed.push({ dir: d, r: spec.float && !spec.face ? 0.05 : Math.max(spec.hit * sc, 0.05) });
+        if (!ps) continue;
+        const k = ps[0].mesh.count;
+        spec.parts.forEach((_s, j) => {
           const mesh = ps[j].mesh;
-          const k = mesh.count++;
-          mesh.setMatrixAt(k, _m);
-          mesh.setColorAt(k, _c.set(s.color(col, rng)).multiplyScalar(tint));
+          mesh.count++;
+          mesh.setColorAt(k, _c.set(colors[j]).multiplyScalar(tint));
         });
-        placed.push({ dir: d, r: Math.max(spec.hit * sc, 0.05) });
+        this.setInstance(ps, k, d, yaw, sc * sizeMul, (spec.lift ?? 0) * sizeMul);
+        if (spec.float || spec.face) this.anims.push({ ps, k, dir: d, yaw, sc: sc * sizeMul, lift: (spec.lift ?? 0) * sizeMul, phase: rng.range(0, Math.PI * 2), spec, look: yaw });
         if (spec.hit > 0) this.obstacles.push({ dir: d, radius: spec.hit * sc });
       }
     }
@@ -745,4 +899,54 @@ export class Decor {
       }
     }
   }
+
+  private setInstance(ps: Part[], k: number, d: THREE.Vector3, yaw: number, sc: number, lift: number): void {
+    _q.setFromUnitVectors(UP, d);
+    _q2.setFromAxisAngle(UP, yaw);
+    _q.multiply(_q2);
+    // Taille constante en unités monde malgré l'échelle de la planète
+    _p.copy(d).multiplyScalar((this.radius + lift - 0.01) / this.scale);
+    _s.setScalar(sc / this.scale);
+    _m.compose(_p, _q, _s);
+    for (const p of ps) p.mesh.setMatrixAt(k, _m);
+  }
+
+  /**
+   * Animation des décorations flottantes ; `carDir` (espace planète) : les
+   * blocs de la forteresse se tournent vers le véhicule.
+   */
+  update(dt: number, t: number, carDir?: THREE.Vector3): void {
+    if (!this.anims.length) return;
+    const touched = new Set<Part[]>();
+    for (const a of this.anims) {
+      const f = a.spec.float;
+      let yaw = a.yaw + (f?.spin ?? 0) * t;
+      if (a.spec.face && carDir) {
+        // Cap vers le véhicule dans le plan tangent (repère de l'instance)
+        _q.setFromUnitVectors(UP, a.dir);
+        const fx = _v1.set(0, 0, 1).applyQuaternion(_q);
+        const fz = _v2.set(1, 0, 0).applyQuaternion(_q);
+        const to = _v3.copy(carDir).addScaledVector(a.dir, -carDir.dot(a.dir));
+        const want = Math.atan2(to.dot(fz), to.dot(fx));
+        let dd = want - a.look;
+        dd = Math.atan2(Math.sin(dd), Math.cos(dd));
+        a.look += dd * (1 - Math.exp(-dt * 4));
+        yaw = a.look;
+      }
+      const lift = a.lift + (f ? Math.sin(t * 1.6 + a.phase) * f.bob : 0);
+      this.setInstance(a.ps, a.k, a.dir, yaw, a.sc, lift);
+      touched.add(a.ps);
+    }
+    for (const ps of touched) for (const p of ps) p.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Libère les maillages (décor des planètes du menu). */
+  dispose(): void {
+    for (const ps of this.parts.values()) for (const p of ps) p.mesh.dispose();
+    this.group.removeFromParent();
+  }
 }
+
+const _v1 = new THREE.Vector3();
+const _v2 = new THREE.Vector3();
+const _v3 = new THREE.Vector3();

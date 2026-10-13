@@ -44,7 +44,8 @@ export class CameraRig {
   private readonly localRot: THREE.Quaternion;
 
   constructor(readonly data: NodeData, cam: CameraData) {
-    this.camera = new THREE.PerspectiveCamera(cam.fov, 16 / 9, cam.near, cam.far);
+    // Plan lointain allongé : planète de verre (on voit la face opposée) et vols entre planètes
+    this.camera = new THREE.PerspectiveCamera(cam.fov, 16 / 9, cam.near, Math.max(cam.far, 300));
     this.camera.rotation.y = Math.PI;
     this.baseFov = cam.fov;
     this.node.add(this.camera);

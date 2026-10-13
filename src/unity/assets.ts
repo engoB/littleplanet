@@ -51,7 +51,7 @@ export class Assets {
   /** Ciel spatial procédural (préréglage Arcade). */
   space: THREE.CubeTexture | null = null;
   /** Cubemaps des planètes toon : couleur et émission. */
-  readonly planetCubes = new Map<string, { color: THREE.CubeTexture; emis: THREE.CubeTexture | null }>();
+  readonly planetCubes = new Map<string, { color: THREE.CubeTexture; emis: THREE.CubeTexture | null; mask: THREE.CubeTexture | null }>();
   readonly planetPreviews = new Map<string, string>();
   /** Ciel doré « au-delà » (planète du Sage). */
   skyDb: THREE.CubeTexture | null = null;
@@ -137,8 +137,8 @@ export class Assets {
       this.planetPreviews.set(id, this.url('textures/' + files.preview));
       if (files.surface) void track(loadSurface(this.url('textures/' + files.surface)).then((sf) => sf && this.planetSurfaces.set(id, sf)));
       void track(
-        Promise.all([cube(files), files.e_px ? cube(files, 'e_', false) : Promise.resolve(null)]).then(([color, emis]) => {
-          this.planetCubes.set(id, { color, emis });
+        Promise.all([cube(files), files.e_px ? cube(files, 'e_', false) : Promise.resolve(null), files.m_px ? cube(files, 'm_', false) : Promise.resolve(null)]).then(([color, emis, mask]) => {
+          this.planetCubes.set(id, { color, emis, mask });
         }),
       );
     }

@@ -37,7 +37,6 @@ import * as fxp from './fxParticles';
 import { HealthRing } from './HealthRing';
 import { DEFAULT_KART, KartProps } from './KartProps';
 import { Toys } from './Toys';
-import { Thwomps } from './Thwomps';
 import { BulletBills, Snitch } from './Chasers';
 import { PlanetSelect } from './PlanetSelect';
 
@@ -46,7 +45,7 @@ export type Mode = 'menu' | 'play' | 'dying' | 'over';
 export interface WorldEvents {
   health(hp: number, max: number, delta: number): void;
   message(text: string, kind?: 'good' | 'bad' | 'info'): void;
-  gameOver(stats: { distance: number; time: number; stage: number; clocks: number }): void;
+  gameOver(stats: { distance: number; time: number; stage: number; clocks: number; victory?: boolean; planets?: number }): void;
   turbo(level: number, active: boolean): void;
   /** Étape réussie : numéro de la nouvelle étape et son objectif. */
   stage?(next: number, label: string, title?: string): void;
@@ -128,11 +127,42 @@ export class World implements GameContext {
     this.selected = d;
     this.def = this.resolve(d, 0);
   }
-  /** Étape i d'un voyage galactique (petites planètes), ou la planète elle-même. */
+  /** Voyage galactique : suite de planètes tirée au hasard (ids). */
+  private route: string[] = [];
+  /** Tire un nouvel itinéraire : toutes les planètes toon, mélangées (sans répétition consécutive). */
+  private newRoute(): void {
+    const pool = PLANETS.filter((p) => p.style === 'toon').map((p) => p.id);
+    const out: string[] = [];
+    while (out.length < 40) {
+      const bag = [...pool];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      if (out.length && bag[0] === out[out.length - 1]) bag.push(bag.shift()!);
+      out.push(...bag);
+    }
+    this.route = out;
+  }
+  /** Nombre de planètes du voyage (0 = sans fin) et temps par planète (0 = illimité). */
+  get galaxyCount(): number {
+    return Number(this.settings.galaxyCount ?? 5) || 0;
+  }
+  get galaxyTime(): number {
+    return Number(this.settings.galaxyTime ?? 90) || 0;
+  }
+  /** Compte à rebours actif (contre-la-montre, ou temps limité par planète du voyage). */
+  get countdown(): boolean {
+    return bool(this.settings, 'modeTimeAttack') || (!!this.galaxy && this.galaxyTime > 0);
+  }
+  /** Voyage réussi (dernière planète atteinte et son objectif rempli). */
+  private won = false;
+  /** Étape i d'un voyage galactique, ou la planète elle-même. */
   private resolve(d: PlanetDef, i: number): PlanetDef {
-    if (d.style !== 'galaxy' || !d.galaxy?.length) return d;
-    const sub = planetById(d.galaxy[i % d.galaxy.length]);
-    return { ...sub, radius: Math.min(sub.radius, d.radius) };
+    if (d.style !== 'galaxy') return d;
+    if (!this.route.length) this.newRoute();
+    const sub = planetById(this.route[i % this.route.length]);
+    return { ...sub, radius: Math.min(sub.radius, 1.05) };
   }
   private planetMesh!: THREE.Mesh;
   private planetStdMat!: THREE.Material;
@@ -166,7 +196,6 @@ export class World implements GameContext {
   // --- circuits
   private kart!: KartProps;
   private toys!: Toys;
-  private thwomps!: Thwomps;
   snitch!: Snitch;
   bills!: BulletBills;
   /** Toupie (pylône) : temps restant (s). */
@@ -318,8 +347,17 @@ export class World implements GameContext {
     this.decor.prepare(PLANETS);
     this.kart = new KartProps(this.planet);
     this.toys = new Toys(this.planet);
+    this.toys.prepare(PLANETS.map((p) => p.toys));
     this.toys.onKick = (k) => {
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.25 + 0.35 * k, 1.5 + Math.random() * 0.4);
+    };
+    this.toys.onBreak = () => {
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.7, 0.9);
+      this.shaker.start({ enabled: true, delay: 0, duration: 0.15, space: 0, strength: [0.05, 0.05, 0.1], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+    };
+    this.toys.onOrbit = () => {
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.6, 1.3);
+      this.events.message('En orbite !', 'info');
     };
     this.snitch = new Snitch(this.planet);
     this.snitch.onCatch = (at) => {
@@ -342,19 +380,17 @@ export class World implements GameContext {
       this.burstAt(at, [0.6, 0.6, 0.65, 1]);
       this.events.message('Esquivé !', 'good');
     };
-    this.thwomps = new Thwomps(this.planet);
-    this.thwomps.onSlam = (local, dist) => {
-      const at = this.planet.localToWorld(local.clone().multiplyScalar(this.planetCollider / this.planetRadius()));
-      this.burstAt(at, [0.75, 0.72, 0.7, 1]);
-      this.sfxAt('sfx_explosion', at, 0.7);
-      const k = Math.max(0, 1 - dist / 4);
-      this.shaker.start({ enabled: true, delay: 0, duration: 0.35, space: 0, strength: [0.12 * k + 0.02, 0.12 * k + 0.02, 0.25 * k + 0.04], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
-      if (dist < 0.55 && this.hop <= 0 && this.mode === 'play') this.damage(25, 'Écrasé !');
-    };
     this.buildGalaxyObjects();
     const geo = this.planetMesh.geometry;
     geo.computeBoundingSphere();
     this.select = new PlanetSelect(this.scene, this.assets, this.planetStdMat, geo, geo.boundingSphere?.radius ?? 5);
+    // Planètes du menu : leurs monuments et décorations flottantes à la surface
+    this.select.decorFor = (def, mesh) => {
+      if (!bool(this.settings, 'premiumFx') || !Decor.hasMonuments(def)) return;
+      const d = new Decor(mesh);
+      // Monuments exagérés : la planète du menu est vue de loin
+      d.build(def, this.planetCollider * def.radius, def.radius, this.surfaceAvoid(def), true, 1.8);
+    };
     const rp = getComponent<{ type: string; id: number; fields: { rotationSpeed: number } }>(this.findRoot(this.menuData, 'Planet')!, 'RotatePlanet');
     this.rotatePlanet = new RotatePlanet(this.planet, rp?.fields.rotationSpeed ?? 10);
     this.shrink = new ShrinkPlanet(this.planet);
@@ -526,6 +562,17 @@ export class World implements GameContext {
     this.health.onChange = (hp, max, d) => this.events.health(hp, max, d);
     this.health.onDie = () => this.triggerGameOver();
     this.stages.onComplete = (n) => {
+      if (this.galaxy && !this.galaxy.goal && this.galaxyCount > 0 && this.galaxy.visited >= this.galaxyCount) {
+        // Dernière planète du voyage : victoire
+        this.galaxy.goal = true;
+        this.events.stage?.(n + 1, `${this.galaxyCount} planètes traversées`, 'Voyage réussi !');
+        if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_stage', 0.8);
+        this.won = true;
+        this.mode = 'dying';
+        this.dyingTime = 0;
+        Time.timeScale = 0.6;
+        return;
+      }
       if (this.galaxy && !this.galaxy.goal) {
         // Voyage galactique : l'objectif accompli débloque l'étoile de lancement
         this.galaxy.goal = true;
@@ -573,13 +620,22 @@ export class World implements GameContext {
       else if (def.emis) u.emisColor.value.setRGB(def.emis, def.emis, def.emis);
       else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.55 : 0);
       u.rimColor.value.set(def.atmosphere);
+      // Planète de verre (Arc-en-ciel) : seule la route est opaque, on voit l'espace au travers
+      const glass = !!def.glass && !!cubes.mask;
+      u.planetMask.value = cubes.mask ?? cubes.color;
+      u.glass.value = glass ? 1 : 0;
+      if (this.planetToonMat.transparent !== glass) {
+        this.planetToonMat.transparent = glass;
+        this.planetToonMat.side = glass ? THREE.DoubleSide : THREE.FrontSide;
+        this.planetToonMat.needsUpdate = true;
+      }
       this.planetMesh.material = this.planetToonMat;
     } else {
       this.planetMesh.material = this.planetStdMat;
     }
     this.atmo.visible = premium;
     (this.atmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
-    (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon ? 0.3 : 0.6;
+    (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon || def.glass ? 0.3 : 0.6;
     if (this.haloRoot) this.haloRoot.visible = !premium;
     // Voyage galactique : ciel étoilé pour tout le voyage
     const sky = premium ? (this.selected.style === 'galaxy' ? 'space' : def.sky ?? 'space') : 'original';
@@ -590,7 +646,7 @@ export class World implements GameContext {
       : this.assets.skies.get(sky) ?? this.assets.skybox;
     this.scene.backgroundIntensity = sky === 'space' ? (def.neon ? 0.55 : 0.8) : sky === 'db' ? 0.62 : sky === 'original' ? 1 : 0.95;
     this.scene.environment = this.dayEnvironment;
-    this.decor.build(def, this.planetRadius(), def.radius);
+    this.decor.build(def, this.planetRadius(), def.radius, this.surfaceAvoid(def));
     // Objets de course sur toutes les planètes Arcade (nombre selon la surface)
     const area = def.radius * def.radius;
     const kart = def.kart ?? {
@@ -605,7 +661,6 @@ export class World implements GameContext {
     this.stages.item = this.toon ? ['caisse', 'caisses'] : ['horloge', 'horloges'];
     const seed = [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 13) >>> 0;
     this.toys.build(this.toon ? def.toys : undefined, this.planetRadius(), def.radius, seed);
-    this.thwomps.configure(this.toon && def.hazard === 'thwomp', this.planetRadius(), def.radius);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
@@ -775,6 +830,7 @@ export class World implements GameContext {
     this.applySettings(this.settings);
     this.planet.quaternion.identity();
     for (const l of this.sceneLights) l.light.intensity = l.game;
+    if (this.selected.style === 'galaxy') this.newRoute();
     this.def = this.resolve(this.selected, 0);
     this.applyPlanet(this.def);
     this.craters.baseScale = this.def.radius;
@@ -810,8 +866,9 @@ export class World implements GameContext {
     this.clocksCollected = 0;
     this.turboLevel = 1;
     this.turboLocked = false;
-    this.timeLeft = 60;
+    this.timeLeft = this.galaxy && this.galaxyTime ? this.galaxyTime : 60;
     this.dyingTime = 0;
+    this.won = false;
     this.stages.start();
     this.revealKart(1);
     this.updateDifficulty();
@@ -867,12 +924,10 @@ export class World implements GameContext {
     this.mode = 'over';
     Time.timeScale = 0; // Time.timeScale = 0 : le jeu s'arrête
     this.music?.stop(); // mainCameraAudioSource.Stop()
-    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected });
+    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited });
   }
 
   private damage(points: number, label: string): void {
-    if (bool(this.settings, 'modeZen')) return;
-    if (bool(this.settings, 'modeSuddenDeath')) points = Math.max(points, this.health.currentHealth);
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
       if (bool(this.settings, 'extraSounds')) {
@@ -885,6 +940,31 @@ export class World implements GameContext {
   private bumpCooldown = 0;
   private shrinkStep = 0;
   /** Décor : cercle (voiture) contre cercle (obstacle) sur la sphère, rebond. */
+  /** Décor tenu à l'écart des routes, de la lave et de l'eau (carte de surface). */
+  surfaceAvoid(def: PlanetDef): ((dir: THREE.Vector3, margin: number) => boolean) | undefined {
+    const sf = this.assets.planetSurfaces.get(def.id);
+    if (!sf) return undefined;
+    const bad = (d: THREE.Vector3) => {
+      const c = sf.at(d.x, d.y, d.z);
+      return c === SURF.PATH || c === SURF.LAVA || c === SURF.WATER;
+    };
+    const t = new THREE.Vector3();
+    const b = new THREE.Vector3();
+    return (d, margin) => {
+      if (bad(d)) return true;
+      // Quatre points autour de l'objet, à `margin` (rad)
+      t.set(0, 1, 0).cross(d);
+      if (t.lengthSq() < 1e-6) t.set(1, 0, 0);
+      t.normalize();
+      b.crossVectors(d, t);
+      for (const [x, y] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const p = d.clone().addScaledVector(t, x * margin).addScaledVector(b, y * margin).normalize();
+        if (bad(p)) return true;
+      }
+      return false;
+    };
+  }
+
   /**
    * Dévoilement progressif des objets de course : un type de plus à chaque
    * étape (accélérateurs d'abord), pour ne pas tout montrer d'un coup.
@@ -973,7 +1053,6 @@ export class World implements GameContext {
       aim = 0.3;
     }
     if (bool(s, 'modeStorm')) interval *= 0.5;
-    if (bool(s, 'modeZen')) interval *= 1.6;
     this.meteors.interval = interval;
     this.meteors.aim = this.aimOverride ?? (bool(s, 'meteorRamp') || bool(s, 'stages') ? aim : 0);
   }
@@ -986,13 +1065,14 @@ export class World implements GameContext {
   step(realDt: number, input: { horizontal: number; turbo: boolean }): void {
     Time.advance(realDt);
     const dt = Time.deltaTime;
+    this.decor.update(dt, Time.time, this.mode === 'menu' ? undefined : this.carDir);
     if (this.mode === 'menu') {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
     } else if (this.mode === 'play' || this.mode === 'dying') {
       if (this.mode === 'play') {
         this.chrono += realDt;
-        if (bool(this.settings, 'modeTimeAttack')) {
+        if (this.countdown && !this.launch) {
           this.timeLeft -= realDt;
           if (this.timeLeft <= 0) {
             this.timeLeft = 0;
@@ -1046,9 +1126,8 @@ export class World implements GameContext {
     // (sinon il se relance par à-coups tant qu'on garde le doigt dessus)
     if (this.turboLevel <= 0.001) this.turboLocked = true;
     if (this.turboLocked && !input.turbo && this.turboLevel >= 0.2) this.turboLocked = false;
-    const infinite = bool(s, 'modeInfiniteTurbo');
     const wantTurbo = alive && bool(s, 'turbo') && input.turbo && !this.turboLocked;
-    if (wantTurbo && !infinite) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
+    if (wantTurbo) this.turboLevel = Math.max(0, this.turboLevel - dt / 2.5);
     else if (!wantTurbo) this.turboLevel = Math.min(1, this.turboLevel + dt / 6);
     if (wantTurbo !== this.turboActive) {
       this.turboActive = wantTurbo;
@@ -1121,8 +1200,7 @@ export class World implements GameContext {
     if (alive) {
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
       const Rp = this.planetRadius();
-      this.toys.update(dt, this.hop > 0 ? null : this.carDir, fwd.clone().multiplyScalar(this.vehicle.speed * this.vehicle.speedMultiplier), Rp);
-      this.thwomps.update(dt, this.carDir, fwd, Rp);
+      this.toys.update(dt, this.hop > 0 ? null : this.carDir, fwd.clone().multiplyScalar(this.vehicle.speed * this.vehicle.speedMultiplier), Rp, this.vehicle.speedMultiplier > 1.3);
       const sp = this.vehicle.speed;
       this.snitch.update(dt, this.carDir, sp, Rp, this.planet.scale.x);
       this.bills.update(dt, this.carDir, sp, Rp, this.planet.scale.x);
@@ -1241,6 +1319,11 @@ export class World implements GameContext {
         this.turboLocked = false;
         this.events.message('Turbo plein !', 'good');
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_turbo_pickup', 0.7);
+      }
+      // Route arc-en-ciel : accélère tant qu'on roule dessus
+      if (this.def.roadBoost && this.surface === SURF.PATH && this.hop <= 0) {
+        if (this.boostTime <= 0 && bool(s, 'extraSounds')) this.audio.playOneShot('sfx_boost', 0.4, 1.2);
+        this.boostTime = Math.max(this.boostTime, 0.35);
       }
       if (this.hop <= 0 && this.kart.springAt(this.carDir, 0.3, R)) {
         // Ressort : léger tassement puis propulsion
@@ -1498,6 +1581,7 @@ export class World implements GameContext {
     this.tracker.resync();
     g.arrivalDist = this.tracker.totalDistance;
     this.health.heal(15);
+    if (this.galaxyTime > 0) this.timeLeft = Math.max(this.timeLeft, this.galaxyTime);
     // Caméra : départ de la caméra de vol (recalée sur le nouveau repère), fondu vers le suivi
     const shift = this.satellite.position.clone().sub(this.planet.position);
     this.rig.endChase();
@@ -1505,7 +1589,7 @@ export class World implements GameContext {
     this.rig.blendFrom(camPos.sub(shift), camQ, 0.35);
     this.landT = 0.5;
     this.burstAt(this.car.position.clone(), [0.9, 0.85, 0.75, 1]);
-    this.events.stage?.(g.visited, next.name, `Planète ${g.visited}`);
+    this.events.stage?.(g.visited, next.name, this.galaxyCount > 0 ? `Planète ${g.visited} / ${this.galaxyCount}` : `Planète ${g.visited}`);
     const ang = g.index * 2.4;
     this.placeSatellite(this.resolve(this.selected, g.index + 1), new THREE.Vector3(Math.cos(ang), 0.6, Math.sin(ang)));
     if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.8);

@@ -16,13 +16,16 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Vingt-cinq planètes décrites dans un fichier unique, `src/game/planets.json`,
+Vingt planètes décrites dans un fichier unique, `src/game/planets.json`,
 lu par le générateur de textures et par le jeu. En Arcade, **la planète
 rétrécit** au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra
 s'adapte** : proche du véhicule tant que la planète est grosse, elle recule
 pour la montrer en entier quand elle devient petite. On roule toujours
-librement tout autour de la planète : les routes dessinées (Sage) ne sont
-qu'un décor.
+librement tout autour de la planète : les **routes qui font le tour** (Sage,
+lave de la Forteresse, rue de Hill Valley, chemins de la Comté, de la prairie
+Meuh Meuh et d'Halloween, tapis de la Chambre de Jouets, route arc-en-ciel)
+ne sont qu'un décor. Le décor évite routes, lave et eau. Les planètes de
+départ sont plus grosses (×1,25 à ×1,35) pour en profiter.
 
 Elles s'inspirent d'univers de dessins animés, de films et de jeux très
 connus, avec un style évident mais sans reprendre de personnage ni de logo :
@@ -30,32 +33,27 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Planète | Diff. | Inspiration | Particularité |
 |---|---|---|---|
 | Planète d'origine | ★★ | — | la planète Unity, telle quelle (voiture Unity) |
-| Stade Champignon | ★★ | Circuit Mario | grosse planète : pelouse de stade en damier, tuyaux, arbres |
-| Prairie Meuh Meuh | ★ | Prairie Meuh Meuh | prés éclatants, vaches tachetées, clôtures, grange rouge, bottes de foin |
-| Stade de Terre | ★★★ | Stade Wario | boue, bosses, flaques, tremplins (sans décor) |
-| Lac Fantôme | ★★★ | Vallée Fantôme | eau violette et radeaux de planches (sans décor) |
-| Forteresse de Lave | ★★★★ | Château de Bowser | pavés clairs, fissures de lave, torches ; **blocs écraseurs qui tombent du ciel** |
-| Arc-en-ciel Céleste | ★★★★★ | Route Arc-en-ciel | damier arc-en-ciel lumineux et translucide, anneaux dorés |
-| Planète du Sage | ★★ | Dragon Ball | route jaune (décor), prés dorés, maison-dôme, ciel doré « au-delà » |
+| Stade Champignon | ★★ | Circuit Mario | grosse planète : pelouse de stade en damier, pièces flottantes, cônes bousculables |
+| Prairie Meuh Meuh | ★ | Prairie Meuh Meuh | chemin de terre, vaches, grange géante, ballons ; **clôtures qui se brisent**, bottes de foin bousculables |
+| Forteresse de Lave | ★★★★ | Château de Bowser | pavés clairs, **une rivière de lave qui fait le tour**, torches, **blocs de pierre qui flottent et te fixent** |
+| Arc-en-ciel Céleste | ★★★★★ | Route Arc-en-ciel | **planète de verre** (on voit l'espace et la face opposée au travers), **deux tronçons de route arc-en-ciel droits qui accélèrent**, anneaux dorés, étoiles flottantes |
+| Planète du Sage | ★★ | Dragon Ball | route jaune, prés dorés, maison-dôme, **sept boules de cristal qui flottent** |
 | Prairie | ★ | — | clairières de terre, maison-dôme ; météores lents et rares |
-| La Comté | ★ | les hobbits | collines-terriers à porte ronde, champs en patchwork, haies, mares |
-| Prairie des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), mares (sans décor) |
-| Royaume Champignon | ★★ | Mario | tuyaux verts, champignons à pois, blocs « ? » |
-| Planète Bonbons | ★★ | Candy Crush | glaçage rose ondulé, flaques de chocolat, sucettes, boules de gomme |
-| Chambre de Jouets | ★★★ | Pixar | **moquette** et tapis ronds, ciel de gros nuages, **jouets bousculables** (ballons, cubes) |
-| Royaume Enchanté | ★★ | Disney | prés en fleurs, lacs, ciel étoilé (sans décor) |
-| Poudlard | ★★★ | Harry Potter | hautes terres, lac noir, château aux tours pointues, anneaux de Quidditch, chandelles flottantes |
-| Ville d'Halloween | ★★★ | L'Étrange Noël de M. Jack | colline en spirale, citrouilles illuminées, tombes, lune géante |
-| Village de Noël | ★★ | Noël | neige, plaques de glace, sapins illuminés, cadeaux, sucres d'orge, bonshommes de neige, aurore |
-| Grand Océan | ★★★ | One Piece | **rien que de l'eau** : tremplins, accélérateurs, tourbillons ; adhérence 0,7 |
-| Émeraude | ★★★ | — | étangs (éclaboussures) ; météores plus rapides (sans décor) |
-| Monde de Cubes | ★★★ | Minecraft | tout en blocs |
-| Hill Valley | ★★★ | Retour vers le futur | pelouses, places pavées, tour de l'horloge, **panneau « Welcome to Hill Valley » qui flotte** ; « 88 mph ! » et traînées de feu en turbo |
-| Astéroïde B 612 | ★★★★ | Le Petit Prince | plus grosse au départ (×1,2) : sable doré, rose sous sa cloche, volcans, baobabs |
-| Banquise | ★★★ | — | **monde de cases gelées** : la voiture glisse (adhérence 0,35) |
+| La Comté | ★ | les hobbits | chemin creux, collines-terriers à porte ronde, champs en patchwork, lanternes flottantes |
+| Royaume Champignon | ★★ | Mario | tuyaux verts, champignons à pois, **blocs « ? » et pièces qui flottent** |
+| Planète Bonbons | ★★ | Candy Crush | glaçage rose, flaques de chocolat, sucettes, bonbons flottants |
+| Chambre de Jouets | ★★★ | Pixar | moquette et **tapis de couloir qui fait le tour**, lampe géante, ballons flottants, **jouets bousculables** |
+| Poudlard | ★★★ | Harry Potter | château géant, **grands anneaux de Quidditch**, chandelles flottantes |
+| Ville d'Halloween | ★★★ | L'Étrange Noël de M. Jack | chemin pavé, colline en spirale géante, **grandes croix de cimetière**, chauves-souris, **citrouilles bousculables** |
+| Village de Noël | ★★ | Noël | **sapin géant**, flocons flottants, sucres d'orge, bonshommes de neige, **cadeaux bousculables** |
+| Grand Océan | ★★★ | One Piece | rien que de l'eau : ressorts, accélérateurs, ballons de plage ; adhérence 0,7 |
+| Monde de Cubes | ★★★ | Minecraft | tout en blocs, îlots de blocs flottants |
+| Hill Valley | ★★★ | Retour vers le futur | rue qui fait le tour, tour de l'horloge, **statue géante de l'hoverboard rose**, panneau qui flotte ; « 88 mph ! » et traînées de feu en turbo |
+| Astéroïde B 612 | ★★★★ | Le Petit Prince | sable doré, rose sous sa cloche, volcans, baobabs, étoiles flottantes |
+| Banquise | ★★★ | — | **monde de cases gelées** : la voiture glisse (adhérence 0,35), flocons |
 | Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
 
-Émeraude, Banquise et Naine se débloquent en parcourant 100 m sur la planète
+Banquise et Naine se débloquent en parcourant 100 m sur la planète
 précédente (réglage « Toutes les planètes débloquées » pour tout ouvrir).
 Records par planète.
 
@@ -65,32 +63,55 @@ déclenche éclaboussures, sillage, braises ou brins d'herbe.
 
 ### Objets sur toutes les planètes
 
-Placés au hasard (graine fixe par planète, nombre selon la taille) :
+Placés au hasard (graine fixe par planète, nombre selon la taille), et
+**dévoilés progressivement** : un type de plus à chaque étape réussie (« Nouveau
+: ressorts ! »), pour ne pas tout montrer d'un coup :
 
-- **cases « ? »** arc-en-ciel : elles remplacent les horloges (même apparition
-  et même soin que l'original) et éclatent en gerbe de particules ;
-- **baskets du futur** (montantes, lacets lumineux) : turbo plein ;
-- **accélérateurs** (dalles à chevrons) : ×1,55 pendant 1,1 s ;
-- **tremplins** : saut, aucun cratère ne fait mal pendant le saut ;
-- **pylônes tournoyants** : le véhicule fait une toupie et accélère.
+- **caisses de réparation** arc-en-ciel (clé de réparation) : elles remplacent
+  les horloges (même apparition et même soin que l'original) ;
+- **accélérateurs** : disques à flèches lumineuses qui **pivotent vers le
+  véhicule qui arrive** (la flèche indique le bon sens) : ×1,55 pendant 1,1 s ;
+- **baskets du futur** (montante argentée, semelle et col lumineux) : turbo plein ;
+- **ressorts** : le plateau se tasse puis propulse le véhicule en l'air ;
+- **poteaux** rayés : le véhicule qui les heurte rebondit, fait **un tour sur
+  lui-même** du côté de l'impact et accélère ; le poteau oscille.
+
+**Objets bousculables** (jouets, citrouilles, cadeaux, bottes de foin, cônes,
+ballons de plage) : percutés, ils rebondissent ailleurs sur la planète ;
+percutés à pleine vitesse (turbo, accélérateur), certains **partent en orbite**
+puis réapparaissent à leur place. Les **clôtures** de Meuh Meuh **se brisent**
+en planches.
+
+**Décorations flottantes** animées (blocs « ? », pièces, boules de cristal,
+ballons, flocons, chauves-souris, bonbons, panneau de Hill Valley…) et
+**monuments agrandis** (château de Poudlard, anneaux, colline en spirale,
+grange, tour de l'horloge, hoverboard, sapin géant…), aussi visibles sur les
+planètes du menu.
 
 ### Voyage galactique (mode de jeu)
 
-Un mode à part (bouton « Modes de jeu » → « Partir ») : une suite de petites
-planètes. La planète suivante flotte dans le ciel. L'**étoile de lancement**
+Un mode à part (bouton « Modes de jeu » → « Partir ») : on choisit le **nombre
+de planètes** (3, 5, 8 ou sans fin) et le **temps par planète** (1:00, 1:30,
+2:00 ou illimité) ; les planètes sont **tirées au hasard**. Le chrono devient
+un compte à rebours (en pause pendant le vol) : à zéro, la partie s'arrête.
+Après la dernière planète : « Voyage réussi ! ».
+La planète suivante flotte dans le ciel. L'**étoile de lancement**
 n'apparaît qu'une fois l'**objectif de la planète réussi** et au moins 30 m
 parcourus dessus (étoile dorée sur la mini-carte, elle attire le véhicule à
 l'approche). Le lancement s'inspire de la « Launch Star » de Mario Galaxy :
-le véhicule est **aspiré** au centre de l'étoile en tournoyant, l'étoile se
-**tasse** pour prendre son élan, puis il est **éjecté** sur une courbe de
-Bézier (départ très rapide, arrivée qui ralentit, tonneau, champ de vision
-élargi, caméra de poursuite qui glisse du véhicule vers la destination). À
-l'arrivée : écrasement et rebond élastique du véhicule, gerbe de poussière,
-et la caméra **fond** doucement de la pose de vol vers le suivi normal.
+le véhicule est **aspiré** au centre de l'étoile en tournoyant (trois tours
+qui finissent face au cap de vol), l'étoile se **tasse**, puis il est
+**éjecté** sur une courbe de Bézier. L'orientation est entièrement calculée
+(Bézier de quaternions départ → mi-vol → arrivée, tonneau borné) : aucun
+lissage cumulé, donc aucun tremblement. La caméra ignore la toupie, fond
+depuis sa pose au décollage, puis **rejoint pendant la fin du vol la pose de
+suivi d'après l'atterrissage** : l'arrivée est continue (écrasement et rebond
+élastique du véhicule, gerbe de poussière).
 
 ### Modes de jeu (bouton « Modes de jeu » de l'accueil)
 
-Défis cumulables, pour toutes les planètes :
+Défis cumulables, pour toutes les planètes. Les modes actifs s'affichent en
+jeu sous le bouton pause (icône et nom, qui se replient en icônes) :
 
 | Mode | Effet |
 |---|---|
@@ -99,9 +120,6 @@ Défis cumulables, pour toutes les planètes :
 | Commandes inversées | gauche et droite échangées |
 | **Attrape le Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
 | **Fuis le Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
-| Mort subite | le moindre choc est fatal |
-| Zen | aucun dégât, météores plus rares (pas de record) |
-| Turbo infini | la jauge ne se vide jamais (pas de record) |
 | Planète qui rétrécit | activé par défaut en Arcade |
 
 ### Menus
@@ -112,7 +130,7 @@ Défis cumulables, pour toutes les planètes :
   difficulté, description, record).
 - **Comment jouer** : tutoriel illustré en 5 diapositives (histoire, tourner,
   éviter, ramasser, progresser).
-- **Réglages** : petite roue discrète en haut à droite.
+- **Réglages** : roue crantée discrète en haut à droite.
 
 ### Véhicule (préréglage Arcade)
 
@@ -125,15 +143,16 @@ celle de la voiture d'origine : le gameplay ne change pas.
 
 ### HUD Arcade
 
-- **Santé** : anneau segmenté au sol autour du véhicule (vert → jaune →
-  rouge, clignote sous 30 %, flash blanc à chaque choc, traînée claire de la
-  part perdue). Réglage « Affichage de la santé » pour revenir à la barre.
-- **Objectif** : bannière sous le chrono (pastille d'étape, icône, texte en
+- **Santé** : anneau fin et discret au sol autour du véhicule (vert → jaune →
+  rouge), presque transparent, plus marqué juste après un choc et sous 30 %.
+  Réglage « Affichage de la santé » pour revenir à la barre.
+- **Objectif** : bannière juste sous le chrono (compacte en portrait) (pastille d'étape, icône, texte en
   gros, barre de progression) et grande annonce « Étape N » au centre quand
   une étape est réussie.
 - **Turbo** : bouton au centre vide (sous le pouce) entouré d'un **anneau de
   flammes** qui représente la jauge ; jauge vide → turbo verrouillé jusqu'au
   relâchement et 20 % de recharge (plus de turbo par à-coups).
+- Plus de flèches gauche / droite à l'écran (les deux demi-écrans restent actifs).
 - Les cratères ne font plus dévier le véhicule (réglage « Les cratères font
   dévier », désactivé par défaut).
 
@@ -232,7 +251,7 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Véhicule | voiture volante | voiture Unity |
 | Modes de jeu (mort subite, zen, contre-la-montre…) | au choix | non |
 | Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
-| Objets kart (accélérateurs, cubes bonus, tremplins) et voyage galactique | oui | non |
+| Objets de course (accélérateurs, baskets, ressorts, poteaux), bousculables, décor flottant et voyage galactique | oui | non |
 
 ---
 
@@ -471,7 +490,12 @@ joué pendant le geste.
 - qualité « auto » : départ à 1,5× sur mobile ; sous 54 i/s pendant 2 s la
   densité de pixels baisse par paliers de 0,25 (jusqu'à 1×, puis MSAA coupé
   et particules réduites) ; au-dessus de 58 i/s pendant 6 s elle remonte,
-  sans repasser au palier qui a ramé.
+  sans repasser au palier qui a ramé ;
+- **pas de temps lissé** : la gigue des horodatages `requestAnimationFrame`
+  (quelques ms) est filtrée par une moyenne glissante, sinon la caméra et le
+  véhicule tremblent légèrement ;
+- collisions de décor et physique des objets sans allocation par image (pas
+  de pauses du ramasse-miettes sur mobile).
 
 ## Icône
 

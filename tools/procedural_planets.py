@@ -103,6 +103,14 @@ def spots(d: np.ndarray, pts: np.ndarray, radii: np.ndarray) -> tuple[np.ndarray
     return i.reshape(d.shape[:-1]), r.reshape(d.shape[:-1])
 
 
+def road_band(d: np.ndarray, nz: Noise3, a: float = 0.1, b: float = 0.05, phase: float = 0.0) -> np.ndarray:
+    """Distance (≈ angulaire) à une route décorative qui fait le tour de la planète
+    autour de l'équateur, en courbes douces (comme le chemin de la planète du Sage)."""
+    lon = np.arctan2(d[..., 2], d[..., 0])
+    off = a * np.sin(2 * lon + phase) + b * np.sin(3 * lon + 1.3 + phase) + 0.02 * (nz.fbm(d * 3 + 17, 2) - 0.5)
+    return np.abs(d[..., 1] - off)
+
+
 def pattern(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Classe de région (entier), couleur RGB, émission [0,1] pour des directions d."""
     cls, col, emis, _ = pattern_full(d, pl, nz)
@@ -265,6 +273,14 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         cls = np.where(plaza > 0.7, 10, cls)
         flowers = nz.fbm(d * 9 + 60, 2)
         paint((flowers > 0.74) & (plaza < 0.69), '#e05a6a', 14, smooth(0.74, 0.75, flowers) * 0.9)
+        # Rue de Hill Valley qui fait le tour : trottoirs, asphalte, ligne jaune pointillée
+        band = road_band(d, nz, 0.09, 0.05)
+        lon = np.arctan2(d[..., 2], d[..., 0])
+        paint(band < 0.1, '#d8d2c4', 15, smooth(0.102, 0.096, band))
+        paint(band < 0.082, '#4a4a52', 16, smooth(0.084, 0.078, band))
+        dash = (band < 0.006) & ((np.floor(lon * 30) % 2) == 0)
+        paint(dash, '#f2c230', 17, dash * 1.0)
+        surf[band < 0.082] = SURF_PATH
     elif kind == 'comte':
         # Bocage : champs en patchwork bordés de haies, chemins creux, mare
         pts = sphere_points(46, 1937)
@@ -282,6 +298,11 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         pond = nz.fbm(d * 3 + 400, 3)
         paint(pond > 0.74, '#5fb4e6', 12, smooth(0.74, 0.75, pond))
         surf[pond > 0.74] = SURF_WATER
+        # Chemin creux de la Comté (terre, bordé d'herbe haute)
+        band = road_band(d, nz, 0.12, 0.05, 4.0)
+        paint(band < 0.075, '#3f7a2e', 13, smooth(0.078, 0.07, band))
+        paint(band < 0.06, pal['path'], 14, smooth(0.062, 0.056, band))
+        surf[band < 0.06] = SURF_PATH
     elif kind == 'herbes':
         # Route de départ : herbe claire, hautes herbes en touffes, routes de terre, mares
         tall = nz.fbm(d * 3.6 + 500, 3)
@@ -310,36 +331,47 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         gold = nz.fbm(d * 5 + 950, 2)
         paint((gold > 0.74) & (lake < 0.7), pal['path'], 12, smooth(0.74, 0.75, gold) * 0.85)
     elif kind == 'moquette':
-        # Moquette de chambre d'enfant : fibres, et quelques tapis ronds colorés
+        # Moquette de chambre d'enfant (fibres) et un tapis de couloir qui fait le tour
         fib = nz.fbm(d * 140 + 3, 2)
         tuft = nz.fbm(d * 18 + 9, 2)
         col = col * (0.9 + 0.16 * fib[..., None]) * (0.95 + 0.1 * tuft[..., None])
-        pts = sphere_points(7, 1995)
-        ci, cr = spots(d, pts, np.full(7, 0.32))
-        rug = ci >= 0
-        rings = [pal['accent1'], pal['accent2'], pal['path'], pal['pathDark']]
-        ring = (np.floor(cr * 5).astype(int) + ci) % len(rings)
-        rc = np.stack([hexc(c) for c in rings])[ring] * (0.9 + 0.16 * fib[..., None])
-        col = np.where(rug[..., None], rc, col)
-        cls = np.where(rug, 10 + ring, 0)
+        band = road_band(d, nz, 0.1, 0.04)
+        run = band < 0.1
+        lon = np.arctan2(d[..., 2], d[..., 0])
+        # Motif de losanges et bordures à franges
+        u = lon * 18
+        v = (band / 0.1) * 2.2
+        diamond = (np.abs((u % 2) - 1) + np.abs(v % 2 - 1)) < 0.55
+        border = (band > 0.075) & run
+        fringe = (band >= 0.1) & (band < 0.108) & ((np.floor(lon * 220) % 2) == 0)
+        rc = np.where(diamond[..., None], hexc(pal['accent1']), hexc(pal['pathDark']))
+        rc = np.where(border[..., None], hexc(pal['path']), rc) * (0.9 + 0.16 * fib[..., None])
+        col = np.where(run[..., None], rc, col)
+        col = np.where(fringe[..., None], hexc('#f4ead2'), col)
+        cls = np.where(run | fringe, 10, 0)
+        surf[run] = SURF_PATH
     elif kind == 'arcenciel':
-        # Damier arc-en-ciel lumineux et translucide (bandes de couleurs, joints clairs)
-        neb = nz.fbm(d * 2.5 + 3, 4)
-        space_c = lerp(hexc('#07061e'), hexc('#1a1450'), smooth(0.4, 0.7, neb))
-        g = d * 22
-        fr = np.abs(g - np.round(g))
-        joint = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1)
-        cell = np.floor(g)
-        chk = (cell.sum(-1) % 2)
-        hue = (d[..., 1] * 1.1 + 0.25 * nz.fbm(d * 1.5 + 8, 2)) % 1.0
-        hh = (hue[..., None] * 6 + np.array([0.0, 4.0, 2.0])) % 6
-        rb = np.clip(np.abs(hh - 3) - 1, 0, 1)
-        rb = rb * 0.8 + 0.2
-        glow_edge = smooth(0.16, 0.03, joint)
-        tile = space_c * (0.35 + 0.15 * chk[..., None]) + rb * (0.5 + 0.15 * chk[..., None] + 0.45 * glow_edge[..., None])
-        col = np.where((joint < 0.03)[..., None], np.array([1.0, 0.95, 0.85]), tile)
-        emis = rb * (0.35 + 0.6 * glow_edge[..., None]) + (joint < 0.03)[..., None] * 0.6
-        cls = np.where(joint < 0.03, 10, 0)
+        # Planète de verre (on voit l'espace et la face opposée au travers) et deux
+        # tronçons de route arc-en-ciel bien droits (grand cercle du départ), qui accélèrent
+        x = d[..., 0]
+        phi = np.arctan2(d[..., 2], d[..., 1])
+        w = 0.1
+        L = 1.05
+        over = np.minimum(np.maximum(np.abs(phi) - L, 0), np.maximum(np.abs(np.abs(phi) - np.pi) - L, 0))
+        dist = np.sqrt(x * x + over * over)
+        road = dist < w
+        t = np.clip(x / w * 0.5 + 0.5, 0, 1)
+        hh = ((t * 0.82)[..., None] * 6 + np.array([0.0, 4.0, 2.0])) % 6
+        rb = np.clip(np.abs(hh - 3) - 1, 0, 1) * 0.85 + 0.15
+        seam = (np.abs((phi / 0.07) - np.round(phi / 0.07)) < 0.08)
+        rail = dist > w * 0.86
+        rc = np.where(seam[..., None], rb * 0.7, rb)
+        rc = np.where(rail[..., None], np.array([1.0, 0.97, 0.9]), rc)
+        glass = lerp(hexc('#0a0a2a'), hexc('#24206a'), smooth(0.35, 0.75, nz.fbm(d * 2.5 + 3, 3)))
+        col = np.where(road[..., None], rc, glass)
+        emis = road[..., None] * (rc * 0.75 + rail[..., None] * 0.5)
+        cls = np.where(road, 40, 0)
+        surf[road] = SURF_PATH
     elif kind == 'wario':
         # Stade de terre : boue, bosses de terre claire, flaques
         mud = nz.fbm(d * 3.5 + 20, 4)
@@ -352,20 +384,23 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         surf[pud > 0.68] = SURF_WATER
         cls = np.where(pud > 0.68, 10, 0)
     elif kind == 'bowser':
-        # Pavés de pierre clairs (grille 3D) et fissures de lave
+        # Pavés de pierre clairs (grille 3D) et une seule route de lave qui fait le tour
         emis = np.zeros(d.shape)
         g = d * 24
         fr = np.abs(g - np.round(g))
         grout = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1) < 0.07
         stone = lerp(hexc('#8e8894'), hexc('#b0aab6'), smooth(0.3, 0.7, nz.fbm(np.floor(g) * 0.37, 2)))
         col = np.where(grout[..., None], hexc('#5e5864'), stone)
-        r = 1 - np.abs(2 * nz.fbm(d * 3.0 + 150, 4) - 1)
-        lava = r > 0.97
-        lc = lerp(hexc('#ff5a10'), hexc('#ffd040'), smooth(0.97, 0.99, r))
+        band = road_band(d, nz, 0.12, 0.06)
+        flow = nz.fbm(d * 9 + 5, 3)
+        lava = band < 0.075
+        lc = lerp(hexc('#ff4a08'), hexc('#ffd040'), smooth(0.4, 0.75, flow) * smooth(0.075, 0.02, band))
+        rim = (band >= 0.075) & (band < 0.095)
+        col = np.where(rim[..., None], hexc('#3a2a2e'), col)
         col = np.where(lava[..., None], lc, col)
-        emis = emis + lava[..., None] * lc
+        emis = emis + lava[..., None] * lc + (rim * 0.25)[..., None] * hexc('#ff6a20')
         surf[lava] = SURF_LAVA
-        cls = np.where(lava, 10, 0)
+        cls = np.where(lava, 10, np.where(rim, 11, 0))
     elif kind == 'circuit':
         # Pelouse de stade en damier tondu (grille 3D) et massifs de fleurs
         q = np.floor(d * 7)
@@ -416,6 +451,17 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         paint(field > 0.68, pal['path'], 10, smooth(0.68, 0.7, field))
         rows = (np.sin(d @ np.array([60.0, 11.0, 37.0])) > 0.6) & (field > 0.7)
         paint(rows, pal['pathDark'], 11, rows * 0.8)
+        # Chemin pavé tortueux qui fait le tour de la ville
+        band = road_band(d, nz, 0.14, 0.07, 2.1)
+        g = d * 70
+        fr = np.abs(g - np.round(g))
+        joint = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1)
+        cob = lerp(hexc('#6e6478'), hexc('#8a8094'), smooth(0.3, 0.7, nz.fbm(np.floor(g) * 0.29, 2)))
+        cob = np.where((joint < 0.1)[..., None], hexc('#3a3240'), cob)
+        a = smooth(0.082, 0.074, band)[..., None]
+        col = col * (1 - a) + cob * a
+        cls = np.where(band < 0.078, 12, cls)
+        surf[band < 0.078] = SURF_PATH
         mist = nz.fbm(d * 1.8 + 90, 3)
         col = col + (smooth(0.6, 0.75, mist) * 0.12)[..., None] * np.array([0.6, 0.7, 0.8])
     elif kind == 'noel':
@@ -431,6 +477,12 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         paint(mead > 0.64, pal['accent2'], 5, smooth(0.64, 0.66, mead) * 0.5)
         dirt = nz.fbm(d * 3.6 + 200, 3)
         paint(dirt > 0.73, pal['path'], 10, smooth(0.725, 0.74, dirt))
+        # Chemin de terre qui serpente autour de la prairie (traces de roues)
+        band = road_band(d, nz, 0.13, 0.06, 0.7)
+        paint(band < 0.085, pal['path'], 11, smooth(0.088, 0.078, band))
+        ruts = (np.abs(band - 0.035) < 0.008)
+        paint(ruts & (band < 0.085), pal['pathDark'], 12, ruts * 0.6)
+        surf[band < 0.085] = SURF_PATH
     # Petits points (fleurs, cristaux, paillettes) sur une grille 3D
     cell = np.floor(d * 34)
     h = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
@@ -503,6 +555,7 @@ def planet(pl: dict, out: str, size: int = 512) -> dict:
     nz = Noise3(sum(map(ord, pl['id'])) * 7919)  # graine stable par planète
     files = {}
     emissive = pl['pattern'] in ('volcan', 'neon') or 'emis' in pl
+    glass = bool(pl.get('glass'))
     esize = 512 if pl['pattern'] == 'neon' or 'emis' in pl else 256
     for f in FACES:
         d = face_dirs(f, size)
@@ -517,6 +570,11 @@ def planet(pl: dict, out: str, size: int = 512) -> dict:
             efn = f"planet_{pl['id']}_e_{f}.jpg"
             e.save(os.path.join(out, efn), quality=88)
             files['e_' + f] = efn
+        if glass:
+            # Masque d'opacité (planète de verre) : 255 sur la route, 0 sur le verre
+            mfn = f"planet_{pl['id']}_m_{f}.png"
+            Image.fromarray(((cls >= 40) * 255).astype(np.uint8)).resize((256, 256), Image.BILINEAR).save(os.path.join(out, mfn), optimize=True)
+            files['m_' + f] = mfn
     files['surface'] = surface_map(pl, out, nz)
     # Aperçu : sphère éclairée façon cel-shading
     n = 256

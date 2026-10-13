@@ -32,10 +32,12 @@ export interface PlanetDef {
   emis?: number;
   /** Voyage galactique : planètes visitées l'une après l'autre. */
   galaxy?: string[];
-  /** Danger propre à la planète (blocs écraseurs qui tombent…). */
-  hazard?: 'thwomp';
-  /** Jouets bousculables (Chambre de Jouets). */
-  toys?: { balls: number; blocks: number };
+  /** Objets bousculables : { type: nombre } (ball, blockA/B/C, pumpkin, gift, hay, beachball, cone, fence). */
+  toys?: Record<string, number>;
+  /** Planète de verre : seule la route est opaque (masque d'opacité). */
+  glass?: boolean;
+  /** Rouler sur la route (surface « chemin ») donne un coup d'accélérateur. */
+  roadBoost?: boolean;
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */

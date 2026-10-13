@@ -36,11 +36,11 @@ export class Screens {
     }
   }
 
-  gameOver(stats: { distance: number; time: number; stage: number; clocks: number }, rank: number, best: number | null, showStats: boolean): void {
+  gameOver(stats: { distance: number; time: number; stage: number; clocks: number }, rank: number, best: number | null, showStats: boolean, item: [string, string] = ['horloge', 'horloges']): void {
     $('over-distance').textContent = `${stats.distance.toFixed(2)} m`;
     const m = Math.floor(stats.time / 60);
     const s = Math.floor(stats.time % 60);
-    $('over-details').textContent = showStats ? `${m}:${String(s).padStart(2, '0')} · étape ${stats.stage} · ${stats.clocks} horloge${stats.clocks > 1 ? 's' : ''}` : '';
+    $('over-details').textContent = showStats ? `${m}:${String(s).padStart(2, '0')} · étape ${stats.stage} · ${stats.clocks} ${stats.clocks > 1 ? item[1] : item[0]}` : '';
     const rec = $('over-record');
     rec.hidden = rank === 0 && best === null;
     rec.textContent = rank === 1 ? 'Nouveau record !' : rank > 1 ? `${rank}ᵉ meilleure distance` : best !== null ? `Record : ${best.toFixed(2)} m` : '';
