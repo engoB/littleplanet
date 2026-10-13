@@ -6,6 +6,19 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.12.0 — lot 12
+
+- Écran titre : planète classique (herbe réaliste et chemin de terre du projet
+  Unity d'origine) et l'aéro-voiture qui fait le tour du chemin.
+- Nouvelle « Planète classique » jouable ; option de test « Herbe en relief »
+  (désactivée par défaut).
+- Impacts : colonne de fumée noire qui monte (peut passer devant la caméra)
+  et cratère incandescent qui s'éteint en 1,6 s.
+- Compte à rebours « 3, 2, 1, Partez ! » avant chaque partie.
+- Bannière d'étape plus haute et plus petite.
+- Voyage galactique : arrivée plus douce et rebonds amortis.
+- Mondes sombres : néons années 80 sous la voiture.
+
 ## 0.11.0 — lot 11
 
 - Difficulté affichée en étoiles ; réinitialisation de la progression depuis

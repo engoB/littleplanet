@@ -89,6 +89,21 @@ export class Hud {
   }
 
   /** Grande annonce au centre de l'écran : « Étape 2 » + nouvel objectif. */
+  private readonly count = $('countdown');
+  private countTimer = 0;
+  /** Compte à rebours de départ (0 : « Partez ! »). */
+  countdown(n: number): void {
+    const c = this.count;
+    c.textContent = n > 0 ? String(n) : 'Partez !';
+    c.hidden = false;
+    c.classList.toggle('go', n <= 0);
+    c.classList.remove('tick');
+    void c.offsetWidth;
+    c.classList.add('tick');
+    clearTimeout(this.countTimer);
+    if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
+  }
+
   stageBanner(stage: number, sub: string, title = `Étape ${stage}`): void {
     const b = this.banner;
     $('sb-title').textContent = title;

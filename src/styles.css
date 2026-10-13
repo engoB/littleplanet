@@ -280,7 +280,7 @@ legend { font-weight: 700; font-size: 18px; padding: 6px 0; color: var(--accent)
   .obj-bar { min-width: 110px; height: 6px; }
   .hud-center { padding-top: 2px; }
   #chrono { font-size: clamp(40px, 11vw, 64px); }
-  #messages { top: calc(132px + var(--safe-t)); }
+  #messages { top: calc(30% + var(--safe-t)); }
   /* Modes actifs : icônes seules */
   .hud-modes .hm { padding: 0 2px; gap: 0; }
   .hud-modes .hm span.t { display: none; }
@@ -658,3 +658,28 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 .art-controls .half.l { left: 0; }
 .art-controls .half.r { right: 0; }
 .tuto-actions > * { white-space: nowrap; }
+
+/* Compte à rebours de départ */
+#countdown {
+  position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none;
+  font-family: 'Lilita', var(--font); font-size: clamp(90px, 30vmin, 170px); line-height: 1; color: #fff;
+  -webkit-text-stroke: 4px #1a1238; paint-order: stroke fill; text-shadow: 0 8px 0 rgba(20, 10, 50, 0.6), 0 0 40px rgba(120, 200, 255, 0.5);
+}
+#countdown[hidden] { display: none; }
+#countdown.go { color: #ffd34d; font-size: clamp(56px, 16vmin, 110px); white-space: nowrap; text-shadow: 0 8px 0 rgba(90, 40, 0, 0.6), 0 0 40px rgba(255, 200, 60, 0.7); }
+#countdown.tick { animation: cdtick 0.9s ease-out; }
+@keyframes cdtick { 0% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.2; } }
+#countdown.go.tick { animation: cdgo 0.8s ease-out forwards; }
+@keyframes cdgo { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
+/* Bannière d'étape : en haut, plus petite, ne masque plus le jeu */
+#stage-banner { top: 22% !important; }
+.sb-title { font-size: clamp(40px, 10vmin, 70px) !important; }
+.sb-sub { font-size: clamp(16px, 3.6vmin, 24px) !important; }
+@media (orientation: portrait) { #stage-banner { top: 24% !important; } }
+
+/* Écran titre : logo en haut, invitation en bas, la planète classique au centre */
+.menu-title { flex-direction: column; justify-content: space-between; align-items: center; padding: calc(40px + var(--safe-t)) 16px calc(46px + var(--safe-b)); background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 40%, rgba(4, 6, 20, 0.35)) !important; cursor: pointer; }
+.title-brand { text-align: center; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.35)); }
+.title-brand .brand-title { font-size: clamp(64px, 18vw, 110px); }
+.title-tap { font-family: 'Lilita', var(--font); font-size: clamp(20px, 5.4vw, 28px); color: #fff; -webkit-text-stroke: 1.5px rgba(20, 30, 20, 0.55); paint-order: stroke fill; text-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); animation: tapPulse 1.6s ease-in-out infinite; }
+@keyframes tapPulse { 50% { opacity: 0.45; transform: scale(0.96); } }

@@ -34,6 +34,8 @@ export class PlanetSelect {
   private portrait = false;
   /** Pose les monuments d'une planète sur son maillage (fourni par le monde). */
   decorFor: ((def: PlanetDef, mesh: THREE.Mesh) => void) | null = null;
+  /** Matériau de la planète classique (herbe et chemin). */
+  classicMat: (() => THREE.Material) | null = null;
 
   constructor(scene: THREE.Scene, private readonly assets: Assets, private readonly origMat: THREE.Material, geo: THREE.BufferGeometry, geoScale: number) {
     this.group.position.copy(ORIGIN);
@@ -70,7 +72,7 @@ export class PlanetSelect {
           m.side = THREE.DoubleSide;
         }
         mat = m;
-      } else mat = this.origMat;
+      } else mat = def.style === 'classic' && this.classicMat ? this.classicMat() : this.origMat;
       if (locked && (mat as THREE.MeshToonMaterial).color) {
         mat = mat === this.origMat ? mat.clone() : mat;
         (mat as THREE.MeshToonMaterial).color.setScalar(0.18);

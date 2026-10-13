@@ -132,3 +132,22 @@ export function burst(obj: THREE.Object3D, atlas: Record<string, [number, number
   const look: SpriteLook = { rect: atlas.fx_dot, additive: true, tint: [2, 2, 2], hidden: false };
   return new ParticleSystem(obj, d, renderer(0, 0.2), look);
 }
+
+/**
+ * Colonne de fumée noire d'un impact de météore (non bouclée) : grosses
+ * bouffées qui montent, grossissent et peuvent passer devant la caméra.
+ */
+export function impactSmoke(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
+  const d = base({
+    looping: false,
+    duration: 3.2,
+    main: { lifetime: rnd(3.2, 5.2), speed: rnd(0.45, 1.0), size: rnd(0.55, 0.95), gravity: k(-0.07), color: col([0.13, 0.12, 0.12, 0.85]), maxParticles: 90, rotation: rnd(0, 6.28) },
+    shape: { type: 4, angle: 16, radius: 0.18 },
+    emission: { enabled: true, rate: curve([[0, 22], [0.4, 9], [1, 0]]), rateOverDistance: k(0), bursts: [{ time: 0, count: k(8), cycles: 1, interval: 0.01, probability: 1 }] },
+    sizeOverLifetime: { enabled: true, curve: curve([[0, 0.5], [0.3, 1.5], [1, 3.4]]) },
+    colorOverLifetime: { enabled: true, gradient: fade([[0, 0.35, 0.3, 0.28], [0.25, 1, 1, 1], [1, 1, 1, 1]], [[0, 0], [0.06, 0.9], [0.55, 0.6], [1, 0]]) },
+  });
+  const tex = atlas['cfxr smoke cloud x4'] ?? atlas.fx_dot;
+  const look: SpriteLook = { rect: [tex[0], tex[1], tex[0] + (tex[2] - tex[0]) / 2, tex[1] + (tex[3] - tex[1]) / 2], additive: false, tint: [1, 1, 1], hidden: false };
+  return new ParticleSystem(obj, d, renderer(0, 2.5), look);
+}

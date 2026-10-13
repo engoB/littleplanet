@@ -96,6 +96,10 @@ export const SCHEMA: SettingDef[] = [
   { key: 'sfxVolume', label: 'Effets', group: 'Audio', type: 'number', arcade: 1, original: 1, min: 0, max: 1, step: 0.05 },
   { key: 'loopMusic', label: 'Musique en boucle', group: 'Audio', type: 'bool', arcade: true, original: false },
   { key: 'engineVolume', label: 'Moteur', group: 'Audio', type: 'number', arcade: 0.45, original: 0.052, min: 0, max: 1, step: 0.01, help: 'AudioSource de la voiture : 0,052 dans Unity (presque inaudible).' },
+  { key: 'countdown', label: 'Compte à rebours avant le départ', group: 'Jeu', type: 'bool', arcade: true, original: false, help: '3, 2, 1, Partez ! : la partie ne démarre pas brusquement.' },
+  { key: 'neonCar', label: 'Néons sous la voiture (mondes sombres)', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Anneaux lumineux magenta et cyan autour des patins et halo au sol, style années 80, sur les mondes de nuit ou dans l’espace.' },
+  { key: 'realGrass', label: 'Herbe en relief (test, planète classique)', group: 'Graphismes', type: 'bool', arcade: false, original: false, help: 'Test : tapis de brins d’herbe en relief (coques superposées) sur la planète classique. Plus lourd pour le téléphone.' },
+  { key: 'impactSmoke', label: 'Fumée et incandescence des impacts', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Colonne de fumée noire qui monte des cratères (elle peut passer devant la caméra) et cratère incandescent quelques instants.' },
   { key: 'extraSounds', label: 'Sons supplémentaires (explosions, chocs, turbo…)', group: 'Audio', type: 'bool', arcade: true, original: false },
   // --- Contrôles
   { key: 'orientation', label: 'Orientation de l’écran', group: 'Contrôles', type: 'select', arcade: 'portrait', original: 'portrait', options: [

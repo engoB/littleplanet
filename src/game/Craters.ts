@@ -35,6 +35,9 @@ export class Craters {
   private readonly style: 'box' | 'decal';
   /** Échelle de base de la planète (taille de la planète choisie). */
   baseScale = 1;
+  /** Incandescence de l'impact : lueur orange qui s'éteint en ~1,6 s (préréglage Arcade). */
+  heatGlow = false;
+  private readonly heat: THREE.InstancedMesh | null = null;
 
   constructor(private readonly ctx: GameContext, prefab: NodeData, style: 'box' | 'decal') {
     this.name = prefab.name + '(Clone)';
@@ -73,6 +76,15 @@ export class Craters {
     this.mesh.receiveShadow = true;
     this.mesh.renderOrder = 1;
     ctx.planet.add(this.mesh);
+    if (style === 'decal') {
+      const hm = new THREE.MeshBasicMaterial({ map: heatTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+      this.heat = new THREE.InstancedMesh(new THREE.CircleGeometry(0.5, 24), hm, MAX);
+      this.heat.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAX * 3), 3);
+      this.heat.count = 0;
+      this.heat.frustumCulled = false;
+      this.heat.renderOrder = 2;
+      ctx.planet.add(this.heat);
+    }
   }
 
   /** Lueur des cratères (planète Néon) ; null = aucune. */
@@ -159,12 +171,65 @@ export class Craters {
     }
     this.mesh.count = n;
     this.mesh.instanceMatrix.needsUpdate = true;
+    // Incandescence : seulement les impacts récents
+    const h = this.heat;
+    if (h) {
+      let m = 0;
+      if (this.heatGlow) {
+        for (const c of this.list) {
+          if (c.age > HEAT_TIME) continue;
+          const x = 1 - c.age / HEAT_TIME;
+          const k = x * x;
+          const d = Math.max(this.size.x, this.size.y) * (1.6 + 0.4 * (1 - x)) * inv;
+          _s.set(d, d, d);
+          _p.copy(c.pos).addScaledVector(c.normal, 0.006);
+          _m.compose(_p, c.quat, _s);
+          h.setMatrixAt(m, _m);
+          h.setColorAt(m, _c.setRGB(2.6 * k, (0.9 + 0.5 * k) * k, 0.25 * k * k));
+          m++;
+        }
+      }
+      h.count = m;
+      h.instanceMatrix.needsUpdate = true;
+      if (h.instanceColor) h.instanceColor.needsUpdate = true;
+    }
   }
 
   clear(): void {
     this.list.length = 0;
     this.mesh.count = 0;
+    if (this.heat) this.heat.count = 0;
   }
+}
+
+const HEAT_TIME = 1.6;
+const _c = new THREE.Color();
+
+/** Lueur d'impact : cœur blanc-jaune, halo orange, fissures rayonnantes. */
+function heatTexture(): THREE.Texture {
+  const N = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N / 2);
+  grd.addColorStop(0, 'rgba(255,255,230,1)');
+  grd.addColorStop(0.25, 'rgba(255,200,120,0.9)');
+  grd.addColorStop(0.6, 'rgba(255,110,40,0.35)');
+  grd.addColorStop(1, 'rgba(255,60,0,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, N, N);
+  g.strokeStyle = 'rgba(255,220,150,0.8)';
+  g.lineWidth = 2;
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + Math.sin(i * 7) * 0.3;
+    g.beginPath();
+    g.moveTo(N / 2, N / 2);
+    const r = N * (0.3 + 0.15 * Math.abs(Math.sin(i * 3.1)));
+    g.lineTo(N / 2 + Math.cos(a + 0.2) * r * 0.5, N / 2 + Math.sin(a + 0.2) * r * 0.5);
+    g.lineTo(N / 2 + Math.cos(a) * r, N / 2 + Math.sin(a) * r);
+    g.stroke();
+  }
+  return new THREE.CanvasTexture(c);
 }
 
 /** Tourbillon d'eau dessiné (spirale bleu foncé → écume blanche, bords transparents). */

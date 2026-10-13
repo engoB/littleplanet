@@ -466,7 +466,8 @@
       },
       "toys": {
         "gift": 8
-      }
+      },
+      "dark": true
     },
     {
       "id": "origine",
@@ -492,6 +493,31 @@
       },
       "sky": "original",
       "vehicle": "original"
+    },
+    {
+      "id": "classique",
+      "name": "Planète classique",
+      "tagline": "De l'herbe, un chemin de terre qui fait le tour du monde et ton aéro-voiture : l'esprit du jeu d'origine.",
+      "difficulty": 2,
+      "style": "classic",
+      "radius": 1.0,
+      "unlock": null,
+      "atmosphere": "#c8f0ff",
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0
+      },
+      "sky": "day",
+      "vehicle": "hover"
     },
     {
       "id": "pixar",
@@ -605,7 +631,8 @@
         "hogcastle": 1,
         "hoops": 3,
         "candles": 10
-      }
+      },
+      "dark": true
     },
     {
       "id": "halloween",
@@ -661,7 +688,8 @@
       },
       "toys": {
         "pumpkin": 7
-      }
+      },
+      "dark": true
     },
     {
       "id": "ocean",
@@ -928,7 +956,8 @@
         "items": 3,
         "ramps": 2,
         "spinners": 1
-      }
+      },
+      "dark": true
     },
     {
       "id": "petitprince",
@@ -1036,7 +1065,8 @@
         "spinners": 1
       },
       "glass": true,
-      "roadBoost": true
+      "roadBoost": true,
+      "dark": true
     },
     {
       "id": "naine",
@@ -1087,7 +1117,8 @@
         "stars": 5
       },
       "sky": "space",
-      "vehicle": "hover"
+      "vehicle": "hover",
+      "dark": true
     }
   ]
 }
