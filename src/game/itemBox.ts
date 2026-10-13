@@ -1,6 +1,6 @@
 /**
- * Case bonus arc-en-ciel « ? » (matériau partagé, rendu en InstancedMesh) :
- * teinte qui tourne avec le temps, point d'interrogation et liseré blancs.
+ * Case de réparation arc-en-ciel (matériau partagé, rendu en InstancedMesh) :
+ * teinte qui tourne avec le temps, clé de réparation et liseré blancs.
  */
 import * as THREE from 'three';
 
@@ -31,25 +31,42 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
 }`;
 
-function questionAlpha(): THREE.Texture {
+/** Clé de réparation (masque alpha) et liseré : la case rend de la santé. */
+function repairAlpha(): THREE.Texture {
   const c = document.createElement('canvas');
-  c.width = c.height = 64;
+  c.width = c.height = 128;
   const g = c.getContext('2d')!;
-  g.font = 'bold 46px sans-serif';
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
   g.fillStyle = '#fff';
-  g.fillText('?', 32, 35);
   g.strokeStyle = '#fff';
-  g.lineWidth = 4;
-  g.strokeRect(4, 4, 56, 56);
+  g.lineWidth = 8;
+  g.strokeRect(8, 8, 112, 112);
+  g.save();
+  g.translate(64, 64);
+  g.rotate(-Math.PI / 4);
+  // Manche arrondi
+  g.beginPath();
+  g.roundRect(-9, -8, 18, 52, 9);
+  g.fill();
+  // Tête ouverte (anneau entaillé) en haut, œillet en bas
+  g.beginPath();
+  g.arc(0, -22, 22, 0, Math.PI * 2);
+  g.fill();
+  g.beginPath();
+  g.arc(0, 40, 13, 0, Math.PI * 2);
+  g.fill();
+  g.globalCompositeOperation = 'destination-out';
+  g.fillRect(-9, -48, 18, 28);
+  g.beginPath();
+  g.arc(0, 40, 5, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
   return new THREE.CanvasTexture(c);
 }
 
 let tex: THREE.Texture | null = null;
 
 export function itemBoxMaterial(): THREE.ShaderMaterial {
-  tex ??= questionAlpha();
+  tex ??= repairAlpha();
   return new THREE.ShaderMaterial({ uniforms: { time: { value: 0 }, opacity: { value: 1 }, map: { value: tex } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true });
 }
 

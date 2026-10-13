@@ -145,7 +145,8 @@ async function main(): Promise<void> {
     const h = Math.max(1, canvas.clientHeight || window.innerHeight);
     world.resize(w, h, pixelRatio);
     stick.layout();
-    minimap.resize(Math.round(Math.max(84, Math.min(140, Math.min(w, h) * 0.24))), window.devicePixelRatio || 1);
+    // Portrait : mini-carte plus compacte (l'objectif tient sous le chrono)
+    minimap.resize(Math.round(h > w ? Math.max(70, Math.min(96, w * 0.2)) : Math.max(84, Math.min(140, Math.min(w, h) * 0.24))), window.devicePixelRatio || 1);
   };
   window.addEventListener('resize', resize);
   window.visualViewport?.addEventListener('resize', resize);
@@ -269,6 +270,7 @@ async function main(): Promise<void> {
     screens.show(null);
     world.startGame();
     hud.setObjective(settings.stages === true ? world.stages.label : '', world.stages.stage, world.stages.objective.kind, 0);
+    showHudModes();
   };
   const setPause = (p: boolean) => {
     if (world.mode !== 'play' && world.mode !== 'dying') return;
@@ -278,7 +280,7 @@ async function main(): Promise<void> {
     world.setPaused(p);
   };
   // --- Modes de jeu : bascules rapides (mêmes réglages que la page Réglages)
-  const MODE_ORDER = ['modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'modeSuddenDeath', 'modeZen', 'modeInfiniteTurbo', 'planetShrink'];
+  const MODE_ORDER = ['modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'planetShrink'];
   const modeDefs = MODE_ORDER.map((k) => SCHEMA.find((d) => d.key === k)!).filter(Boolean);
   const updateModes = () => {
     const on = modeDefs.filter((d) => settings[d.key] === true && d.key !== 'planetShrink').map((d) => d.label);
@@ -302,10 +304,7 @@ async function main(): Promise<void> {
       b.addEventListener('click', () => {
         settings[d.key] = settings[d.key] !== true;
         if (settings.extraSounds === true) world.audio.playOneShot(settings[d.key] ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
-        // Zen et Mort subite s'excluent
-        if (d.key === 'modeZen' && settings.modeZen) settings.modeSuddenDeath = false;
-        if (d.key === 'modeSuddenDeath' && settings.modeSuddenDeath) settings.modeZen = false;
-        for (const k of ['modeZen', 'modeSuddenDeath', d.key]) if (!urlOverride) saveSetting(k, settings[k]);
+        if (!urlOverride) saveSetting(d.key, settings[d.key]);
         world.applySettings(settings);
         renderModes();
         updateModes();
@@ -315,14 +314,55 @@ async function main(): Promise<void> {
     }
   }
   updateModes();
+  // Voyage galactique : nombre de planètes et temps par planète (choix segmentés)
+  const syncSegs = () => {
+    for (const seg of document.querySelectorAll<HTMLElement>('.seg')) {
+      const key = seg.dataset.key!;
+      for (const b of seg.querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', String(settings[key]) === b.dataset.v);
+    }
+  };
+  for (const seg of document.querySelectorAll<HTMLElement>('.seg')) {
+    seg.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b) return;
+      const key = seg.dataset.key!;
+      settings[key] = b.dataset.v!;
+      if (!urlOverride) saveSetting(key, settings[key]);
+      click();
+      syncSegs();
+    });
+  }
+  syncSegs();
+  // Modes actifs affichés en jeu (icône + nom, qui se replient en icônes après quelques secondes)
+  let hudModesTimer = 0;
+  const showHudModes = () => {
+    const el = $('hud-modes');
+    const list: { key: string; label: string }[] = modeDefs.filter((d) => settings[d.key] === true).map((d) => ({ key: d.key, label: d.label }));
+    if (world.planetDef.style === 'galaxy') list.unshift({ key: 'galaxy', label: world.galaxyCount ? `Voyage · ${world.galaxyCount} planètes` : 'Voyage sans fin' });
+    el.innerHTML = '';
+    for (const m of list) {
+      const c = document.createElement('div');
+      c.className = 'hm';
+      c.innerHTML = `<i class="mode-ico mi-${m.key}"></i><span class="t"></span>`;
+      c.querySelector('.t')!.textContent = m.label;
+      el.appendChild(c);
+    }
+    el.hidden = list.length === 0 || preset === 'original';
+    el.classList.remove('compact');
+    clearTimeout(hudModesTimer);
+    hudModesTimer = window.setTimeout(() => el.classList.add('compact'), 4500);
+  };
 
-  function onGameOver(stats: { distance: number; time: number; stage: number; clocks: number }): void {
+  function onGameOver(stats: { distance: number; time: number; stage: number; clocks: number; victory?: boolean; planets?: number }): void {
+    document.querySelector('#menu-over .gameover')!.textContent = stats.victory ? 'VOYAGE RÉUSSI !' : 'GAME OVER';
+    document.querySelector('#menu-over .gameover')!.classList.toggle('victory', !!stats.victory);
     let rank = 0;
     // Modes « faciles » ou au score différent : pas de record
-    const noRecord = settings.modeZen === true || settings.modeInfiniteTurbo === true || settings.modeTimeAttack === true;
+    const noRecord = settings.modeTimeAttack === true;
     if (settings.saveRecords === true && !noRecord) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
     const best = settings.saveRecords === true ? loadRecords()[0]?.distance ?? null : null;
-    screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original');
+    screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original', world.stages.item);
+    $('stage-banner').hidden = true;
     const unlocked = isOriginal || noRecord ? [] : recordDistance(world.planetDef.id, stats.distance);
     const un = $('over-unlock');
     un.hidden = unlocked.length === 0;
@@ -424,7 +464,7 @@ async function main(): Promise<void> {
     if (!paused && !portrait) world.step(dt, input);
     world.render();
     if (world.mode === 'play' || world.mode === 'dying') {
-      const ta = settings.modeTimeAttack === true;
+      const ta = world.countdown;
       hud.setChrono(ta ? world.timeLeft : world.chrono, ta);
       hud.setDistance(world.tracker.totalDistance, preset === 'original');
       if (settings.stages === true) hud.setObjective(world.stages.label, world.stages.stage, world.stages.objective.kind, world.stages.progress01);
@@ -444,9 +484,14 @@ async function main(): Promise<void> {
       }
     }
   };
+  // Pas de temps lissé : les horodatages rAF ont une gigue de quelques ms qui,
+  // appliquée telle quelle, fait trembler la caméra et le véhicule
+  let avgDt = 1 / 60;
   const loop = (now: number) => {
-    const dt = Math.min(0.25, Math.max(0, (now - last) / 1000));
+    const raw = Math.min(0.25, Math.max(0, (now - last) / 1000));
     last = now;
+    avgDt += (raw - avgDt) * 0.12;
+    const dt = Math.abs(raw - avgDt) < avgDt * 0.35 ? avgDt : raw;
     frame(dt);
     // FPS et qualité adaptative (densité de pixels, quantité de particules)
     fpsAcc += dt;

@@ -20,6 +20,7 @@
       <div class="hud-top">
         <div class="hud-left">
           <button id="btn-pause" class="round-btn" aria-label="Pause"><span class="pause-icon"></span></button>
+          <div id="hud-modes" class="hud-modes" hidden></div>
           <div class="health" role="meter" aria-label="Santé">
             <div id="health-fill" class="health-fill"></div>
             <span id="health-text" class="health-text">100</span>
@@ -67,7 +68,7 @@
         <button id="btn-help" class="btn-glass">Comment jouer</button>
         <div id="records" class="records"></div>
       </div>
-      <a id="btn-settings" class="settings-gear" href="./settings.html" aria-label="Réglages"></a>
+      <a id="btn-settings" class="settings-gear" href="./settings.html" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="gear-hole"><rect width="24" height="24" fill="#fff"/><circle cx="12" cy="12" r="3.3" fill="#000"/></mask></defs><g fill="#fff" mask="url(#gear-hole)"><circle cx="12" cy="12" r="7.4"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(0 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(45 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(90 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(135 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(180 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(225 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(270 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="5" rx="1.1" transform="rotate(315 12 12)"/></g></svg></a>
       <div id="preset-badge" class="badge"></div>
       <div id="install-hint" class="hint" hidden></div>
     </section>
@@ -98,9 +99,13 @@
           <div class="mh-art"><span class="mh-star"></span></div>
           <div class="mh-text">
             <b>Voyage galactique</b>
-            <small>Réussis l'objectif de chaque planète, puis fonce sur l'étoile de lancement pour t'envoler vers la suivante.</small>
+            <small>Des planètes tirées au hasard : réussis l'objectif de chacune à temps, puis fonce sur l'étoile de lancement pour t'envoler vers la suivante.</small>
           </div>
           <button id="btn-galaxy" class="btn-primary">Partir</button>
+          <div class="mh-opts">
+            <div class="seg" data-key="galaxyCount"><span class="seg-label">Planètes</span><button data-v="3">3</button><button data-v="5">5</button><button data-v="8">8</button><button data-v="0">∞</button></div>
+            <div class="seg" data-key="galaxyTime"><span class="seg-label">Temps / planète</span><button data-v="60">1:00</button><button data-v="90">1:30</button><button data-v="120">2:00</button><button data-v="0">libre</button></div>
+          </div>
         </div>
         <h3 class="modes-sub">Défis <small>(cumulables, pour toutes les planètes)</small></h3>
         <div id="modes-list" class="modes-list"></div>

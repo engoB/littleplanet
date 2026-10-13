@@ -112,6 +112,9 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     emisColor: { value: new THREE.Color(0, 0, 0) },
     rimColor: { value: new THREE.Color(1, 1, 1) },
     rimStrength: { value: 0.14 },
+    /** Planète de verre : masque d'opacité (route opaque) et activation. */
+    planetMask: { value: null as THREE.CubeTexture | null },
+    glass: { value: 0 },
   };
   m.userData.planetUniforms = uniforms;
   m.onBeforeCompile = (sh) => {
@@ -122,7 +125,7 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     sh.fragmentShader = sh.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
+        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform samplerCube planetMask;\nuniform float glass;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
       )
       .replace(
         '#include <map_fragment>',
@@ -134,7 +137,14 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
         '#include <emissivemap_fragment>',
         `totalEmissiveRadiance += emisColor * textureCube(planetEmis, planetDir).rgb;
         float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0), 3.0);
-        totalEmissiveRadiance += rimColor * rim * rimStrength;`,
+        totalEmissiveRadiance += rimColor * rim * rimStrength;
+        if (glass > 0.5) {
+          // Verre : transparent au centre, reflet bleuté sur les bords (Fresnel) ; route opaque
+          float road = textureCube(planetMask, planetDir).r;
+          float fres = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 2.0);
+          diffuseColor.a = mix(0.16 + 0.55 * fres, 1.0, road);
+          totalEmissiveRadiance += (1.0 - road) * (vec3(0.45, 0.55, 1.0) * fres * 0.7 + vec3(0.02, 0.03, 0.08));
+        }`,
       );
   };
   m.customProgramCacheKey = () => 'planet-toon';

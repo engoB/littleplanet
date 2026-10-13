@@ -25,13 +25,16 @@ export const GROUPS = ['Modes de jeu', 'Jeu', 'Météores', 'Horloges', 'Caméra
 
 export const SCHEMA: SettingDef[] = [
   // --- Modes de jeu (cumulables, activables aussi depuis le menu « Modes »)
-  { key: 'modeSuddenDeath', label: 'Mort subite', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Le moindre choc est fatal.' },
-  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Aucun dégât, météores plus rares : pour se balader (pas de record).' },
   { key: 'modeTimeAttack', label: 'Contre-la-montre', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: '60 s au départ, chaque horloge ajoute 5 s ; la partie s’arrête à 0 (pas de record).' },
   { key: 'modeStorm', label: 'Tempête de météores', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Deux fois plus de météores, 30 % plus rapides.' },
-  { key: 'modeInfiniteTurbo', label: 'Turbo infini', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'La jauge ne se vide jamais (pas de record).' },
   { key: 'modeSnitch', label: 'Attrape le Vif d’or', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Une balle dorée ailée file au ras de la planète : rattrape-la (+10 santé à chaque prise).' },
   { key: 'modeBullet', label: 'Fuis le Bullet Bill', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Des obus te prennent en chasse : esquive-les jusqu’à ce qu’ils s’éteignent (turbo conseillé).' },
+  { key: 'galaxyCount', label: 'Voyage : nombre de planètes', group: 'Modes de jeu', type: 'select', arcade: '5', original: '5', options: [
+    { value: '3', label: '3 planètes' }, { value: '5', label: '5 planètes' }, { value: '8', label: '8 planètes' }, { value: '0', label: 'Sans fin' },
+  ], help: 'Voyage galactique : planètes tirées au hasard à traverser.' },
+  { key: 'galaxyTime', label: 'Voyage : temps par planète', group: 'Modes de jeu', type: 'select', arcade: '90', original: '90', options: [
+    { value: '60', label: '1 min' }, { value: '90', label: '1 min 30' }, { value: '120', label: '2 min' }, { value: '0', label: 'Illimité' },
+  ], help: 'Temps pour réussir l’objectif de chaque planète et rejoindre l’étoile de lancement.' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
