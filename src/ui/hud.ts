@@ -106,6 +106,25 @@ export class Hud {
     if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
   }
 
+  private readonly pops = $('car-pops');
+  /** Bonus qui jaillit contre le véhicule puis s'envole (« +20 ❤ »). */
+  popup(text: string, kind: 'good' | 'bad' | 'info' = 'good'): void {
+    const el = document.createElement('div');
+    el.className = `pop ${kind}`;
+    el.textContent = text;
+    // Décalage léger si plusieurs bonus se suivent
+    el.style.setProperty('--dx', `${(this.pops.children.length % 3) * 14 - 14}px`);
+    this.pops.appendChild(el);
+    while (this.pops.children.length > 4) this.pops.firstElementChild?.remove();
+    setTimeout(() => el.remove(), 1300);
+  }
+
+  /** Suit le véhicule à l'écran (fractions 0..1) ; null : masqué. */
+  popsAt(p: { x: number; y: number } | null): void {
+    this.pops.style.visibility = p ? 'visible' : 'hidden';
+    if (p) this.pops.style.transform = `translate(${(p.x * 100).toFixed(2)}vw, ${(p.y * 100).toFixed(2)}lvh)`;
+  }
+
   stageBanner(stage: number, sub: string, title = `Étape ${stage}`): void {
     const b = this.banner;
     $('sb-title').textContent = title;

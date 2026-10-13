@@ -56,6 +56,8 @@ export interface WorldEvents {
   stage?(next: number, label: string, title?: string): void;
   /** Compte à rebours de départ : 3, 2, 1 puis 0 (« Partez ! »). */
   countdown?(n: number): void;
+  /** Bonus affiché contre le véhicule (« +20 ❤ », « +5 s »…). */
+  popup?(text: string, kind?: 'good' | 'bad' | 'info'): void;
 }
 
 const _v = new THREE.Vector3();
@@ -407,6 +409,7 @@ export class World implements GameContext {
     this.snitch.onCatch = (at) => {
       this.burstAt(at, [1, 0.85, 0.3, 1]);
       this.health.heal(10);
+      this.pop('+10 ❤');
       this.events.message(`Vif d'or attrapé ! (${this.snitch.caught})`, 'good');
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_snitch', 0.8);
     };
@@ -636,10 +639,10 @@ export class World implements GameContext {
       this.clocksCollected++;
       if (bool(this.settings, 'modeTimeAttack')) {
         this.timeLeft += 5;
-        this.events.message('+5 s', 'good');
+        this.pop('+5 s');
       }
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_pickup', 0.7);
-      this.events.message(`+${Number.isFinite(hs) ? hs : heal} ❤`, 'good');
+      this.pop(`+${Number.isFinite(hs) ? hs : heal} ❤`);
     };
     this.health.onChange = (hp, max, d) => this.events.health(hp, max, d);
     this.health.onDie = () => this.triggerGameOver();
@@ -664,13 +667,14 @@ export class World implements GameContext {
       if (this.galaxy && !this.galaxy.goal) {
         // Voyage galactique : l'objectif accompli débloque l'étoile de lancement
         this.galaxy.goal = true;
-        this.events.stage?.(n + 1, 'L’étoile de lancement arrive…', 'Objectif réussi !');
+        this.events.stage?.(n + 1, '', 'Objectif réussi !');
         if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_stage', 0.7);
         this.health.heal(10);
         return;
       }
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_stage', 0.7);
-      if (this.events.stage) this.events.stage(n + 1, `Objectif : ${this.stages.label}`);
+      // Bannière courte : l'objectif est déjà affiché sous le chrono
+      if (this.events.stage) this.events.stage(n + 1, `Étape ${n} réussie !`);
       else this.events.message(`Étape ${n} réussie !`, 'good');
       this.health.heal(10);
       this.revealKart(n + 1, true);
@@ -1085,12 +1089,12 @@ export class World implements GameContext {
     this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited, decor: this.decorBroken, orbit: this.orbited });
   }
 
-  private damage(points: number, label: string): void {
+  /** `_label` : origine du choc (plus affichée). */
+  private damage(points: number, _label: string): void {
     // Défi Zen : rien ne fait mal ; Normal : dégâts réduits
     if (this.zen) return;
     if (this.difficulty !== 'hard') points = Math.max(1, Math.round(points * 0.75));
     if (this.health.takeDamage(points)) {
-      this.events.message(`${label} −${points}`, 'bad');
       // Arcade : étoiles d'étourdissement au-dessus du véhicule
       if (bool(this.settings, 'hitStars')) this.dizzyT = DIZZY_TIME;
       if (bool(this.settings, 'extraSounds')) {
@@ -1260,10 +1264,10 @@ export class World implements GameContext {
     return bool(this.settings, 'modeZen');
   }
 
-  /** La planète rétrécit : défi « Rétrécit », ou niveau Difficile (étapes). */
+  /** La planète rétrécit (réglage activé par défaut). */
   get shrinking(): boolean {
-    if (this.zen) return false;
-    return bool(this.settings, 'planetShrink') || (this.difficulty === 'hard' && bool(this.settings, 'stages'));
+    // Activé par défaut (Options → « Rétrécit ») ; jamais en Zen
+    return !this.zen && bool(this.settings, 'planetShrink');
   }
 
   private updateDifficulty(): void {
@@ -1426,9 +1430,7 @@ export class World implements GameContext {
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
     const radius = this.shrinking || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
     if (alive && this.cannonT <= 0) {
-      // Rafales (vent, orage) : le véhicule est poussé sur le côté
-      const gust = this.weather.steerBias(_o5.set(1, 0, 0).applyQuaternion(this.car.quaternion));
-      this.vehicle.update(dt, Math.max(-1, Math.min(1, input.horizontal + gust)), this.planet.position, radius);
+      this.vehicle.update(dt, input.horizontal, this.planet.position, radius);
       this.tracker.update();
     }
     this.car.updateMatrixWorld(true);
@@ -1614,7 +1616,7 @@ export class World implements GameContext {
         this.burstAt(this.planet.localToWorld(got.clone().multiplyScalar(this.planetCollider + 0.1)), [0.5, 0.95, 1, 1]);
         this.turboLevel = 1;
         this.turboLocked = false;
-        this.events.message('Turbo plein !', 'good');
+        this.pop('Turbo plein !');
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_turbo_pickup', 0.7);
       }
       // Route arc-en-ciel : accélère tant qu'on roule dessus
@@ -1916,6 +1918,21 @@ export class World implements GameContext {
     const ang = g.index * 2.4;
     this.placeSatellite(this.resolve(this.selected, g.index + 1), new THREE.Vector3(Math.cos(ang), 0.6, Math.sin(ang)));
     if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.5, 0.7);
+  }
+
+  /** Bonus contre le véhicule (ou message classique sans HUD de bonus). */
+  private pop(text: string): void {
+    if (this.events.popup) this.events.popup(text, 'good');
+    else this.events.message(text, 'good');
+  }
+
+  /** Position du véhicule à l'écran (0..1), juste au-dessus de lui ; null s'il est hors champ. */
+  carScreen(): { x: number; y: number } | null {
+    if (!this.car.visible) return null;
+    const up = _o6.copy(this.car.position).sub(this.planet.position).normalize();
+    const p = _o7.copy(this.car.position).addScaledVector(up, 0.25).project(this.rig.camera);
+    if (p.z > 1) return null;
+    return { x: (p.x + 1) / 2, y: (1 - p.y) / 2 };
   }
 
   /** Cinq étoiles jaunes qui tournent au-dessus de la tête (choc). */

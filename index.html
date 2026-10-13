@@ -45,6 +45,7 @@
       <div id="messages"></div>
       <div id="stage-banner" hidden><div class="sb-title" id="sb-title">Étape 2</div><div class="sb-sub" id="sb-sub"></div></div>
       <div id="countdown" hidden></div>
+      <div id="car-pops" class="car-pops"></div>
       <div id="touch-zones"></div>
       <div id="stick-zone"></div>
       <button id="btn-turbo" aria-label="Turbo (maintenir)"><canvas id="turbo-ring" width="160" height="160"></canvas><span class="turbo-label">turbo</span></button>
@@ -227,6 +228,7 @@
         <div class="opt-row arcade-only"><span class="opt-label">Difficulté</span><div class="seg" data-key="difficulty"><button data-v="normal">Normal</button><button data-v="hard">Difficile</button></div></div>
         <div id="opt-diff-help" class="opt-help arcade-only"></div>
         <div class="opt-row arcade-only"><span class="opt-label">Climat</span><div class="seg seg-icons" data-key="weather"><button data-v="auto" title="Celui du monde">Auto</button><button data-v="none" title="Beau temps">☀️</button><button data-v="rain" title="Pluie">🌧️</button><button data-v="snow" title="Neige">❄️</button><button data-v="leaves" title="Feuilles">🍂</button><button data-v="wind" title="Vent">💨</button><button data-v="storm" title="Orage">⛈️</button></div></div>
+        <div class="opt-row arcade-only"><span class="opt-label">Rétrécit</span><button id="opt-shrink" class="opt-toggle" role="switch" aria-label="La planète rétrécit"><i></i></button><small class="opt-note">La planète rapetisse au fil de la partie</small></div>
         <label class="opt-row"><span class="opt-label">Musique</span><input id="opt-music" type="range" min="0" max="1" step="0.05" /></label>
         <label class="opt-row"><span class="opt-label">Sons</span><input id="opt-sfx" type="range" min="0" max="1" step="0.05" /></label>
         <div class="opt-row"><span class="opt-label">Qualité</span><div class="seg" data-key="quality"><button data-v="auto">Auto</button><button data-v="high">Haute</button><button data-v="medium">Moyenne</button><button data-v="low">Basse</button></div></div>

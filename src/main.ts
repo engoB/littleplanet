@@ -146,6 +146,7 @@ async function main(): Promise<void> {
       vibrate([30, 40, 30], settings.haptics === true);
     },
     countdown: (n) => hud.countdown(n),
+    popup: (t, k) => hud.popup(t, k),
   });
 
   const audioP = world.audio.loadAll('./', assets.manifest.audio);
@@ -361,9 +362,9 @@ async function main(): Promise<void> {
     world.setPaused(p);
   };
   // --- Défis : choisis monde par monde, directement sur la carte du monde
-  const MODE_ORDER = ['modeZen', 'modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'planetShrink'];
+  const MODE_ORDER = ['modeZen', 'modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet'];
   const modeDefs = MODE_ORDER.map((k) => SCHEMA.find((d) => d.key === k)!).filter(Boolean);
-  const SHORT: Record<string, string> = { modeZen: 'Zen', modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill', planetShrink: 'Rétrécit' };
+  const SHORT: Record<string, string> = { modeZen: 'Zen', modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill' };
   // Valeurs par défaut (réglages) : un monde jamais réglé reprend celles-ci
   const defaultDefis = MODE_ORDER.filter((k) => settings[k] === true);
   const defisOf = (id: string) => (worldChallenges(id) ?? defaultDefis).filter((k) => defiUnlocked(k));
@@ -656,10 +657,20 @@ async function main(): Promise<void> {
   };
   optRange('opt-music', 'musicVolume');
   optRange('opt-sfx', 'sfxVolume');
+  const syncShrink = () => {
+    $('opt-shrink').classList.toggle('on', settings.planetShrink === true);
+    $('opt-shrink').setAttribute('aria-checked', String(settings.planetShrink === true));
+  };
+  on('opt-shrink', () => {
+    settings.planetShrink = settings.planetShrink !== true;
+    if (!urlOverride) saveSetting('planetShrink', settings.planetShrink);
+    syncShrink();
+  });
   let optionsFrom: 'menu-main' | 'menu-planets' = 'menu-main';
   on('btn-settings', () => {
     optionsFrom = 'menu-main';
     syncSegs();
+    syncShrink();
     diffHelp();
     screens.show('menu-options');
   });
@@ -720,6 +731,7 @@ async function main(): Promise<void> {
     world.render();
     $('sky-flash').style.opacity = String(Math.min(1, world.weather.flash) * 0.55);
     if (world.mode === 'play' || world.mode === 'dying') {
+      hud.popsAt(world.carScreen());
       const ta = world.countdown;
       hud.setChrono(ta ? world.timeLeft : world.chrono, ta);
       hud.setDistance(world.tracker.totalDistance, preset === 'original');

@@ -6,6 +6,19 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.17.0 — lot 17
+
+- Climat purement visuel : le vent ne pousse plus la voiture, et il garde son
+  cap (le repère du climat ne bascule plus quand on passe sous la planète).
+- Défi Zen : se débloque avec le dernier monde, comme les autres défis.
+- Plus de textes « Cratère −8 » ; la bannière d'étape ne répète plus
+  l'objectif (déjà affiché sous le chrono).
+- Bonus (« +20 ❤ », « +5 s », « Turbo plein ! ») affichés contre la voiture,
+  près de la jauge de vie, puis ils s'envolent.
+- Planète qui rétrécit : activée par défaut, interrupteur « Rétrécit » dans
+  les Options (ce n'est plus un défi).
+- Espace perso protégé par un code d'accès.
+
 ## 0.16.0 — lot 16
 
 - **Climat** : pluie, neige, feuilles qui volent, vent (rafales qui poussent

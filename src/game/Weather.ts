@@ -1,6 +1,7 @@
 /**
  * Climat autour du véhicule : pluie, neige, feuilles qui volent, vent, orage
- * (pluie battante, rafales et éclairs) ou rien. Les particules vivent dans un
+ * (pluie battante, rafales et éclairs) ou rien. Purement visuel : le climat
+ * ne change rien à la conduite. Les particules vivent dans un
  * volume qui suit la voiture (repère « haut = normale de la planète ») ; le
  * déplacement de la voiture est compensé pour qu'elles restent fixes dans le
  * monde (la pluie défile quand on roule).
@@ -14,6 +15,7 @@ export const WEATHERS: WeatherKind[] = ['none', 'rain', 'snow', 'leaves', 'wind'
 const W = 7;
 const H = 8;
 const _y = new THREE.Vector3(0, 1, 0);
+const _y2 = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 const _d = new THREE.Vector3();
 const _m = new THREE.Matrix4();
@@ -146,17 +148,9 @@ export class Weather {
     const k = this.kind;
     const base = k === 'wind' ? 6 : k === 'storm' ? 4.5 : k === 'leaves' ? 1.8 : k === 'rain' ? 1.2 : k === 'snow' ? 0.7 : 0;
     const gust = 1 + 0.45 * Math.sin(this.t * 0.9) + 0.25 * Math.sin(this.t * 2.3 + 1);
-    const a = this.windA + 0.6 * Math.sin(this.t * 0.07);
+    // Le vent garde son cap (légère oscillation seulement)
+    const a = this.windA + 0.15 * Math.sin(this.t * 0.07);
     return [Math.cos(a) * base * gust, Math.sin(a) * base * gust, base * gust];
-  }
-
-  /** Poussée latérale du vent sur le véhicule (à ajouter au braquage), -1..1. */
-  steerBias(carLeft: THREE.Vector3): number {
-    if (this.kind !== 'wind' && this.kind !== 'storm') return 0;
-    const [wx, wz, s] = this.wind();
-    if (s <= 0) return 0;
-    _d.set(wx, 0, wz).applyQuaternion(this.group.quaternion);
-    return -_d.dot(carLeft) * 0.035;
   }
 
   update(dt: number, carPos: THREE.Vector3, up: THREE.Vector3, camera: THREE.Camera): void {
@@ -170,7 +164,10 @@ export class Weather {
     if (this.kind === 'none') return;
     // Repère qui suit la voiture ; la voiture se déplace : les particules restent dans le monde
     this.group.position.copy(carPos);
-    this.group.quaternion.setFromUnitVectors(_y, up);
+    // Repère transporté pas à pas (rotation minimale depuis l'image précédente) :
+    // aucune bascule quand la voiture passe sous la planète, le vent garde son cap
+    if (this.hasLast) this.group.quaternion.premultiply(_q.setFromUnitVectors(_y2.copy(_y).applyQuaternion(this.group.quaternion), up));
+    else this.group.quaternion.setFromUnitVectors(_y, up);
     this.group.updateMatrixWorld(true);
     _d.set(0, 0, 0);
     if (this.hasLast) _d.copy(carPos).sub(this.last).applyQuaternion(_q.copy(this.group.quaternion).invert());
