@@ -497,7 +497,7 @@
     {
       "id": "classique",
       "name": "Planète classique",
-      "tagline": "De l'herbe, un chemin de terre qui fait le tour du monde et une petite voiture rouge : l'esprit du jeu d'origine.",
+      "tagline": "De l'herbe, un chemin de terre qui fait le tour du monde et ton aéro-voiture : l'esprit du jeu d'origine.",
       "difficulty": 2,
       "style": "classic",
       "radius": 1.0,
@@ -517,7 +517,7 @@
         "houses": 0
       },
       "sky": "day",
-      "vehicle": "original"
+      "vehicle": "hover"
     },
     {
       "id": "pixar",

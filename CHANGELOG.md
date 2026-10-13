@@ -9,7 +9,7 @@ puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 ## 0.12.0 — lot 12
 
 - Écran titre : planète classique (herbe réaliste et chemin de terre du projet
-  Unity d'origine) et la petite voiture rouge qui fait le tour du chemin.
+  Unity d'origine) et l'aéro-voiture qui fait le tour du chemin.
 - Nouvelle « Planète classique » jouable ; option de test « Herbe en relief »
   (désactivée par défaut).
 - Impacts : colonne de fumée noire qui monte (peut passer devant la caméra)

@@ -821,7 +821,7 @@ export class World implements GameContext {
 
   // ------------------------------------------------------------------ modes
   /** Scène « Menu » : planète qui tourne, caméra fixe au-dessus. */
-  /** Écran titre : planète classique, la voiture boucle le long du chemin. */
+  /** Écran titre : planète classique, la voiture volante boucle le long du chemin. */
   enterTitle(): void {
     this.planetDef = planetById('classique');
     this.enterMenu();
@@ -850,6 +850,29 @@ export class World implements GameContext {
     const x = _o3.crossVectors(up, f).normalize();
     this.car.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, up, f));
     this.car.updateMatrixWorld(true);
+    // La voiture volante flotte et se balance comme en jeu
+    if (this.rig3d) animateVehicle(this.rig3d, Time.time, 0, false);
+    // Caméra du titre : de trois-quarts, en retrait derrière la voiture, la planète entière à l'image
+    const D = this.planetRadius() * 2.9;
+    this.healthRing.mesh.visible = false;
+    const c = this.planet.position;
+    const pos = _o4.copy(c).addScaledVector(up, D * 0.82).addScaledVector(f, -D * 0.62);
+    const look = _o5.copy(c).addScaledVector(up, this.planetRadius() * 0.45);
+    const n = this.rig.node;
+    this.rig.pivot.position.set(0, 0, 0);
+    this.rig.pivot.quaternion.identity();
+    this.rig.pivot.scale.set(1, 1, 1);
+    n.scale.set(1, 1, 1);
+    const k = dt > 0 ? 1 - Math.exp(-dt * 3) : 1;
+    n.position.lerp(pos, k);
+    // Le nœud suit la convention Unity (+Z vers l'avant) : base (x, haut, avant)
+    const fw = look.sub(n.position).normalize();
+    const x2 = new THREE.Vector3().crossVectors(f, fw).normalize();
+    const y2 = new THREE.Vector3().crossVectors(fw, x2);
+    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x2, y2, fw));
+    if (dt > 0) n.quaternion.slerp(q, k);
+    else n.quaternion.copy(q);
+    this.rig.pivot.updateMatrixWorld(true);
   }
 
   enterMenu(): void {

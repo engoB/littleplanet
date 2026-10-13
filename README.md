@@ -135,8 +135,8 @@ Au lancement (Arcade), un **écran titre** montre la **planète classique** :
 l'herbe réaliste et la terre du projet Unity d'origine
 (`Texture_Grass_Diffuse`, `Texture_Dirt_Diffuse`, exportées par
 `tools/classic_textures.py`) en projection triplanaire, avec un **chemin de
-terre** qui fait le tour du monde, et la petite **voiture rouge** qui le suit
-en boucle. Toucher l'écran ouvre l'accueil. La planète classique est aussi
+terre** qui fait le tour du monde, et l'**aéro-voiture** (la voiture volante
+du jeu) qui le suit en boucle. Toucher l'écran ouvre l'accueil. La planète classique est aussi
 jouable (Monde 11). Réglage de test **« Herbe en relief »** (désactivé par
 défaut) : coques d'herbe superposées (shell texturing) qui donnent un tapis de
 brins en relief, plus lourd pour le téléphone.
