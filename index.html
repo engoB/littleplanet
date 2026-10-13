@@ -61,9 +61,9 @@
           <span class="chip-change">Changer</span>
         </button>
         <button id="btn-play" class="btn-primary"><span class="play-ico"></span>Jouer</button>
-        <button id="btn-modes" class="btn-modes arcade-only" aria-label="Modes de jeu">
+        <button id="btn-modes" class="btn-modes arcade-only" aria-label="Voyage galactique">
           <span class="bm-ico"></span>
-          <span class="bm-text"><b>Modes de jeu</b><small id="modes-summary">Voyage galactique, défis…</small></span>
+          <span class="bm-text"><b>Voyage galactique</b><small id="modes-summary">5 planètes au hasard</small></span>
         </button>
         <button id="btn-help" class="btn-glass">Comment jouer</button>
         <div id="records" class="records"></div>
@@ -88,39 +88,42 @@
         <div id="ps-stars" class="ps-stars"></div>
         <div id="ps-info" class="ps-info"></div>
         <div id="ps-best" class="ps-best"></div>
+        <div class="ps-defis-wrap arcade-only"><span class="ps-defis-label">Défis</span><div id="ps-defis" class="ps-defis"></div></div>
+        <div id="ps-defi-help" class="ps-defi-help"></div>
         <button id="btn-planet-go" class="btn-primary"><span class="play-ico"></span>Jouer</button>
       </div>
     </section>
 
     <section id="menu-modes" class="screen panel-screen" hidden>
       <div class="panel glass modes-panel">
-        <h2>Modes de jeu</h2>
         <div class="mode-hero">
-          <div class="mh-art"><span class="mh-star"></span></div>
-          <div class="mh-text">
-            <b>Voyage galactique</b>
-            <small>Des planètes tirées au hasard : réussis l'objectif de chacune à temps, puis fonce sur l'étoile de lancement pour t'envoler vers la suivante.</small>
+          <div class="mh-head">
+            <div class="mh-art"><span class="mh-star"></span></div>
+            <div class="mh-text">
+              <b>Voyage galactique</b>
+              <small>Des planètes tirées au hasard : réussis l'objectif de chacune à temps, puis fonce sur l'étoile de lancement pour t'envoler vers la suivante.</small>
+            </div>
           </div>
-          <button id="btn-galaxy" class="btn-primary">Partir</button>
           <div class="mh-opts">
             <div class="seg" data-key="galaxyCount"><span class="seg-label">Planètes</span><button data-v="3">3</button><button data-v="5">5</button><button data-v="8">8</button><button data-v="0">∞</button></div>
             <div class="seg" data-key="galaxyTime"><span class="seg-label">Temps / planète</span><button data-v="60">1:00</button><button data-v="90">1:30</button><button data-v="120">2:00</button><button data-v="0">libre</button></div>
           </div>
         </div>
-        <h3 class="modes-sub">Défis <small>(cumulables, pour toutes les planètes)</small></h3>
-        <div id="modes-list" class="modes-list"></div>
-        <button id="btn-modes-back" class="btn-glass">Retour</button>
+        <div class="mh-actions">
+          <button id="btn-modes-back" class="btn-glass">Retour</button>
+          <button id="btn-galaxy" class="btn-primary"><span class="play-ico"></span>Partir</button>
+        </div>
       </div>
     </section>
 
     <section id="menu-help" class="screen panel-screen" hidden>
       <div class="panel glass tuto-panel">
         <div id="tuto-slides" class="tuto-slides">
-          <div class="tuto-slide"><div class="tuto-art art-story"></div><h2>L'histoire</h2><p>Une pluie de météores s'abat sur ta petite planète&nbsp;! Saute dans ton aéro-voiture&nbsp;: elle ne s'arrête jamais. À toi de lui faire faire le tour du monde le plus longtemps possible.</p></div>
-          <div class="tuto-slide"><div class="tuto-art art-controls"><span class="half l">◀</span><span class="half r">▶</span><span class="flame"></span></div><h2>Tourner</h2><p>Pose le doigt n'importe où sur la <b>moitié gauche</b> de l'écran pour tourner à gauche, sur la <b>moitié droite</b> pour tourner à droite. Garde le pouce sur l'<b>anneau de flammes</b> pour le turbo.</p></div>
-          <div class="tuto-slide"><div class="tuto-art art-danger"><span class="reticle"></span><span class="ring"></span></div><h2>Éviter</h2><p>Les <b>cibles rouges</b> annoncent les impacts&nbsp;; ne roule pas dans les <b>cratères</b>. Ta vie, c'est l'<b>anneau lumineux</b> sous le véhicule.</p></div>
-          <div class="tuto-slide"><div class="tuto-art art-bonus"><span class="qbox">?</span><span class="shoe"></span><span class="pad"></span></div><h2>Ramasser</h2><p>Les <b>cases «&nbsp;?&nbsp;»</b> rendent de la vie, les <b>baskets du futur</b> rechargent le turbo. <b>Accélérateurs</b>, <b>tremplins</b> et <b>pylônes</b> tournoyants pimentent la balade.</p></div>
-          <div class="tuto-slide"><div class="tuto-art art-goal"><span class="trophy"></span></div><h2>Progresser</h2><p>Remplis les <b>objectifs d'étape</b>, débloque des planètes et essaie les <b>modes de jeu</b>&nbsp;: Voyage galactique, Vif d'or, Bullet Bill…</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-story"></div><h2>L'histoire</h2><p>Une pluie de météores menace une galaxie de petits mondes&nbsp;! Dans ton aéro-voiture qui ne s'arrête jamais, fais le tour de chaque planète le plus longtemps possible… puis saute d'un monde à l'autre grâce aux étoiles de lancement.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-controls"><span class="half l">◀</span><span class="half r">▶</span><span class="flame"></span></div><h2>Piloter</h2><p>Touche la <b>moitié gauche</b> de l'écran pour tourner à gauche, la <b>moitié droite</b> pour tourner à droite. Garde le pouce sur l'<b>anneau de flammes</b> pour le turbo.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-danger"><span class="reticle"></span><span class="ring"></span></div><h2>Éviter</h2><p>Les <b>cibles rouges</b> annoncent les impacts&nbsp;; évite les <b>cratères</b> et les <b>poteaux</b>. Ta vie, c'est le fin <b>cercle</b> sous le véhicule.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-bonus"><span class="qbox">🔧</span><span class="shoe"></span><span class="pad"></span></div><h2>Ramasser</h2><p>Les <b>caisses à clé</b> réparent, les <b>baskets du futur</b> remplissent le turbo. Les <b>flèches</b> au sol accélèrent, les <b>ressorts</b> font sauter. Fonce dans les jouets, citrouilles ou cadeaux&nbsp;: à pleine vitesse, ils partent en orbite&nbsp;!</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-goal"><span class="trophy"></span></div><h2>Progresser</h2><p>Chaque étape réussie dévoile de nouveaux objets. Sur la carte de chaque monde, active des <b>défis</b> (chrono, tempête, Vif d'or…). Prêt pour le grand saut&nbsp;? Lance un <b>Voyage galactique</b> à travers des planètes tirées au hasard.</p></div>
         </div>
         <div id="tuto-dots" class="tuto-dots"></div>
         <div class="tuto-actions">

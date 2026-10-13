@@ -115,6 +115,7 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     /** Planète de verre : masque d'opacité (route opaque) et activation. */
     planetMask: { value: null as THREE.CubeTexture | null },
     glass: { value: 0 },
+    planetTime: { value: 0 },
   };
   m.userData.planetUniforms = uniforms;
   m.onBeforeCompile = (sh) => {
@@ -125,7 +126,7 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     sh.fragmentShader = sh.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform samplerCube planetMask;\nuniform float glass;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
+        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform samplerCube planetMask;\nuniform float glass;\nuniform float planetTime;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
       )
       .replace(
         '#include <map_fragment>',
@@ -144,6 +145,25 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
           float fres = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 2.0);
           diffuseColor.a = mix(0.16 + 0.55 * fres, 1.0, road);
           totalEmissiveRadiance += (1.0 - road) * (vec3(0.45, 0.55, 1.0) * fres * 0.7 + vec3(0.02, 0.03, 0.08));
+          // Scintillements d'étoiles et petites galaxies spirales dans le verre
+          vec3 sg = planetDir * 64.0;
+          vec3 sc = floor(sg);
+          float sh = fract(sin(dot(sc, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+          float sd = length(fract(sg) - 0.5);
+          float tw = 0.5 + 0.5 * sin(planetTime * (1.5 + sh * 4.0) + sh * 40.0);
+          float star = step(0.94, sh) * smoothstep(0.2, 0.0, sd) * tw * tw;
+          vec3 gg = planetDir * 7.0;
+          vec3 gc = floor(gg);
+          float gh = fract(sin(dot(gc, vec3(39.346, 11.135, 83.155))) * 24634.6345);
+          vec3 gf = fract(gg) - 0.5;
+          vec2 gp = gf.xy + gf.z * vec2(0.35, -0.5);
+          float gr = length(gp);
+          float ga = atan(gp.y, gp.x);
+          float arms = 0.5 + 0.5 * sin(ga * 2.0 - gr * 34.0 + planetTime * 0.4 + gh * 6.28);
+          float galaxy = step(0.88, gh) * exp(-gr * gr * 55.0) * (0.35 + 0.65 * arms) * (1.0 - smoothstep(0.2, 0.35, gr));
+          vec3 gcol = mix(vec3(0.7, 0.45, 1.0), vec3(0.45, 0.8, 1.0), gh);
+          totalEmissiveRadiance += (1.0 - road) * (star * vec3(1.6, 1.5, 1.8) + galaxy * gcol * 0.9);
+          diffuseColor.a = max(diffuseColor.a, (1.0 - road) * clamp(star + galaxy * 0.6, 0.0, 1.0));
         }`,
       );
   };

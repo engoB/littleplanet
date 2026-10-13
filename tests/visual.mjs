@@ -61,6 +61,8 @@ const scenarios = [
   { name: 'vif-dor', query: 'preset=arcade&planet=poudlard&modeSnitch=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(180, 1 / 60, 0.3); }) },
   { name: 'bullet-bill', query: 'preset=arcade&planet=meuh&modeBullet=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(330, 1 / 60, 0.2); }) },
   { name: 'modes', viewport: { width: 420, height: 860 }, query: 'preset=arcade', run: async (page) => page.evaluate(() => { document.getElementById('btn-modes').click(); }) },
+  { name: 'defis-portrait', viewport: { width: 390, height: 844 }, query: 'preset=arcade', run: async (page) => page.evaluate(() => __mpp.showPlanets()) },
+  { name: 'ocean-bouees', query: 'preset=arcade&planet=ocean', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.3, true); }) },
   { name: 'tutoriel', viewport: { width: 420, height: 860 }, query: 'preset=arcade', run: async (page) => page.evaluate(() => { document.getElementById('btn-help').click(); }) },
   { name: 'comte', query: 'preset=arcade&planet=comte', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.2); }) },
   { name: 'candy', query: 'preset=arcade&planet=candy', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.world.health.currentHealth = 30; __mpp.step(300, 1 / 60, 0.3); }) },

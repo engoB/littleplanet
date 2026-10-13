@@ -15,7 +15,7 @@ import { setupOrientation } from './ui/orientation';
 import { Screens } from './ui/screens';
 import { Assets } from './unity/assets';
 import { World } from './game/World';
-import { PLANETS, isUnlocked, planetById, recordDistance, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
+import { FIRST, PLANETS, type PlanetDef, isUnlocked, setWorldChallenges, worldChallenges, planetById, recordDistance, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
 import * as THREE from 'three';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -101,7 +101,7 @@ async function main(): Promise<void> {
   const isOriginal = preset === 'original';
   // Planète : la planète d'origine en préréglage Original, sinon la dernière choisie
   let planetId = isOriginal ? 'origine' : params.get('planet') ?? selectedPlanet();
-  if (!isUnlocked(planetById(planetId), settings.unlockAll === true) || planetById(planetId).style === 'galaxy') planetId = 'prairie';
+  if (!isUnlocked(planetById(planetId), settings.unlockAll === true) || planetById(planetId).style === 'galaxy') planetId = FIRST.id;
   world.planetDef = planetById(planetId);
   // ?planet=galaxie (tests) : lance directement le voyage galactique
   if (params.get('planet') === 'galaxie') world.planetDef = planetById('galaxie');
@@ -215,6 +215,8 @@ async function main(): Promise<void> {
     $('ps-info').textContent = p.tagline;
     $('ps-best').textContent = !unlocked && p.unlock ? `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` : best ? `Record : ${Math.floor(best)} m` : '';
     $('ps-best').classList.toggle('locked', !unlocked);
+    $('ps-defi-help').textContent = '';
+    renderDefis(p, !unlocked);
     ($('btn-planet-go') as HTMLButtonElement).disabled = !unlocked;
     if (unlocked && p.id !== planetId) {
       planetId = p.id;
@@ -268,6 +270,7 @@ async function main(): Promise<void> {
     hud.show(true);
     if (!zonesMode) stick.layout();
     screens.show(null);
+    applyDefis(world.planetDef);
     world.startGame();
     hud.setObjective(settings.stages === true ? world.stages.label : '', world.stages.stage, world.stages.objective.kind, 0);
     showHudModes();
@@ -279,41 +282,49 @@ async function main(): Promise<void> {
     screens.show(p ? 'menu-pause' : null);
     world.setPaused(p);
   };
-  // --- Modes de jeu : bascules rapides (mêmes réglages que la page Réglages)
+  // --- Défis : choisis monde par monde, directement sur la carte du monde
   const MODE_ORDER = ['modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'planetShrink'];
   const modeDefs = MODE_ORDER.map((k) => SCHEMA.find((d) => d.key === k)!).filter(Boolean);
-  const updateModes = () => {
-    const on = modeDefs.filter((d) => settings[d.key] === true && d.key !== 'planetShrink').map((d) => d.label);
-    $('modes-summary').textContent = on.length ? `Actifs : ${on.join(' · ')}` : 'Voyage galactique, défis…';
-    $('btn-modes').classList.toggle('active', on.length > 0);
+  const SHORT: Record<string, string> = { modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill', planetShrink: 'Rétrécit' };
+  // Valeurs par défaut (réglages) : un monde jamais réglé reprend celles-ci
+  const defaultDefis = MODE_ORDER.filter((k) => settings[k] === true);
+  const defisOf = (id: string) => worldChallenges(id) ?? defaultDefis;
+  /** Applique les défis du monde (ou aucun pour le voyage) avant une partie. */
+  const applyDefis = (def: PlanetDef) => {
+    if (urlOverride) return; // tests : réglages imposés par l'URL
+    const on = def.style === 'galaxy' ? [] : defisOf(def.id);
+    for (const k of MODE_ORDER) settings[k] = on.includes(k);
+    world.applySettings(settings);
   };
-  function renderModes(): void {
-    const list = $('modes-list');
-    list.innerHTML = '';
+  const renderDefis = (def: PlanetDef, locked: boolean) => {
+    const box = $('ps-defis');
+    box.innerHTML = '';
+    box.hidden = locked || preset === 'original';
+    const on = new Set(defisOf(def.id));
     for (const d of modeDefs) {
       const b = document.createElement('button');
-      b.className = 'mode-card';
+      b.className = 'defi';
+      b.classList.toggle('on', on.has(d.key));
       b.setAttribute('role', 'switch');
-      const sync = () => {
-        b.classList.toggle('on', settings[d.key] === true);
-        b.setAttribute('aria-checked', String(settings[d.key] === true));
-      };
-      b.innerHTML = `<span class="mode-ico mi-${d.key}"></span><span class="mode-text"><b></b><small></small></span><span class="mode-switch"><i></i></span>`;
-      b.querySelector('b')!.textContent = d.label;
-      b.querySelector('small')!.textContent = d.help ?? '';
+      b.setAttribute('aria-checked', String(on.has(d.key)));
+      b.title = `${d.label} : ${d.help ?? ''}`;
+      b.innerHTML = `<i class="mode-ico mi-${d.key}"></i><span></span>`;
+      b.querySelector('span')!.textContent = SHORT[d.key] ?? d.label;
       b.addEventListener('click', () => {
-        settings[d.key] = settings[d.key] !== true;
-        if (settings.extraSounds === true) world.audio.playOneShot(settings[d.key] ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
-        if (!urlOverride) saveSetting(d.key, settings[d.key]);
-        world.applySettings(settings);
-        renderModes();
-        updateModes();
+        if (on.has(d.key)) on.delete(d.key);
+        else on.add(d.key);
+        setWorldChallenges(def.id, MODE_ORDER.filter((k) => on.has(k)));
+        if (settings.extraSounds === true) world.audio.playOneShot(on.has(d.key) ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
+        renderDefis(def, locked);
+        $('ps-defi-help').textContent = on.has(d.key) ? `${d.label} : ${d.help ?? ''}` : '';
       });
-      sync();
-      list.appendChild(b);
+      box.appendChild(b);
     }
-  }
-  updateModes();
+  };
+  const updateModes = () => {
+    const t = world.galaxyTime;
+    $('modes-summary').textContent = `${world.galaxyCount ? `${world.galaxyCount} planètes` : 'Sans fin'} · ${t ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')} / planète` : 'temps libre'}`;
+  };
   // Voyage galactique : nombre de planètes et temps par planète (choix segmentés)
   const syncSegs = () => {
     for (const seg of document.querySelectorAll<HTMLElement>('.seg')) {
@@ -330,9 +341,11 @@ async function main(): Promise<void> {
       if (!urlOverride) saveSetting(key, settings[key]);
       click();
       syncSegs();
+      updateModes();
     });
   }
   syncSegs();
+  updateModes();
   // Modes actifs affichés en jeu (icône + nom, qui se replient en icônes après quelques secondes)
   let hudModesTimer = 0;
   const showHudModes = () => {
@@ -384,7 +397,7 @@ async function main(): Promise<void> {
   on('btn-pause-planets', showPlanets);
   on('btn-over-planets', showPlanets);
   on('btn-modes', () => {
-    renderModes();
+    syncSegs();
     screens.show('menu-modes');
   });
   on('btn-modes-back', () => screens.show('menu-main'));
