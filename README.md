@@ -200,7 +200,8 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
   dans les Options pour en imposer un partout.
 - **Décor** : seuls les gros monuments bloquent ; le reste vole en éclats au
   contact (5 de dégâts).
-- **Défi Zen** : ni météores ni dégâts (remplace l'ancien niveau Facile).
+- **Défi Zen** : ni météores ni dégâts (remplace l'ancien niveau Facile) ;
+  la partie ne compte pas : ni objectifs, ni statistiques, ni succès, ni records.
 - **Sillage d'écume** sur l'eau derrière la voiture (`src/game/WakeTrail.ts`).
 - **Canon champignon** : en fin de vol, la voiture plonge dans un
   champignon-canon posé sur la planète d'arrivée ; il l'avale, gonfle en se

@@ -35,7 +35,7 @@ export const SCHEMA: SettingDef[] = [
   { key: 'galaxyTime', label: 'Voyage : temps par planète', group: 'Modes de jeu', type: 'select', arcade: '90', original: '90', options: [
     { value: '60', label: '1 min' }, { value: '90', label: '1 min 30' }, { value: '120', label: '2 min' }, { value: '0', label: 'Illimité' },
   ], help: 'Temps pour réussir l’objectif de chaque planète et rejoindre l’étoile de lancement.' },
-  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Ni météores ni dégâts : on roule tranquille, on ramasse et on explore.' },
+  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Ni météores ni dégâts : on roule tranquille, on ramasse et on explore. La partie ne compte pas (ni objectifs, ni succès, ni records).' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'difficulty', label: 'Difficulté', group: 'Jeu', type: 'select', arcade: 'normal', original: 'hard', options: [

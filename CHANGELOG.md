@@ -14,7 +14,7 @@ puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 - Décor : à part les gros monuments, plus rien ne bloque. On passe à travers
   les éléments, qui volent en éclats (quelques dégâts).
 - Niveau Facile retiré, remplacé par le **défi Zen** (ni météores ni dégâts),
-  ouvert d'emblée.
+  ouvert d'emblée ; une partie Zen ne rapporte et ne débloque rien.
 - Grand Océan : moins d'écume, le sens de la houle tourne doucement, et un
   **sillage d'écume** suit la voiture sur l'eau.
 - Barre de vie au sol : petites barres aux coins arrondis, dégradé du vert au

@@ -536,7 +536,10 @@ async function main(): Promise<void> {
     if (!isOriginal && !noRecord) recordDistance(world.planetDef.id, stats.distance);
     // Progression classique : mondes, défis et succès débloqués
     const lines: string[] = [];
-    if (!isOriginal) {
+    // Défi Zen : partie libre, elle ne compte ni ne débloque rien
+    const zen = settings.modeZen === true;
+    if (zen) lines.push('Défi Zen : partie libre, rien n’est compté.');
+    if (!isOriginal && !zen) {
       const got = recordRun(world.planetDef, stats);
       for (const w of got.worlds) {
         lines.push(`Nouveau monde débloqué : ${w.name} !`);
