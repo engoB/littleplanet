@@ -224,6 +224,11 @@ export class MeteorSpawner {
     this.timer = 0;
   }
 
+  /** Racines de tous les météores (actifs ou non), avec leur état. */
+  forEachMeteor(fn: (root: THREE.Object3D, active: boolean) => void): void {
+    for (const pool of this.pools.values()) for (const m of pool) fn(m.inst.root, m.active);
+  }
+
   /** Points d'impact prévus (espace planète), pour la mini-carte. */
   targets(): THREE.Vector3[] {
     return this.active.map((m) => m.target);

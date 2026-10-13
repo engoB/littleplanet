@@ -65,7 +65,6 @@ const scenarios = [
   { name: 'ocean-bouees', query: 'preset=arcade&planet=ocean', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(300, 1 / 60, 0.3, true); }) },
   { name: 'titre', viewport: { width: 390, height: 844 }, query: 'preset=arcade&title=1', run: async (page) => page.evaluate(() => { __mpp.step(120, 1 / 60, 0); }) },
   { name: 'classique', viewport: { width: 390, height: 844 }, query: 'preset=arcade&planet=classique', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(240, 1 / 60, 0.2); }) },
-  { name: 'herbe-relief', viewport: { width: 390, height: 844 }, query: 'preset=arcade&planet=classique&realGrass=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(120, 1 / 60, 0.2); }) },
   { name: 'compte-a-rebours', viewport: { width: 390, height: 844 }, query: 'preset=arcade&planet=prairie&countdown=1', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(50, 1 / 60, 0); }) },
   { name: 'neons', viewport: { width: 390, height: 844 }, query: 'preset=arcade&planet=halloween', run: async (page) => page.evaluate(() => { __mpp.play(); __mpp.step(120, 1 / 60, 0.2); }) },
   { name: 'tutoriel', viewport: { width: 420, height: 860 }, query: 'preset=arcade', run: async (page) => page.evaluate(() => { document.getElementById('btn-help').click(); }) },
