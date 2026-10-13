@@ -41,6 +41,7 @@ import { Toys } from './Toys';
 import { BulletBills, Snitch } from './Chasers';
 import { PlanetSelect } from './PlanetSelect';
 import { classicPathPoint, classicPlanetMaterial } from './classicPlanet';
+import { MushroomCannon } from './MushroomCannon';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -53,6 +54,8 @@ export interface WorldEvents {
   stage?(next: number, label: string, title?: string): void;
   /** Compte à rebours de départ : 3, 2, 1 puis 0 (« Partez ! »). */
   countdown?(n: number): void;
+  /** Onomatopée de bande dessinée (« BOUM ! ») au centre de l'écran. */
+  boom?(text: string): void;
 }
 
 const _v = new THREE.Vector3();
@@ -66,8 +69,11 @@ const _o3 = new THREE.Vector3();
 const _o4 = new THREE.Vector3();
 const _o5 = new THREE.Vector3();
 const SPIN_TIME = 0.7;
-const LAND_DRIFT = 1.8;
 const HOP_TIME = 1.0;
+/** Taille du canon champignon d'arrivée. */
+const CANNON_SCALE = 1;
+/** Durée des étoiles d'étourdissement après un choc (s). */
+const DIZZY_TIME = 1.4;
 const _yAxis = new THREE.Vector3(0, 1, 0);
 const _zAxis = new THREE.Vector3(0, 0, 1);
 
@@ -237,10 +243,14 @@ export class World implements GameContext {
   } | null = null;
   /** Rebond d'atterrissage (s restantes). */
   private landT = 0;
-  /** Rebonds après l'atterrissage (s restantes). */
-  private landBounce = 0;
-  /** Dérapage après l'atterrissage (s restantes). */
-  private landDrift = 0;
+  /** Canon champignon d'arrivée : voiture dedans (s restantes avant le BOUM). */
+  private cannon!: MushroomCannon;
+  private cannonT = 0;
+  /** Hauteur du saut en cours (1 : ressort ; plus haut : éjection du canon). */
+  private hopScale = 1;
+  /** Étoiles d'étourdissement après un choc (s restantes). */
+  private dizzyT = 0;
+  private dizzy!: THREE.Group;
   private readonly launchProxy = new THREE.Object3D();
   private satellite!: THREE.Group;
   private satMat!: THREE.MeshToonMaterial;
@@ -400,6 +410,9 @@ export class World implements GameContext {
       this.events.message('Esquivé !', 'good');
     };
     this.buildGalaxyObjects();
+    this.cannon = new MushroomCannon(this.scene);
+    this.dizzy = this.buildDizzy();
+    this.cannon.onGone = (at) => this.burstAt(at, [0.95, 0.9, 0.85, 1]);
     const geo = this.planetMesh.geometry;
     geo.computeBoundingSphere();
     this.select = new PlanetSelect(this.scene, this.assets, this.planetStdMat, geo, geo.boundingSphere?.radius ?? 5);
@@ -925,8 +938,11 @@ export class World implements GameContext {
     this.boostTime = 0;
     this.galaxy = this.selected.style === 'galaxy' ? { index: 0, arrivalDist: 0, star: null, visited: 1, goal: false } : null;
     this.landT = 0;
-    this.landBounce = 0;
-    this.landDrift = 0;
+    this.cannonT = 0;
+    this.hopScale = 1;
+    this.dizzyT = 0;
+    this.dizzy.visible = false;
+    this.cannon.hide();
     this.carDir.set(0, 1, 0);
     if (bool(this.settings, 'modeSnitch') && bool(this.settings, 'premiumFx')) this.snitch.start(this.carDir);
     else this.snitch.stop();
@@ -1026,6 +1042,8 @@ export class World implements GameContext {
     if (this.difficulty !== 'hard') points = Math.max(1, Math.round(points * (this.difficulty === 'easy' ? 0.5 : 0.75)));
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
+      // Arcade : étoiles d'étourdissement au-dessus du véhicule
+      if (bool(this.settings, 'hitStars')) this.dizzyT = DIZZY_TIME;
       if (bool(this.settings, 'extraSounds')) {
         this.audio.playOneShot('sfx_crunch', 0.8, 0.9 + Math.random() * 0.2);
         this.audio.playOneShot('sfx_hurt', 0.25);
@@ -1297,13 +1315,22 @@ export class World implements GameContext {
     // Accélérateurs et tremplins (planètes « kart »)
     this.boostTime = Math.max(0, this.boostTime - dt);
     this.boostCd = Math.max(0, this.boostCd - dt);
+    const hopping = this.hop > 0;
     this.hop = Math.max(0, this.hop - dt);
+    if (hopping && this.hop <= 0 && this.hopScale > 1) {
+      // Retombée après l'éjection du canon : écrasement, poussière
+      this.hopScale = 1;
+      this.landT = 0.5;
+      this.burstAt(this.car.position.clone(), [0.9, 0.85, 0.75, 1]);
+      if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.8);
+      this.shaker.start({ enabled: true, delay: 0, duration: 0.2, space: 0, strength: [0.05, 0.05, 0.12], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+    }
     this.vehicle.speedMultiplier = (this.turboActive ? 1.7 : 1) * (this.boostTime > 0 ? 1.55 : 1);
-    if (this.landDrift > 0) {
-      // Reprise d'adhérence progressive après l'atterrissage (dérapage contrôlé)
-      this.landDrift = Math.max(0, this.landDrift - dt);
-      const k = 1 - this.landDrift / LAND_DRIFT;
-      this.vehicle.grip = 0.22 + (this.def.gameplay.grip - 0.22) * k * k;
+    this.cannon.update(dt);
+    if (this.cannonT > 0) {
+      // Dans le canon champignon : la voiture attend le BOUM
+      this.cannonT = Math.max(0, this.cannonT - dt);
+      if (this.cannonT <= 0) this.fireCannon();
     }
     if (this.shrinking && !this.galaxy) {
       const dur = num(s, 'shrinkDuration');
@@ -1326,7 +1353,7 @@ export class World implements GameContext {
     this.planet.updateMatrixWorld(true);
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
     const radius = this.shrinking || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
-    if (alive) {
+    if (alive && this.cannonT <= 0) {
       this.vehicle.update(dt, input.horizontal, this.planet.position, radius);
       this.tracker.update();
     }
@@ -1383,13 +1410,14 @@ export class World implements GameContext {
       if (this.fire.rateScale > 0 && !this.fire.playing) this.fire.play();
     }
     this.surfaceEffects(dt, alive);
+    this.updateDizzy(dt);
     this.healthRing.mesh.visible = String(s.healthDisplay) === 'ring' && this.mode !== 'menu' && !this.launch;
     this.healthRing.set(this.health.currentHealth / Math.max(1, this.health.maxHealth));
     this.healthRing.update(dt, Time.time);
     // Son moteur : hauteur selon le turbo ; dérapage selon le braquage
     if (this.engine === this.engineOriginal) this.engine?.setPitch(0.65 * (this.turboActive ? 1.35 : 1));
     else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.def.gameplay.carSpeed);
-    if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5, (0.45 * this.landDrift) / LAND_DRIFT));
+    if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5);
   }
 
   /** Animation du véhicule Arcade et effets selon le sol (eau, lave). */
@@ -1418,17 +1446,13 @@ export class World implements GameContext {
       const lk = 1 - this.landT / 0.5;
       const sq = this.landT > 0 ? Math.sin(lk * Math.PI * 2) * (1 - lk) * 0.35 : 0;
       r.body.scale.set(1 + sq * 0.5, 1 - sq, 1 + sq * 0.5);
-      // Rebonds amortis à l'arrivée sur une nouvelle planète
-      if (this.landBounce > 0) {
-        this.landBounce = Math.max(0, this.landBounce - dt);
-        const bt = 1.1 - this.landBounce;
-        r.body.position.y += 1.8 * Math.exp(-4.2 * bt) * Math.abs(Math.sin(bt * 8.5));
-      }
       if (this.hop > 0) {
         // Saut : parabole (unités locales de la voiture, échelle 0,2)
         const k = 1 - this.hop / HOP_TIME;
-        r.body.position.y += 5.5 * 4 * k * (1 - k);
-        r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
+        r.body.position.y += 5.5 * this.hopScale * 4 * k * (1 - k);
+        // Éjection du canon : un salto complet ; ressort : petit tangage
+        if (this.hopScale > 1) r.body.rotation.x -= Math.PI * 2 * (k * k * (3 - 2 * k));
+        else r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
       }
       for (const t of this.thrusters) {
         t.gravityDir = down;
@@ -1633,7 +1657,9 @@ export class World implements GameContext {
     const Rn = this.planetCollider * this.satDef!.radius + this.vehicle.f.desiredDistanceFromSurface;
     const p0 = L.at.clone();
     const up1 = this.planet.position.clone().sub(this.satellite.position).normalize().addScaledVector(L.up0, 0.6).normalize();
-    const p3 = this.satellite.position.clone().addScaledVector(up1, Rn);
+    // Arrivée dans la bouche du canon champignon posé sur la planète suivante
+    this.cannon.place(this.satellite.position.clone().addScaledVector(up1, this.planetCollider * this.satDef!.radius), up1, CANNON_SCALE);
+    const p3 = this.cannon.mouth().addScaledVector(up1, Rn - this.vehicle.f.desiredDistanceFromSurface);
     // Cap d'arrivée : le cap de départ ramené dans le plan tangent d'arrivée
     const h1 = L.h0.clone().addScaledVector(up1, -L.h0.dot(up1));
     if (h1.lengthSq() < 1e-4) h1.set(1, 0, 0).addScaledVector(up1, -up1.x);
@@ -1711,6 +1737,8 @@ export class World implements GameContext {
       const r = Math.min(1, Math.max(0, (x - 0.08) / 0.62));
       const roll = Math.PI * 4 * (r * r * (3 - 2 * r));
       this.car.quaternion.copy(base).multiply(_q4.setFromAxisAngle(_zAxis, roll));
+      // Plongée dans le canon : la voiture disparaît dans la bouche
+      this.car.visible = x < 0.97;
       // Champ de vision élargi pendant le vol
       this.rig.flightFov = 10 * Math.sin(Math.PI * x);
       (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * (1 - Math.min(1, Math.max(0, (x - 0.35) / 0.35)));
@@ -1772,17 +1800,84 @@ export class World implements GameContext {
     this.rig.endChase();
     this.rig.follow(this.car, 0, true);
     this.rig.blendFrom(camPos.sub(shift), camQ, 0.35);
-    this.landT = 0.5;
-    this.landBounce = 1.1;
-    // Sortie de vol : le véhicule glisse, dérape, puis reprend le contrôle
-    this.landDrift = LAND_DRIFT;
-    this.vehicle.grip = 0.22;
-    this.vehicle.kickSlip((Math.random() < 0.5 ? -1 : 1) * 0.75);
-    this.burstAt(this.car.position.clone(), [0.9, 0.85, 0.75, 1]);
+    // Canon champignon : il suit la planète (recalée à l'origine), la voiture est dedans
+    this.cannon.group.position.sub(shift);
+    this.cannon.charge();
+    this.cannonT = MushroomCannon.CHARGE;
+    this.car.visible = false;
+    this.landT = 0;
     this.events.stage?.(g.visited, next.name, this.galaxyCount > 0 ? `Planète ${g.visited} / ${this.galaxyCount}` : `Planète ${g.visited}`);
     const ang = g.index * 2.4;
     this.placeSatellite(this.resolve(this.selected, g.index + 1), new THREE.Vector3(Math.cos(ang), 0.6, Math.sin(ang)));
-    if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.8);
+    if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.5, 0.7);
+  }
+
+  /** Cinq étoiles jaunes qui tournent au-dessus de la tête (choc). */
+  private buildDizzy(): THREE.Group {
+    const sh = new THREE.Shape();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+      const r = i % 2 ? 0.45 : 1;
+      if (i) sh.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      else sh.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const geo = new THREE.ShapeGeometry(sh);
+    const fill = new THREE.MeshBasicMaterial({ color: 0xffe14a, side: THREE.DoubleSide, toneMapped: false });
+    const edge = new THREE.MeshBasicMaterial({ color: 0xff9a1a, side: THREE.DoubleSide, toneMapped: false });
+    const g = new THREE.Group();
+    for (let i = 0; i < 5; i++) {
+      const st = new THREE.Group();
+      const back = new THREE.Mesh(geo, edge);
+      back.scale.setScalar(1.25);
+      back.position.z = -0.01;
+      st.add(back, new THREE.Mesh(geo, fill));
+      g.add(st);
+    }
+    g.visible = false;
+    this.scene.add(g);
+    return g;
+  }
+
+  private updateDizzy(dt: number): void {
+    const g = this.dizzy;
+    if (this.dizzyT <= 0 || !this.car.visible) {
+      g.visible = false;
+      return;
+    }
+    this.dizzyT = Math.max(0, this.dizzyT - dt);
+    const up = _v.copy(this.car.position).sub(this.planet.position).normalize();
+    g.visible = true;
+    g.position.copy(this.car.position).addScaledVector(up, 0.42);
+    g.quaternion.setFromUnitVectors(_yAxis, up);
+    g.updateMatrixWorld(true);
+    const t = DIZZY_TIME - this.dizzyT;
+    const k = Math.min(1, t / 0.15) * Math.min(1, this.dizzyT / 0.3);
+    const cam = this.rig.camera.getWorldPosition(new THREE.Vector3());
+    g.children.forEach((st, i) => {
+      const a = t * 7 + (i / 5) * Math.PI * 2;
+      st.position.set(Math.cos(a) * 0.4, 0.06 * Math.sin(a * 2), Math.sin(a) * 0.4);
+      st.scale.setScalar(0.12 * k * (0.85 + 0.15 * Math.sin(t * 12 + i)));
+      st.lookAt(cam);
+      st.rotateZ(t * 5 + i);
+    });
+  }
+
+  /** BOUM : le canon recrache la voiture en l'air (salto), elle retombe en douceur. */
+  private fireCannon(): void {
+    this.cannon.fire();
+    this.car.visible = true;
+    this.hop = HOP_TIME;
+    this.hopScale = 2.4;
+    this.boostTime = 0.9;
+    const mouth = this.cannon.mouth();
+    this.burstAt(mouth.clone(), [1, 0.95, 0.8, 1]);
+    if (bool(this.settings, 'impactSmoke')) this.smokeAt(mouth);
+    this.events.boom?.(['BOUM !', 'BOOM !', 'POUF !'][Math.floor(Math.random() * 3)]);
+    this.shaker.start({ enabled: true, delay: 0, duration: 0.35, space: 0, strength: [0.12, 0.12, 0.25], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+    if (bool(this.settings, 'extraSounds')) {
+      this.audio.playOneShot('sfx_explosion', 0.8, 1.35);
+      this.audio.playOneShot('sfx_jump', 0.8, 0.8);
+    }
   }
 
   /** Pilote automatique (tests) : braquage vers l'étoile de lancement. */

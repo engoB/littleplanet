@@ -126,7 +126,8 @@ qui finissent face au cap de vol), l'étoile se **tasse**, puis il est
 lissage cumulé, donc aucun tremblement. La caméra ignore la toupie, fond
 depuis sa pose au décollage, puis **rejoint pendant la fin du vol la pose de
 suivi d'après l'atterrissage** : l'arrivée est continue (approche très
-ralentie, écrasement puis **rebonds amortis** du véhicule, gerbe de poussière).
+ralentie) et se termine dans la bouche du **canon champignon** de la planète
+d'arrivée, qui recrache la voiture (« BOUM ! », salto, retombée en douceur).
 
 ### Défis (sur la carte de chaque monde)
 
@@ -185,11 +186,19 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
   réglage « Orientation » ; écart assumé avec l'APK Unity, qui était en
   paysage). Tous les menus tiennent dans l'écran, sans défilement.
 - **Options** (roue crantée en haut à droite) : difficulté, musique, sons,
-  vibrations, qualité, Succès, et **Espace perso** (la page de tous les
+  qualité, Succès, et **Espace perso** (la page de tous les
   réglages avancés, ancienne page Réglages).
 - **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
   dans un élément de décor le détruit en éclats ; certains partent en orbite.
   L'explosion du véhicule projette aussi des débris en orbite.
+- **Canon champignon** (0.14) : en fin de vol, la voiture plonge dans un
+  champignon-canon posé sur la planète d'arrivée ; il gonfle, « BOUM ! »
+  (onomatopée de BD), la recrache en salto, puis rentre sous terre
+  (`src/game/MushroomCannon.ts`).
+- **Étoiles d'étourdissement** après un choc (réglage `hitStars`, à la place
+  du contour rouge).
+- **Mondes verrouillés** : planètes grises, bandeau « Verrouillé » et encart
+  sur la carte (qui garde toujours la même taille).
 - **Victoire du voyage** : vrai écran de victoire (trophée, planètes, distance,
   temps, confettis) ; plus aucun météore ni explosion ne fait trembler la
   caméra derrière.

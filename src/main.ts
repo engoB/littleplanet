@@ -135,7 +135,7 @@ async function main(): Promise<void> {
   const canvas = $<HTMLCanvasElement>('game');
   const world = new World(assets, settings, canvas, {
     health: (hp, max, d) => {
-      hud.health(hp, max, d);
+      hud.health(hp, max, d, settings.hitStars !== true);
       if (d < 0) vibrate(d <= -30 ? [60, 40, 90] : 45, settings.haptics === true);
     },
     message: (t, k) => hud.message(t, k),
@@ -146,6 +146,7 @@ async function main(): Promise<void> {
       vibrate([30, 40, 30], settings.haptics === true);
     },
     countdown: (n) => hud.countdown(n),
+    boom: (t) => hud.boom(t),
   });
 
   const audioP = world.audio.loadAll('./', assets.manifest.audio);
@@ -228,7 +229,7 @@ async function main(): Promise<void> {
   /** Cadrage de la planète selon l'écran affiché (menus premium). */
   const compose = (where: 'home' | 'planets' | 'game' | 'title') => {
     if (where === 'game') world.rig.setComposition(0, 0);
-    else if (where === 'title') world.rig.setComposition(0, portraitNow() ? 0.12 : 0);
+    else if (where === 'title') world.rig.setComposition(0, portraitNow() ? -0.1 : 0);
     else if (where === 'planets') world.rig.setComposition(0, portraitNow() ? 0.22 : 0.14);
     else world.rig.setComposition(portraitNow() ? 0 : 0.2, portraitNow() ? 0.2 : 0);
   };
@@ -274,7 +275,14 @@ async function main(): Promise<void> {
     $('ps-name').textContent = p.name;
     stars($('ps-stars'), p.difficulty);
     $('ps-info').textContent = p.tagline;
-    $('ps-best').textContent = !unlocked ? unlockHint(p) ?? '' : preset === 'original' ? (best ? `Record : ${Math.floor(best)} m` : '') : `Objectifs ${'●'.repeat(goals)}${'○'.repeat(GOALS - goals)}${best ? ` · record ${Math.floor(best)} m` : ''}`;
+    $('ps-band').hidden = unlocked;
+    $('ps-lockinfo').hidden = unlocked;
+    if (!unlocked) {
+      const prev = choosable[i - 1];
+      const g = prev ? Math.min(GOALS, goalsOf(prev.id)) : 0;
+      $('ps-lockhint').textContent = `${(unlockHint(p) ?? '').replace('🔒 ', '')} (${g}/${GOALS})`;
+    }
+    $('ps-best').textContent = !unlocked ? '' : preset === 'original' ? (best ? `Record : ${Math.floor(best)} m` : '') : `Objectifs ${'●'.repeat(goals)}${'○'.repeat(GOALS - goals)}${best ? ` · record ${Math.floor(best)} m` : ''}`;
     $('ps-best').classList.toggle('locked', !unlocked);
     $('ps-defi-help').textContent = '';
     renderDefis(p, !unlocked);
@@ -363,7 +371,8 @@ async function main(): Promise<void> {
   const renderDefis = (def: PlanetDef, locked: boolean, boxId = 'ps-defis') => {
     const box = $(boxId);
     box.innerHTML = '';
-    box.hidden = locked || preset === 'original';
+    // Monde verrouillé : pastilles gardées (invisibles) pour que la carte garde sa taille
+    box.hidden = preset === 'original';
     const voyage = def.style === 'galaxy';
     const on = new Set((voyage ? worldChallenges('galaxie') ?? [] : defisOf(def.id)).filter((k) => defiUnlocked(k)));
     const help = $(voyage ? 'voy-defi-help' : 'ps-defi-help');
@@ -636,21 +645,10 @@ async function main(): Promise<void> {
   };
   optRange('opt-music', 'musicVolume');
   optRange('opt-sfx', 'sfxVolume');
-  const syncHaptics = () => {
-    $('opt-haptics').classList.toggle('on', settings.haptics === true);
-    $('opt-haptics').setAttribute('aria-checked', String(settings.haptics === true));
-  };
-  on('opt-haptics', () => {
-    settings.haptics = settings.haptics !== true;
-    if (!urlOverride) saveSetting('haptics', settings.haptics);
-    syncHaptics();
-    vibrate(40, settings.haptics === true);
-  });
   let optionsFrom: 'menu-main' | 'menu-planets' = 'menu-main';
   on('btn-settings', () => {
     optionsFrom = 'menu-main';
     syncSegs();
-    syncHaptics();
     diffHelp();
     screens.show('menu-options');
   });
