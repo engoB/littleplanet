@@ -116,6 +116,8 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     planetMask: { value: null as THREE.CubeTexture | null },
     glass: { value: 0 },
     planetTime: { value: 0 },
+    /** Océan : houle animée, crêtes d'écume et reflets. */
+    ocean: { value: 0 },
   };
   m.userData.planetUniforms = uniforms;
   m.onBeforeCompile = (sh) => {
@@ -126,19 +128,43 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
     sh.fragmentShader = sh.fragmentShader
       .replace(
         '#include <common>',
-        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform samplerCube planetMask;\nuniform float glass;\nuniform float planetTime;\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
+        '#include <common>\nvarying vec3 vObjDir;\nuniform samplerCube planetCube;\nuniform samplerCube planetEmis;\nuniform samplerCube planetMask;\nuniform float glass;\nuniform float ocean;\nuniform float planetTime;\nfloat wHash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }\nfloat wNoise(vec3 p) { vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(wHash(i), wHash(i + vec3(1, 0, 0)), f.x), mix(wHash(i + vec3(0, 1, 0)), wHash(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(wHash(i + vec3(0, 0, 1)), wHash(i + vec3(1, 0, 1)), f.x), mix(wHash(i + vec3(0, 1, 1)), wHash(i + vec3(1, 1, 1)), f.x), f.y), f.z); }\nuniform vec3 emisColor;\nuniform vec3 rimColor;\nuniform float rimStrength;',
       )
       .replace(
         '#include <map_fragment>',
         // Les cubemaps WebGL sont « main gauche » : X inversé pour retrouver l'espace
         // du générateur (pistes, cartes de surface)
-        'vec3 planetDir = normalize(vObjDir);\ndiffuseColor.rgb *= textureCube(planetCube, planetDir).rgb;',
+        `vec3 planetDir = normalize(vObjDir);
+        diffuseColor.rgb *= textureCube(planetCube, planetDir).rgb;
+        float oceanGlint = 0.0;
+        float oceanFoam = 0.0;
+        if (ocean > 0.5) {
+          // Houle : trains de vagues croisés qui avancent, crêtes d'écume et dentelle
+          float t = planetTime;
+          vec3 q = planetDir;
+          float ch = wNoise(q * 18.0 + vec3(0.0, t * 0.35, t * 0.2));
+          // Houle dominante (lignes parallèles, ondulées par le bruit) + houle croisée faible
+          float w1 = sin(dot(q, vec3(46.0, 12.0, 18.0)) + t * 1.8 + ch * 3.0);
+          float w2 = sin(dot(q, vec3(-10.0, 34.0, 15.0)) - t * 2.1 + ch * 1.4);
+          float w = 0.78 * w1 + 0.22 * w2;
+          // Creux sombres, dos des vagues clairs
+          diffuseColor.rgb *= 0.62 + 0.5 * smoothstep(-0.9, 0.9, w);
+          // Écume : liseré sur la crête (un peu déchiré) et dentelle sur le dos
+          float brk = 0.55 + 0.45 * smoothstep(0.3, 0.6, wNoise(q * 40.0 + vec3(t * 0.5, 0.0, -t * 0.3)));
+          float crest = smoothstep(0.62, 0.76, w1) * (1.0 - smoothstep(0.86, 0.97, w1)) * brk;
+          float lace = smoothstep(0.6, 0.7, wNoise(q * 120.0 + vec3(t * 0.3, -t * 0.2, t * 0.25))) * smoothstep(0.5, 0.95, w1) * 0.3;
+          oceanFoam = clamp(crest + lace, 0.0, 1.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.97, 1.0), oceanFoam * 0.85);
+          float sp = wNoise(q * 170.0 + vec3(t * 1.2));
+          oceanGlint = smoothstep(0.88, 0.98, sp) * smoothstep(0.2, 0.8, w);
+        }`,
       )
       .replace(
         '#include <emissivemap_fragment>',
         `totalEmissiveRadiance += emisColor * textureCube(planetEmis, planetDir).rgb;
         float rim = pow(1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0), 3.0);
         totalEmissiveRadiance += rimColor * rim * rimStrength;
+        totalEmissiveRadiance += vec3(0.8, 0.9, 1.0) * oceanGlint * 0.7 + vec3(0.55, 0.62, 0.7) * oceanFoam;
         if (glass > 0.5) {
           // Verre : transparent au centre, reflet bleuté sur les bords (Fresnel) ; route opaque
           float road = textureCube(planetMask, planetDir).r;

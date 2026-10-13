@@ -178,7 +178,7 @@ export class World implements GameContext {
     if (d.style !== 'galaxy') return d;
     if (!this.route.length) this.newRoute();
     const sub = planetById(this.route[i % this.route.length]);
-    return { ...sub, radius: Math.min(sub.radius, 1.05) };
+    return { ...sub, radius: Math.min(sub.radius, 1.3) };
   }
   private planetMesh!: THREE.Mesh;
   private planetStdMat!: THREE.Material;
@@ -690,6 +690,7 @@ export class World implements GameContext {
       const glass = !!def.glass && !!cubes.mask;
       u.planetMask.value = cubes.mask ?? cubes.color;
       u.glass.value = glass ? 1 : 0;
+      u.ocean.value = def.id === 'ocean' && bool(this.settings, 'oceanWaves') ? 1 : 0;
       if (this.planetToonMat.transparent !== glass) {
         this.planetToonMat.transparent = glass;
         this.planetToonMat.side = glass ? THREE.DoubleSide : THREE.FrontSide;
@@ -1235,6 +1236,7 @@ export class World implements GameContext {
     const dt = Time.deltaTime;
     this.decor.update(dt, Time.time, this.mode === 'menu' ? undefined : this.carDir);
     this.planetToonMat.userData.planetUniforms.planetTime.value = Time.realtimeSinceStartup;
+    if (this.satMat) this.satMat.userData.planetUniforms.planetTime.value = Time.realtimeSinceStartup;
     if (this.mode === 'menu') {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
@@ -1634,6 +1636,7 @@ export class World implements GameContext {
     u.planetEmis.value = cubes.emis ?? cubes.color;
     u.emisColor.value.setRGB(def.emis ?? 0, def.emis ?? 0, def.emis ?? 0);
     u.rimColor.value.set(def.atmosphere);
+    u.ocean.value = def.id === 'ocean' && bool(this.settings, 'oceanWaves') ? 1 : 0;
     (this.satAtmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
     (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6;
     this.satellite.scale.setScalar(def.radius);

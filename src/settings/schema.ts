@@ -54,6 +54,7 @@ export const SCHEMA: SettingDef[] = [
   { key: 'healthDisplay', label: 'Affichage de la santé', group: 'Jeu', type: 'select', arcade: 'ring', original: 'bar', options: [
     { value: 'ring', label: 'Anneau au sol autour du véhicule' }, { value: 'bar', label: 'Barre en haut de l’écran (Slider d’origine)' },
   ], help: 'La barre du HUD est difficile à regarder en pleine partie.' },
+  { key: 'oceanWaves', label: 'Vagues et écume (océan)', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Houle animée, crêtes d’écume et reflets sur le Grand Océan.' },
   { key: 'hitStars', label: 'Étoiles d’étourdissement', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Après un choc, des étoiles tournent au-dessus du véhicule (à la place du flash rouge).' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en réussissant 3 objectifs sur la précédente ; la dernière débloque les défis et le voyage galactique.' },

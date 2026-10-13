@@ -1,8 +1,8 @@
 /**
  * Véhicules du préréglage Arcade, construits procéduralement (unités locales
  * de la voiture Unity : ~3,35 de long, pivot au sol, échelle 0,2) :
- *  - « hover » : voiture volante ronde et blanche, cockpit-bulle, réacteurs
- *    lumineux (inspiration aéro-voitures des dessins animés japonais) ;
+ *  - « hover » : DeLorean volante (« Retour vers le futur 2 ») en inox,
+ *    roues couchées lumineuses, persiennes, Mr. Fusion ;
  * La boîte de collision reste celle de la voiture d'origine.
  */
 import * as THREE from 'three';
@@ -32,99 +32,119 @@ export function buildHover(): VehicleRig {
   const group = new THREE.Group();
   const body = new THREE.Group();
   group.add(body);
-  // Blanc légèrement émissif : reste blanc éclatant même côté ombre
-  const white = toon(0xffffff, { emissive: new THREE.Color(0x3a3a44) });
-  const red = toon(0xff3b3b, { emissive: new THREE.Color(0x401010) });
-  const blue = toon(0x2f7dff, { emissive: new THREE.Color(0x081a40) });
-  const yellow = toon(0xffc93a, { emissive: new THREE.Color(0x302008) });
-  const dark = toon(0x253047);
-  // Coque compacte et large (silhouette de voiture vue de dessus : avant
-  // arrondi, flancs droits, arrière large), profil bombé
-  const hg = new THREE.SphereGeometry(1, 40, 20);
-  const hp = hg.attributes.position;
-  for (let i = 0; i < hp.count; i++) {
-    const x = hp.getX(i);
-    const y = hp.getY(i);
-    const z = hp.getZ(i);
-    // Super-ellipse dans le plan XZ : coins arrondis mais flancs presque droits
-    const r = Math.hypot(x, z);
-    const k = r < 1e-6 ? 1 : Math.pow(Math.pow(Math.abs(x / r), 4) + Math.pow(Math.abs(z / r), 4), -0.25);
-    const t = (z + 1) / 2; // 0 arrière → 1 avant
-    const w = 0.9 - 0.12 * t * t;
-    hp.setXYZ(i, x * k * w * 0.92, y * (y > 0 ? 0.46 : 0.3) * (1 - 0.18 * t), z * k * 1.28);
-  }
-  hg.computeVertexNormals();
-  const hull = new THREE.Mesh(hg, white);
-  hull.position.y = 0.55;
-  // Bandes de course rouges sur le dessus (visibles depuis la caméra)
-  for (const sx of [-1, 1]) {
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 2.0), red);
-    st.position.set(sx * 0.2, 0.98, -0.1);
-    body.add(st);
-  }
-  // Jupe colorée autour de la coque
-  const skirt = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 8, 48), blue);
-  skirt.rotation.x = Math.PI / 2;
-  skirt.scale.set(0.82, 1.18, 1);
-  skirt.position.y = 0.5;
-  // Bulle de cockpit, grande et brillante, pilote visible
-  const glass = new THREE.MeshPhysicalMaterial({ color: 0x8fe0ff, emissive: new THREE.Color(0x0a3550), transparent: true, opacity: 0.62, roughness: 0.05, metalness: 0, depthWrite: false });
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), glass);
-  dome.scale.set(1.05, 0.95, 1.15);
-  dome.position.set(0, 0.95, 0.2);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 10), toon(0xffd9b0));
-  head.position.set(0, 1.08, 0.12);
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon(0x3a5fd9));
-  hair.position.set(0, 1.11, 0.1);
-  // Emblème rond sur le capot
-  const emb = new THREE.Mesh(new THREE.CircleGeometry(0.2, 24), blue);
-  emb.rotation.x = -Math.PI / 2 + 0.35;
-  emb.position.set(0, 0.86, 0.95);
-  const embRing = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 24), white);
-  embRing.rotation.copy(emb.rotation);
-  embRing.position.copy(emb.position);
-  // Quatre patins anti-gravité aux coins (remplacent les roues, lisibles de dessus)
+  // DeLorean volante (« Retour vers le futur 2 ») : inox brossé, vitres
+  // teintées, persiennes noires, roues couchées à l'horizontale
+  const steel = toon(0xd3d8e0, { emissive: new THREE.Color(0x2e323a) });
+  const steelDark = toon(0x9aa1ad, { emissive: new THREE.Color(0x1a1d24) });
+  const black = toon(0x1b1d22);
+  const glassMat = toon(0x16202e, { emissive: new THREE.Color(0x0a1626), side: THREE.DoubleSide });
+  const red = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 0.15, 0.12) });
+  const orange = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 1.1, 0.15) });
+  const white = toon(0xf4f4f0, { emissive: new THREE.Color(0x3a3a3a) });
   const glowA = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 1.6, 2.4) });
   const glowB = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.2, 1.6) });
-  for (const [x, z] of [[-0.82, 0.78], [0.82, 0.78], [-0.82, -0.82], [0.82, -0.82]]) {
-    const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.3, 0.2, 20), yellow);
-    pod.position.set(x, 0.42, z);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 20), dark);
-    cap.position.set(x, 0.535, z);
-    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.24, 20), glowA);
-    glow.rotation.x = Math.PI / 2;
-    glow.position.set(x, 0.315, z);
-    body.add(pod, cap, glow);
-  }
-  // Aileron arrière en arceau
-  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.3), red);
-  spoiler.position.set(0, 1.08, -1.12);
+  /** Profil latéral (z avant, y haut) extrudé sur la largeur. */
+  const extrude = (pts: [number, number][], width: number, mat: THREE.Material, bevel = 0.05) => {
+    const sh = new THREE.Shape();
+    pts.forEach(([z, y], i) => (i ? sh.lineTo(z, y) : sh.moveTo(z, y)));
+    const g = new THREE.ExtrudeGeometry(sh, { depth: width - 2 * bevel, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 2, curveSegments: 4 });
+    g.translate(0, 0, -(width - 2 * bevel) / 2);
+    g.rotateY(-Math.PI / 2);
+    g.computeVertexNormals();
+    return new THREE.Mesh(g, mat);
+  };
+  // Caisse en coin : nez bas, capot plat, pare-brise très incliné, toit court, arrière tronqué
+  const hull = extrude([[1.5, 0.36], [1.52, 0.52], [0.55, 0.7], [0.2, 0.74], [-1.38, 0.74], [-1.46, 0.66], [-1.46, 0.36]], 1.62, steel, 0.06);
+  // Habitacle (plus étroit) : pare-brise, toit, lunette en persiennes
+  const cabin = extrude([[0.22, 0.72], [-0.28, 1.1], [-0.72, 1.1], [-1.3, 0.78], [-1.3, 0.72]], 1.3, steel, 0.04);
+  body.add(hull, cabin);
+  // Vitres teintées : pare-brise et vitres latérales (portes papillon)
+  const ws = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 0.6), glassMat);
+  ws.position.set(0, 0.945, -0.01);
+  ws.rotation.x = -(Math.PI / 2 - Math.atan2(0.38, 0.5));
+  body.add(ws);
   for (const sx of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.28, 0.14), dark);
-    leg.position.set(sx * 0.6, 0.94, -1.1);
-    body.add(leg);
+    const sw = new THREE.Shape();
+    sw.moveTo(0.12, 0.8);
+    sw.lineTo(-0.3, 1.06);
+    sw.lineTo(-0.7, 1.06);
+    sw.lineTo(-0.95, 0.85);
+    sw.lineTo(-0.95, 0.8);
+    const sg = new THREE.ShapeGeometry(sw).rotateY(-Math.PI / 2);
+    const side = new THREE.Mesh(sg, glassMat);
+    side.position.x = sx * 0.672;
+    body.add(side);
+    // Joint des portes papillon sur le toit
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.5), black);
+    seam.position.set(sx * 0.32, 1.115, -0.5);
+    body.add(seam);
   }
-  // Deux réacteurs arrière avec tuyère lumineuse
+  // Persiennes noires sur la lunette arrière (signature vue de dessus)
+  for (let i = 0; i < 6; i++) {
+    const u = (i + 0.5) / 6;
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.025, 0.06), black);
+    slat.position.set(0, 1.1 - 0.32 * u + 0.02, -0.72 - 0.58 * u);
+    slat.rotation.x = Math.atan2(0.32, 0.58);
+    body.add(slat);
+  }
+  // Bas de caisse noir, calandre et bandeau arrière
+  const skirt = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 3.0), black);
+  skirt.position.set(0, 0.36, 0.02);
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 0.04), black);
+  grille.position.set(0, 0.46, 1.535);
+  const rear = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 0.04), black);
+  rear.position.set(0, 0.5, -1.53);
+  body.add(skirt, grille, rear);
+  // Phares rectangulaires et feux arrière
+  for (const sx of [-1, 1]) {
+    for (const ox of [0.36, 0.56]) {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.02), glowB);
+      l.position.set(sx * ox, 0.46, 1.56);
+      body.add(l);
+    }
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.1, 0.02), red);
+    tl.position.set(sx * 0.48, 0.52, -1.555);
+    const bl = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.021), orange);
+    bl.position.set(sx * 0.72, 0.52, -1.555);
+    body.add(tl, bl);
+  }
+  // Mr. Fusion sur le capot arrière, et bobines sur les flancs
+  const fusion = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 16), white);
+  fusion.position.set(0, 0.84, -1.3);
+  const fusionTop = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), steelDark);
+  fusionTop.position.set(0, 0.94, -1.3);
+  body.add(fusion, fusionTop);
+  for (const sx of [-1, 1]) {
+    const coil = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 10), steelDark);
+    coil.rotation.x = Math.PI / 2;
+    coil.position.set(sx * 0.84, 0.62, -0.75);
+    body.add(coil);
+  }
+  // Roues couchées (mode vol) : pneu, jante inox et lueur bleue dessous
+  for (const [x, z] of [[-0.82, 0.86], [0.82, 0.86], [-0.82, -0.86], [0.82, -0.86]]) {
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 22), black);
+    tire.position.set(x, 0.36, z);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.17, 18), steelDark);
+    rim.position.set(x, 0.36, z);
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.22, 20), glowA);
+    glow.rotation.x = Math.PI / 2;
+    glow.position.set(x, 0.275, z);
+    body.add(tire, rim, glow);
+  }
+  // Deux tuyères arrière lumineuses (traînée des réacteurs)
   const emitters: THREE.Object3D[] = [];
   for (const sx of [-1, 1]) {
-    const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.5, 16), white);
+    const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.16, 14), steelDark);
     pod.rotation.x = Math.PI / 2;
-    pod.position.set(sx * 0.42, 0.62, -1.18);
-    const flame = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), glowA);
+    pod.position.set(sx * 0.42, 0.4, -1.58);
+    const flame = new THREE.Mesh(new THREE.CircleGeometry(0.08, 14), glowA);
     flame.rotation.y = Math.PI;
-    flame.position.set(sx * 0.42, 0.62, -1.435);
+    flame.position.set(sx * 0.42, 0.4, -1.665);
     const em = new THREE.Object3D();
-    em.position.set(sx * 0.42, 0.62, -1.5);
+    em.position.set(sx * 0.42, 0.4, -1.72);
     emitters.push(em);
     body.add(pod, flame, em);
   }
-  // Phares
-  for (const sx of [-1, 1]) {
-    const l = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), glowB);
-    l.position.set(sx * 0.45, 0.62, 1.22);
-    body.add(l);
-  }
-  body.add(hull, skirt, dome, head, hair, emb, embRing, spoiler);
   // Néons « années 80 » : fins anneaux sous les quatre patins et petite lueur au sol
   // juste sous chacun (rien sur la caisse)
   const neon = new THREE.Group();
@@ -139,10 +159,10 @@ export function buildHover(): VehicleRig {
   g.fillStyle = grd;
   g.fillRect(0, 0, 64, 64);
   const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), color: new THREE.Color(1.3, 0.3, 1.2), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  [[-0.82, 0.78], [0.82, 0.78], [-0.82, -0.82], [0.82, -0.82]].forEach(([x, z], i) => {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.018, 6, 28), i < 2 ? pink : cyan);
+  [[-0.82, 0.86], [0.82, 0.86], [-0.82, -0.86], [0.82, -0.86]].forEach(([x, z], i) => {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.018, 6, 28), i < 2 ? pink : cyan);
     ring.rotation.x = Math.PI / 2;
-    ring.position.set(x, 0.33, z);
+    ring.position.set(x, 0.28, z);
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), haloMat);
     halo.rotation.x = -Math.PI / 2;
     halo.position.set(x, 0.05, z);

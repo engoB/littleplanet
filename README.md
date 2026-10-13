@@ -54,7 +54,7 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Hill Valley | ★★★ | Retour vers le futur | rue qui fait le tour, tour de l'horloge, **statue géante de l'hoverboard rose**, panneau qui flotte ; « 88 mph ! » et traînées de feu en turbo |
 | Astéroïde B 612 | ★★★★ | Le Petit Prince | sable doré, rose sous sa cloche, volcans, baobabs, étoiles flottantes |
 | Banquise | ★★★ | — | **monde de cases gelées** : la voiture glisse (adhérence 0,35), flocons |
-| Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
+| Naine | ★★★★★ | — | planète bonbon, météores en rafale |
 
 **Progression classique** (0.13) : au départ seul le Monde 1 est ouvert.
 Réussir 3 objectifs sur un monde débloque le suivant ; débloquer le dernier
@@ -127,7 +127,8 @@ lissage cumulé, donc aucun tremblement. La caméra ignore la toupie, fond
 depuis sa pose au décollage, puis **rejoint pendant la fin du vol la pose de
 suivi d'après l'atterrissage** : l'arrivée est continue (approche très
 ralentie) et se termine dans la bouche du **canon champignon** de la planète
-d'arrivée, qui recrache la voiture (« BOUM ! », salto, retombée en douceur).
+d'arrivée, qui l'avale puis la tire vers l'avant (bouffée de fumée, retombée en
+douceur).
 
 ### Défis (sur la carte de chaque monde)
 
@@ -152,7 +153,7 @@ Au lancement (Arcade), un **écran titre** montre la **planète classique** :
 l'herbe réaliste et la terre du projet Unity d'origine
 (`Texture_Grass_Diffuse`, `Texture_Dirt_Diffuse`, exportées par
 `tools/classic_textures.py`) en projection triplanaire, avec un **chemin de
-terre** qui fait le tour du monde, et l'**aéro-voiture** (la voiture volante
+terre** qui fait le tour du monde, et la **DeLorean volante** (la voiture
 du jeu) qui le suit à bonne allure ; la caméra reste fixe et la planète tourne
 doucement. Toucher l'écran ouvre l'accueil. La planète classique est aussi
 jouable (Monde 11). L'herbe en relief (coques superposées, `grassShells`) est
@@ -191,10 +192,12 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 - **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
   dans un élément de décor le détruit en éclats ; certains partent en orbite.
   L'explosion du véhicule projette aussi des débris en orbite.
-- **Canon champignon** (0.14) : en fin de vol, la voiture plonge dans un
-  champignon-canon posé sur la planète d'arrivée ; il gonfle, « BOUM ! »
-  (onomatopée de BD), la recrache en salto, puis rentre sous terre
-  (`src/game/MushroomCannon.ts`).
+- **Canon champignon** : en fin de vol, la voiture plonge dans un
+  champignon-canon posé sur la planète d'arrivée ; il l'avale, gonfle en se
+  dandinant, s'incline vers l'avant et la tire devant lui dans une bouffée de
+  fumée, puis rentre sous terre (`src/game/MushroomCannon.ts`).
+- **Grand Océan** : houle animée, crêtes d'écume et reflets (shader de
+  planète, réglage « Vagues et écume »).
 - **Étoiles d'étourdissement** après un choc (réglage `hitStars`, à la place
   du contour rouge).
 - **Mondes verrouillés** : planètes grises, bandeau « Verrouillé » et encart
@@ -207,11 +210,11 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 
 ### Véhicule (préréglage Arcade)
 
-Voiture volante (inspiration aéro-voitures des dessins animés japonais) :
-coque blanche compacte à bandes rouges, bulle de cockpit avec pilote, **quatre
-patins anti-gravité lumineux aux coins** (silhouette de voiture vue de
-dessus), aileron, deux réacteurs arrière (jets de particules, plus forts en
-turbo). Elle flotte et s'incline dans les virages. La boîte de collision reste
+**DeLorean volante** (0.15, inspirée de « Retour vers le futur 2 ») : caisse
+en coin en inox brossé, vitres teintées, portes papillon, **persiennes noires**
+sur la lunette arrière, feux rectangulaires, Mr. Fusion, et les **quatre roues
+couchées à l'horizontale** avec leur lueur bleue (mode vol), deux tuyères
+arrière (jets de particules, plus forts en turbo). Elle flotte et s'incline dans les virages. La boîte de collision reste
 celle de la voiture d'origine : le gameplay ne change pas.
 
 ### HUD Arcade
