@@ -15,6 +15,9 @@ function toon(color: number, opts: Partial<THREE.MeshToonMaterialParameters> = {
 }
 
 export interface VehicleRig {
+  /** Néons années 80 (anneaux autour des patins + halo au sol) : mondes sombres. */
+  neon?: THREE.Object3D;
+  neonMats?: THREE.MeshBasicMaterial[];
   group: THREE.Group;
   /** Matériaux lumineux (réacteurs, phares) : intensité modulée (turbo). */
   glow: THREE.MeshBasicMaterial[];
@@ -122,10 +125,42 @@ export function buildHover(): VehicleRig {
     body.add(l);
   }
   body.add(hull, skirt, dome, head, hair, emb, embRing, spoiler);
+  // Néons « années 80 » : anneaux magenta / cyan autour des patins et halo au sol
+  const neon = new THREE.Group();
+  const pink = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.0, 0.4, 2.4) });
+  const cyan = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.4, 3.0) });
+  [[-0.82, 0.78], [0.82, 0.78], [-0.82, -0.82], [0.82, -0.82]].forEach(([x, z], i) => {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.035, 8, 28), i < 2 ? pink : cyan);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, 0.36, z);
+    neon.add(ring);
+  });
+  const tube = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 6, 56), pink);
+  tube.rotation.x = Math.PI / 2;
+  tube.scale.set(0.84, 1.22, 1);
+  tube.position.y = 0.42;
+  neon.add(tube);
+  // Halo au sol (additif) sous la caisse
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(32, 32, 4, 32, 32, 32);
+  grd.addColorStop(0, 'rgba(255,255,255,0.9)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 64, 64);
+  const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), color: new THREE.Color(1.6, 0.35, 1.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 4.2), haloMat);
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.y = 0.05;
+  halo.renderOrder = 2;
+  neon.add(halo);
+  neon.visible = false;
+  body.add(neon);
   body.traverse((o) => {
     if ((o as THREE.Mesh).isMesh) o.castShadow = true;
   });
-  return { group, glow: [glowA, glowB], body, emitters, kind: 'hover' };
+  return { group, glow: [glowA, glowB], body, emitters, kind: 'hover', neon, neonMats: [pink, cyan, haloMat] };
 }
 
 /** Animation : flottement, roulis selon le braquage, éclat des réacteurs. */
@@ -138,5 +173,10 @@ export function animateVehicle(v: VehicleRig, t: number, steer: number, turbo: b
     v.body.rotation.x = -0.04 + 0.03 * Math.sin(t * 2.3) - (turbo ? 0.08 : 0);
     const k = turbo ? 1.8 : 1 + 0.15 * Math.sin(t * 20);
     v.glow[0].color.setRGB(0.4 * k, 1.6 * k, 2.4 * k);
+    if (v.neon?.visible && v.neonMats) {
+      const p = 0.85 + 0.15 * Math.sin(t * 6);
+      v.neonMats[0].color.setRGB(3.0 * p, 0.4 * p, 2.4 * p);
+      v.neonMats[1].color.setRGB(0.4 * p, 2.4 * p, 3.0 * p);
+    }
   }
 }

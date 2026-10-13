@@ -102,6 +102,8 @@ async function main(): Promise<void> {
   await assets.loadData();
   bindSchemaToProject(assets.project);
   const settings: Settings = settingsFromUrl(loadSettings());
+  // Tests déterministes : pas de compte à rebours sauf demande explicite
+  if (TEST && !params.has('countdown')) settings.countdown = false;
   // Paramètres d'URL (tests) : les bascules du menu ne sont pas enregistrées
   const urlOverride = new URLSearchParams(location.search).has('preset');
   const preset = params.get('preset') ?? currentPreset();
@@ -138,6 +140,7 @@ async function main(): Promise<void> {
       hud.stageBanner(n, label, title);
       vibrate([30, 40, 30], settings.haptics === true);
     },
+    countdown: (n) => hud.countdown(n),
   });
 
   const audioP = world.audio.loadAll('./', assets.manifest.audio);
@@ -213,8 +216,9 @@ async function main(): Promise<void> {
   $('preset-badge').hidden = preset !== 'original';
   const portraitNow = () => window.innerHeight > window.innerWidth;
   /** Cadrage de la planète selon l'écran affiché (menus premium). */
-  const compose = (where: 'home' | 'planets' | 'game') => {
+  const compose = (where: 'home' | 'planets' | 'game' | 'title') => {
     if (where === 'game') world.rig.setComposition(0, 0);
+    else if (where === 'title') world.rig.setComposition(0, portraitNow() ? 0.12 : 0);
     else if (where === 'planets') world.rig.setComposition(0, portraitNow() ? 0.22 : 0.14);
     else world.rig.setComposition(portraitNow() ? 0 : 0.2, portraitNow() ? 0.2 : 0);
   };
@@ -605,9 +609,29 @@ async function main(): Promise<void> {
   compose('home');
   window.addEventListener('resize', () => {
     if (screens.current === 'menu-main') compose('home');
+    else if (screens.current === 'menu-title') compose('title');
     else if (screens.current === 'menu-planets') compose('planets');
   });
-  screens.show('menu-main');
+  // Écran titre (Arcade) : planète classique, la voiture boucle sur le chemin
+  const showTitle = preset !== 'original' && (!TEST || params.has('title'));
+  if (showTitle) {
+    world.enterTitle();
+    compose('title');
+    screens.show('menu-title');
+    const leave = () => {
+      if (screens.current !== 'menu-title') return;
+      click();
+      world.leaveTitle();
+      world.planetDef = planetById(planetId);
+      world.enterMenu();
+      compose('home');
+      screens.show('menu-main');
+    };
+    $('menu-title').addEventListener('click', leave);
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') leave();
+    });
+  } else screens.show('menu-main');
   if (TEST) {
     // Mode test : pas de boucle rAF, simulation pilotée par Playwright
     const w = window as unknown as Record<string, unknown>;

@@ -9,7 +9,7 @@ export interface PlanetDef {
   name: string;
   tagline: string;
   difficulty: number;
-  style: 'original' | 'toon' | 'galaxy';
+  style: 'original' | 'toon' | 'galaxy' | 'classic';
   /** Planète nocturne : sol sombre, voiture et impacts lumineux. */
   neon?: boolean;
   radius: number;
@@ -34,6 +34,8 @@ export interface PlanetDef {
   galaxy?: string[];
   /** Objets bousculables : { type: nombre } (ball, blockA/B/C, pumpkin, gift, hay, beachball, cone, fence). */
   toys?: Record<string, number>;
+  /** Monde sombre : néons années 80 sous la voiture. */
+  dark?: boolean;
   /** Planète de verre : seule la route est opaque (masque d'opacité). */
   glass?: boolean;
   /** Rouler sur la route (surface « chemin ») donne un coup d'accélérateur. */

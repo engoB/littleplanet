@@ -109,6 +109,8 @@ export class Assets {
     for (const extra of ['crater', 'crater_n', 'planet_detail_n']) {
       void track(this.loadTexture(extra, extra + '.png', extra.endsWith('_n')));
     }
+    // Planète classique (écran titre) : herbe et terre du projet Unity d'origine
+    for (const extra of ['classic_grass', 'classic_dirt']) void track(this.loadTexture(extra, extra + '.jpg'));
     void track(this.texLoader.loadAsync(this.url('textures/fx_atlas.png')).then((t) => {
       t.colorSpace = THREE.SRGBColorSpace;
       t.generateMipmaps = false;

@@ -109,8 +109,8 @@ qui finissent face au cap de vol), l'étoile se **tasse**, puis il est
 (Bézier de quaternions départ → mi-vol → arrivée, tonneau borné) : aucun
 lissage cumulé, donc aucun tremblement. La caméra ignore la toupie, fond
 depuis sa pose au décollage, puis **rejoint pendant la fin du vol la pose de
-suivi d'après l'atterrissage** : l'arrivée est continue (écrasement et rebond
-élastique du véhicule, gerbe de poussière).
+suivi d'après l'atterrissage** : l'arrivée est continue (approche très
+ralentie, écrasement puis **rebonds amortis** du véhicule, gerbe de poussière).
 
 ### Défis (sur la carte de chaque monde)
 
@@ -128,6 +128,23 @@ bouton pause (icône et nom, qui se replient en icônes) :
 | **Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
 | **Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
 | Rétrécit | la planète rétrécit (activé par défaut en Arcade) |
+
+### Écran titre et planète classique
+
+Au lancement (Arcade), un **écran titre** montre la **planète classique** :
+l'herbe réaliste et la terre du projet Unity d'origine
+(`Texture_Grass_Diffuse`, `Texture_Dirt_Diffuse`, exportées par
+`tools/classic_textures.py`) en projection triplanaire, avec un **chemin de
+terre** qui fait le tour du monde, et la petite **voiture rouge** qui le suit
+en boucle. Toucher l'écran ouvre l'accueil. La planète classique est aussi
+jouable (Monde 11). Réglage de test **« Herbe en relief »** (désactivé par
+défaut) : coques d'herbe superposées (shell texturing) qui donnent un tapis de
+brins en relief, plus lourd pour le téléphone.
+
+Analyse du projet d'origine : le modèle `GroundTrack.fbx` et les textures
+d'herbe réaliste, de terre et de brins existent dans le dépôt Unity mais ne
+sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
+(grand cercle sinueux) plutôt qu'importé.
 
 ### Menus
 
@@ -172,6 +189,16 @@ celle de la voiture d'origine : le gameplay ne change pas.
 - **Turbo** : bouton au centre vide (sous le pouce) entouré d'un **anneau de
   flammes** qui représente la jauge ; jauge vide → turbo verrouillé jusqu'au
   relâchement et 20 % de recharge (plus de turbo par à-coups).
+- **Compte à rebours** « 3, 2, 1, Partez ! » avant chaque partie (tout est
+  figé, la caméra est en place) ; réglage « Compte à rebours avant le départ ».
+- **Impacts** : colonne de fumée noire qui monte et grossit (elle peut passer
+  devant la caméra) et cratère incandescent qui s'éteint en 1,6 s ; réglage
+  « Fumée et incandescence des impacts ».
+- **Néons années 80** sous la voiture (anneaux magenta et cyan autour des
+  patins, halo au sol) sur les mondes sombres (Halloween, Poudlard, Forteresse,
+  Arc-en-ciel, Noël, Naine) ; réglage « Néons sous la voiture ».
+- Bannière « Étape N » en haut de l'écran, plus petite : elle ne masque plus
+  le jeu.
 - Plus de flèches gauche / droite à l'écran (les deux demi-écrans restent actifs).
 - Les cratères ne font plus dévier le véhicule (réglage « Les cratères font
   dévier », désactivé par défaut).

@@ -27,6 +27,7 @@ import dae2glb  # noqa: E402
 import procedural_audio  # noqa: E402
 import premium_sfx  # noqa: E402
 import procedural_planets  # noqa: E402
+import classic_textures  # noqa: E402
 import procedural_textures  # noqa: E402
 
 MAX_TEX = 1024
@@ -275,6 +276,8 @@ def main() -> None:
     # l'icône Unity ne sert que si aucune icône n'existe encore
     if not os.path.exists(os.path.join(out, 'icons', 'icon-512.png')):
         make_icons(assets, out)
+    print('Planète classique (herbe et terre du projet Unity)')
+    classic_textures.main(project, os.path.join(out, 'textures'))
     print('Planètes et ciel')
     planets = procedural_planets.main(os.path.join(HERE, '..', 'src', 'game', 'planets.json'), os.path.join(out, 'textures'))
     manifest = {'textures': tex, 'fxAtlas': atlas, 'audio': audio, 'fonts': fonts,
