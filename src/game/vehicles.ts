@@ -2,7 +2,7 @@
  * Véhicules du préréglage Arcade, construits procéduralement (unités locales
  * de la voiture Unity : ~3,35 de long, pivot au sol, échelle 0,2) :
  *  - « hover » : DeLorean volante (« Retour vers le futur 2 ») en inox,
- *    roues couchées lumineuses, persiennes, Mr. Fusion ;
+ *    roues couchées lumineuses, Mr. Fusion ;
  * La boîte de collision reste celle de la voiture d'origine.
  */
 import * as THREE from 'three';
@@ -33,7 +33,7 @@ export function buildHover(): VehicleRig {
   const body = new THREE.Group();
   group.add(body);
   // DeLorean volante (« Retour vers le futur 2 ») : inox brossé, vitres
-  // teintées, persiennes noires, roues couchées à l'horizontale
+  // teintées, roues couchées à l'horizontale
   const steel = toon(0xd3d8e0, { emissive: new THREE.Color(0x2e323a) });
   const steelDark = toon(0x9aa1ad, { emissive: new THREE.Color(0x1a1d24) });
   const black = toon(0x1b1d22);
@@ -55,7 +55,7 @@ export function buildHover(): VehicleRig {
   };
   // Caisse en coin : nez bas, capot plat, pare-brise très incliné, toit court, arrière tronqué
   const hull = extrude([[1.5, 0.36], [1.52, 0.52], [0.55, 0.7], [0.2, 0.74], [-1.38, 0.74], [-1.46, 0.66], [-1.46, 0.36]], 1.62, steel, 0.06);
-  // Habitacle (plus étroit) : pare-brise, toit, lunette en persiennes
+  // Habitacle (plus étroit) : pare-brise, toit, lunette
   const cabin = extrude([[0.22, 0.72], [-0.28, 1.1], [-0.72, 1.1], [-1.3, 0.78], [-1.3, 0.72]], 1.3, steel, 0.04);
   body.add(hull, cabin);
   // Vitres teintées : pare-brise et vitres latérales (portes papillon)
@@ -78,14 +78,6 @@ export function buildHover(): VehicleRig {
     const seam = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.5), black);
     seam.position.set(sx * 0.32, 1.115, -0.5);
     body.add(seam);
-  }
-  // Persiennes noires sur la lunette arrière (signature vue de dessus)
-  for (let i = 0; i < 6; i++) {
-    const u = (i + 0.5) / 6;
-    const slat = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.025, 0.06), black);
-    slat.position.set(0, 1.1 - 0.32 * u + 0.02, -0.72 - 0.58 * u);
-    slat.rotation.x = Math.atan2(0.32, 0.58);
-    body.add(slat);
   }
   // Bas de caisse noir, calandre et bandeau arrière
   const skirt = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 3.0), black);

@@ -35,10 +35,11 @@ export const SCHEMA: SettingDef[] = [
   { key: 'galaxyTime', label: 'Voyage : temps par planète', group: 'Modes de jeu', type: 'select', arcade: '90', original: '90', options: [
     { value: '60', label: '1 min' }, { value: '90', label: '1 min 30' }, { value: '120', label: '2 min' }, { value: '0', label: 'Illimité' },
   ], help: 'Temps pour réussir l’objectif de chaque planète et rejoindre l’étoile de lancement.' },
+  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Ni météores ni dégâts : on roule tranquille, on ramasse et on explore. La partie ne compte pas (ni objectifs, ni succès, ni records).' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'difficulty', label: 'Difficulté', group: 'Jeu', type: 'select', arcade: 'normal', original: 'hard', options: [
-    { value: 'easy', label: 'Facile : météores rares, dégâts réduits, aucune contrainte' }, { value: 'normal', label: 'Normal : aucune contrainte, montée douce' }, { value: 'hard', label: 'Difficile : poteaux, planète qui rétrécit, montée en puissance' },
+    { value: 'normal', label: 'Normal : aucune contrainte, montée douce' }, { value: 'hard', label: 'Difficile : poteaux, planète qui rétrécit, montée en puissance' },
   ], help: 'Les contraintes (poteaux, rétrécissement, météores de plus en plus nombreux) sont réservées au niveau Difficile.' },
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
@@ -54,6 +55,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'healthDisplay', label: 'Affichage de la santé', group: 'Jeu', type: 'select', arcade: 'ring', original: 'bar', options: [
     { value: 'ring', label: 'Anneau au sol autour du véhicule' }, { value: 'bar', label: 'Barre en haut de l’écran (Slider d’origine)' },
   ], help: 'La barre du HUD est difficile à regarder en pleine partie.' },
+  { key: 'weather', label: 'Climat', group: 'Graphismes', type: 'select', arcade: 'auto', original: 'none', options: [
+    { value: 'auto', label: 'Celui de chaque monde' }, { value: 'none', label: 'Beau temps' }, { value: 'rain', label: 'Pluie' }, { value: 'snow', label: 'Neige' }, { value: 'leaves', label: 'Feuilles qui volent' }, { value: 'wind', label: 'Vent (rafales qui poussent la voiture)' }, { value: 'storm', label: 'Orage (pluie, rafales, foudre)' },
+  ], help: 'Chaque monde a son climat ; on peut aussi en imposer un partout.' },
   { key: 'oceanWaves', label: 'Vagues et écume (océan)', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Houle animée, crêtes d’écume et reflets sur le Grand Océan.' },
   { key: 'hitStars', label: 'Étoiles d’étourdissement', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Après un choc, des étoiles tournent au-dessus du véhicule (à la place du flash rouge).' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },

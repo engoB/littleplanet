@@ -68,10 +68,10 @@ d'avancement, annonce « Succès débloqué » en fin de partie. La version 0.13
 remet la progression à 0 % une fois (`mpp.progress.version`). Le réglage
 « Toutes les planètes débloquées » ouvre tout. Records par planète.
 
-**Difficulté** (Facile / Normal / Difficile, sur la carte du monde et dans les
-Options) : en Facile et Normal on roule sans contrainte — ni poteaux, ni
-planète qui rétrécit, météores plus rares (Facile : plus lents, dégâts
-divisés par deux ; Normal : dégâts × 0,75 et montée douce). Difficile garde
+**Difficulté** (Normal / Difficile, sur la carte du monde et dans les
+Options) : en Normal on roule sans contrainte — ni poteaux, ni
+planète qui rétrécit, météores plus rares, dégâts × 0,75 et montée douce.
+Le défi **Zen** supprime météores et dégâts. Difficile garde
 la montée en puissance : poteaux, rétrécissement, pluie de météores des
 étapes. Le préréglage Original reste en Difficile (comportement Unity
 inchangé).
@@ -192,6 +192,17 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 - **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
   dans un élément de décor le détruit en éclats ; certains partent en orbite.
   L'explosion du véhicule projette aussi des débris en orbite.
+- **Climat** (0.16, `src/game/Weather.ts`) : pluie, neige, feuilles qui
+  volent, vent (les rafales poussent la voiture), orage (pluie battante,
+  éclairs, coups de foudre qui laissent un cratère) ou beau temps. Chaque monde
+  a son climat (`weather` dans `planets.json` : Noël et Banquise sous la neige,
+  la Comté dans les feuilles, Halloween sous l'orage…) ; réglage « Climat »
+  dans les Options pour en imposer un partout.
+- **Décor** : seuls les gros monuments bloquent ; le reste vole en éclats au
+  contact (5 de dégâts).
+- **Défi Zen** : ni météores ni dégâts (remplace l'ancien niveau Facile) ;
+  la partie ne compte pas : ni objectifs, ni statistiques, ni succès, ni records.
+- **Sillage d'écume** sur l'eau derrière la voiture (`src/game/WakeTrail.ts`).
 - **Canon champignon** : en fin de vol, la voiture plonge dans un
   champignon-canon posé sur la planète d'arrivée ; il l'avale, gonfle en se
   dandinant, s'incline vers l'avant et la tire devant lui dans une bouffée de
@@ -211,8 +222,7 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 ### Véhicule (préréglage Arcade)
 
 **DeLorean volante** (0.15, inspirée de « Retour vers le futur 2 ») : caisse
-en coin en inox brossé, vitres teintées, portes papillon, **persiennes noires**
-sur la lunette arrière, feux rectangulaires, Mr. Fusion, et les **quatre roues
+en coin en inox brossé, vitres teintées, portes papillon, feux rectangulaires, Mr. Fusion, et les **quatre roues
 couchées à l'horizontale** avec leur lueur bleue (mode vol), deux tuyères
 arrière (jets de particules, plus forts en turbo). Elle flotte et s'incline dans les virages. La boîte de collision reste
 celle de la voiture d'origine : le gameplay ne change pas.

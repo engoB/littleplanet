@@ -133,7 +133,8 @@ export function hasTrophy(id: string): boolean {
 
 /** Un défi est-il ouvert ? Chrono avec le dernier monde, les autres avec leur succès. */
 export function defiUnlocked(key: string): boolean {
-  if (all) return true;
+  // Zen : ouvert d'emblée (il remplace l'ancien niveau Facile)
+  if (all || key === 'modeZen') return true;
   if (!lastUnlocked()) return false;
   const t = TROPHIES.find((x) => x.unlocks === key);
   return !t || hasTrophy(t.id);
