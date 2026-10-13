@@ -62,6 +62,8 @@ const _o2 = new THREE.Vector3();
 const _o3 = new THREE.Vector3();
 const _o4 = new THREE.Vector3();
 const _o5 = new THREE.Vector3();
+const SPIN_TIME = 0.7;
+const HOP_TIME = 1.0;
 const _yAxis = new THREE.Vector3(0, 1, 0);
 const _zAxis = new THREE.Vector3(0, 0, 1);
 
@@ -169,6 +171,7 @@ export class World implements GameContext {
   bills!: BulletBills;
   /** Toupie (pylône) : temps restant (s). */
   private spinT = 0;
+  private spinSign = 1;
   private spinCd = 0;
   private readonly burstObj = new THREE.Object3D();
   private bursts: ParticleSystem[] = [];
@@ -535,6 +538,7 @@ export class World implements GameContext {
       if (this.events.stage) this.events.stage(n + 1, this.stages.label);
       else this.events.message(`Étape ${n} réussie !`, 'good');
       this.health.heal(10);
+      this.revealKart(n + 1, true);
     };
     this.applySettings(s);
   }
@@ -596,7 +600,9 @@ export class World implements GameContext {
       spinners: Math.round((DEFAULT_KART.spinners ?? 0) * area),
     };
     this.kart.build(this.toon ? kart : undefined, this.planetRadius(), def.radius, [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0);
+    this.revealKart(this.mode === 'menu' ? 99 : this.stages.stage);
     this.clocks.boxLook = this.toon;
+    this.stages.item = this.toon ? ['caisse', 'caisses'] : ['horloge', 'horloges'];
     const seed = [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 13) >>> 0;
     this.toys.build(this.toon ? def.toys : undefined, this.planetRadius(), def.radius, seed);
     this.thwomps.configure(this.toon && def.hazard === 'thwomp', this.planetRadius(), def.radius);
@@ -807,6 +813,7 @@ export class World implements GameContext {
     this.timeLeft = 60;
     this.dyingTime = 0;
     this.stages.start();
+    this.revealKart(1);
     this.updateDifficulty();
     this.meteors.start();
     this.shrink.start(0);
@@ -878,36 +885,79 @@ export class World implements GameContext {
   private bumpCooldown = 0;
   private shrinkStep = 0;
   /** Décor : cercle (voiture) contre cercle (obstacle) sur la sphère, rebond. */
+  /**
+   * Dévoilement progressif des objets de course : un type de plus à chaque
+   * étape (accélérateurs d'abord), pour ne pas tout montrer d'un coup.
+   */
+  private revealKart(stage: number, announce = false): void {
+    const kinds = this.kart.kinds();
+    const progressive = bool(this.settings, 'stages');
+    const n = progressive ? Math.min(kinds.length, stage) : kinds.length;
+    this.kart.reveal(kinds.slice(0, n));
+    const added = kinds[n - 1];
+    if (announce && added && n === stage) {
+      const names: Record<string, string> = { boosts: 'accélérateurs', items: 'baskets turbo', ramps: 'ressorts', spinners: 'poteaux tournoyants' };
+      this.events.message(`Nouveau : ${names[added]} !`, 'info');
+    }
+  }
+
   private obstacles(): void {
     this.bumpCooldown = Math.max(0, this.bumpCooldown - Time.deltaTime);
+    for (const o of this.decor.obstacles) if (this.pushOut(o.dir, o.radius)) this.bumpFx();
+    // Poteaux : rebond, un tour de toupie du côté de l'impact, accélération
+    for (const p of this.kart.activePoles()) {
+      const away = this.pushOut(p.dir, this.kart.poleRadius, false);
+      if (!away || this.spinCd > 0) continue;
+      const left = _o5.set(1, 0, 0).applyQuaternion(this.car.quaternion);
+      // Poteau à gauche (la voiture est repoussée vers la droite) : toupie vers la gauche
+      this.spinSign = left.dot(away) < 0 ? 1 : -1;
+      this.vehicle.bump(this.spinSign * 35);
+      this.spinT = SPIN_TIME;
+      this.spinCd = 1.2;
+      this.boostTime = Math.max(this.boostTime, 1.2);
+      this.kart.hitPole(p, away.clone().applyQuaternion(_q.copy(this.planet.quaternion).invert()));
+      if (bool(this.settings, 'extraSounds')) {
+        this.audio.playOneShot('sfx_spin', 0.6);
+        this.audio.playOneShot('sfx_crunch', 0.35, 1.4);
+      }
+    }
+  }
+
+  /**
+   * Cercle (voiture) contre cercle (obstacle de direction `dir`, espace planète)
+   * sur la sphère : repousse la voiture et renvoie la direction d'éloignement
+   * (monde), ou null sans contact. `deflect` : réflexion du cap.
+   */
+  private pushOut(dir: THREE.Vector3, radius: number, deflect = true): THREE.Vector3 | null {
     const R = this.planetRadius();
     const up = _o1.copy(this.car.position).sub(this.planet.position).normalize();
-    const d = _o2;
-    for (const o of this.decor.obstacles) {
-      d.copy(o.dir).applyQuaternion(this.planet.quaternion);
-      const min = o.radius + 0.16;
-      // Rejet rapide (cosinus) avant le calcul d'angle
-      if (up.dot(d) < Math.cos(Math.min(Math.PI, min / R))) continue;
-      const dist = up.angleTo(d) * R;
-      if (dist >= min) continue;
-      // Repousse la voiture hors de l'obstacle, le long de la surface
-      const away = _o3.copy(up).addScaledVector(d, -up.dot(d)).normalize();
-      const push = (min - dist) / R;
-      const axis = _o4.crossVectors(up, away).normalize();
-      const q = _q.setFromAxisAngle(axis, push);
-      this.car.position.sub(this.planet.position).applyQuaternion(q).add(this.planet.position);
-      this.car.quaternion.premultiply(q);
-      // Réflexion du cap si la voiture fonce dans l'obstacle
-      const fwd = _o5.set(0, 0, 1).applyQuaternion(this.car.quaternion);
-      if (fwd.dot(away) < 0) {
-        const left = _o5.set(1, 0, 0).applyQuaternion(this.car.quaternion);
-        this.vehicle.bump((left.dot(away) > 0 ? -1 : 1) * 70);
-      }
-      if (this.bumpCooldown <= 0) {
-        this.bumpCooldown = 0.4;
-        if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.5, 0.7);
-        this.shaker.start({ enabled: true, delay: 0, duration: 0.2, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
-      }
+    const d = _o2.copy(dir).applyQuaternion(this.planet.quaternion);
+    const min = radius + 0.16;
+    // Rejet rapide (cosinus) avant le calcul d'angle
+    if (up.dot(d) < Math.cos(Math.min(Math.PI, min / R))) return null;
+    const dist = up.angleTo(d) * R;
+    if (dist >= min) return null;
+    // Repousse la voiture hors de l'obstacle, le long de la surface
+    const away = _o3.copy(up).addScaledVector(d, -up.dot(d)).normalize();
+    const push = (min - dist) / R;
+    const axis = _o4.crossVectors(up, away).normalize();
+    const q = _q.setFromAxisAngle(axis, push);
+    this.car.position.sub(this.planet.position).applyQuaternion(q).add(this.planet.position);
+    this.car.quaternion.premultiply(q);
+    // Réflexion du cap si la voiture fonce dans l'obstacle
+    const fwd = _o5.set(0, 0, 1).applyQuaternion(this.car.quaternion);
+    if (deflect && fwd.dot(away) < 0) {
+      const left = _o5.set(1, 0, 0).applyQuaternion(this.car.quaternion);
+      this.vehicle.bump((left.dot(away) > 0 ? -1 : 1) * 70);
+    }
+    return away;
+  }
+
+  private bumpFx(): void {
+    if (this.bumpCooldown <= 0) {
+      this.bumpCooldown = 0.4;
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.5, 0.7);
+      this.shaker.start({ enabled: true, delay: 0, duration: 0.2, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
     }
   }
 
@@ -1114,7 +1164,11 @@ export class World implements GameContext {
     const r = this.rig3d;
     if (r) {
       animateVehicle(r, Time.time, this.vehicle.steer, this.turboActive || this.boostTime > 0);
-      if (this.spinT > 0) r.body.rotation.y += (1 - this.spinT / 0.75) * Math.PI * 4;
+      if (this.spinT > 0) {
+        // Un tour complet, rapide puis amorti (sens selon le côté de l'impact)
+        const k = 1 - this.spinT / SPIN_TIME;
+        r.body.rotation.y += this.spinSign * Math.PI * 2 * (1 - Math.pow(1 - k, 3));
+      }
       // Atterrissage : écrasement puis rebond élastique
       this.landT = Math.max(0, this.landT - dt);
       const lk = 1 - this.landT / 0.5;
@@ -1122,8 +1176,8 @@ export class World implements GameContext {
       r.body.scale.set(1 + sq * 0.5, 1 - sq, 1 + sq * 0.5);
       if (this.hop > 0) {
         // Saut : parabole (unités locales de la voiture, échelle 0,2)
-        const k = 1 - this.hop / 0.8;
-        r.body.position.y += 4.2 * 4 * k * (1 - k);
+        const k = 1 - this.hop / HOP_TIME;
+        r.body.position.y += 5.5 * 4 * k * (1 - k);
         r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
       }
       for (const t of this.thrusters) {
@@ -1165,7 +1219,8 @@ export class World implements GameContext {
   /** Cubes bonus, accélérateurs, tremplins, étoile de lancement. */
   private kartEvents(dt: number): void {
     const s = this.settings;
-    this.kart.update(dt);
+    const carFwd = _o5.set(0, 0, 1).applyQuaternion(this.car.quaternion).applyQuaternion(_q.copy(this.planet.quaternion).invert());
+    this.kart.update(dt, this.carDir, carFwd);
     const R = this.planetRadius();
     this.spinT = Math.max(0, this.spinT - dt);
     this.spinCd = Math.max(0, this.spinCd - dt);
@@ -1187,15 +1242,9 @@ export class World implements GameContext {
         this.events.message('Turbo plein !', 'good');
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_turbo_pickup', 0.7);
       }
-      if (this.spinCd <= 0 && this.kart.spinnerAt(this.carDir, 0.38, R)) {
-        // Pylône : toupie + accélération
-        this.spinT = 0.75;
-        this.spinCd = 1.2;
-        this.boostTime = Math.max(this.boostTime, 1.2);
-        if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_spin', 0.6);
-      }
-      if (this.hop <= 0 && this.kart.rampAt(this.carDir, 0.34, R)) {
-        this.hop = 0.8;
+      if (this.hop <= 0 && this.kart.springAt(this.carDir, 0.3, R)) {
+        // Ressort : léger tassement puis propulsion
+        this.hop = HOP_TIME;
         if (bool(s, 'extraSounds')) this.audio.playOneShot('sfx_jump', 0.7);
       }
     }

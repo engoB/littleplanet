@@ -18,6 +18,8 @@ export class Stages {
   private startTime = 0;
   private startClocks = 0;
   onComplete: (stage: number) => void = () => undefined;
+  /** Objet à ramasser (horloge dans l'original, caisse de réparation en Arcade toon). */
+  item: [string, string] = ['horloge', 'horloges'];
 
   start(): void {
     this.stage = 1;
@@ -55,7 +57,7 @@ export class Stages {
       case 'distance':
         return `Étape ${this.stage} · parcours encore ${Math.ceil(left)} m`;
       case 'clocks':
-        return `Étape ${this.stage} · ramasse ${Math.ceil(left)} horloge${Math.ceil(left) > 1 ? 's' : ''}`;
+        return `Étape ${this.stage} · ramasse ${Math.ceil(left)} ${Math.ceil(left) > 1 ? this.item[1] : this.item[0]}`;
       default:
         return `Étape ${this.stage} · survis encore ${Math.ceil(left)} s`;
     }
@@ -69,7 +71,7 @@ export class Stages {
       case 'distance':
         return `Parcours ${left} m`;
       case 'clocks':
-        return `Ramasse ${left} horloge${left > 1 ? 's' : ''}`;
+        return `Ramasse ${left} ${left > 1 ? this.item[1] : this.item[0]}`;
       default:
         return `Survis ${left} s`;
     }
