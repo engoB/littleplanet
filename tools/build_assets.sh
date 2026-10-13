@@ -31,6 +31,10 @@ fi
 if [ ! -d "$CACHE/lilita/package/files" ]; then
   (cd "$CACHE" && npm pack @fontsource/lilita-one@5.3.0 >/dev/null && mkdir -p lilita && tar xzf fontsource-lilita-one-5.3.0.tgz -C lilita)
 fi
+# Sons d'interface CC0 (paquet npm uisfx, audio CC0-1.0)
+if [ ! -d "$CACHE/uisfx/package/sounds" ]; then
+  (cd "$CACHE" && npm pack uisfx@0.4.0 >/dev/null && mkdir -p uisfx && tar xzf uisfx-0.4.0.tgz -C uisfx)
+fi
 command -v ffmpeg >/dev/null || { echo "ffmpeg est requis (conversion des sons)"; exit 1; }
 
 mkdir -p public/data

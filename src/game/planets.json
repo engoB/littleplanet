@@ -110,13 +110,65 @@
       "kart": {
         "boosts": 6,
         "items": 5,
-        "ramps": 2
+        "ramps": 2,
+        "spinners": 3
+      }
+    },
+    {
+      "id": "meuh",
+      "name": "Prairie Meuh Meuh",
+      "tagline": "Prés éclatants, vaches tachetées, clôtures en bois, grange rouge et bottes de foin.",
+      "difficulty": 1,
+      "style": "toon",
+      "radius": 1.3,
+      "unlock": null,
+      "atmosphere": "#bff0a0",
+      "sky": "day",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#8ee86a",
+        "mid": "#76d85a",
+        "dark": "#5ec44a",
+        "path": "#c8a06a",
+        "pathDark": "#a8804a",
+        "accent1": "#ffffff",
+        "accent2": "#ffe14d",
+        "line": "#2a5a20"
+      },
+      "pattern": "meuh",
+      "decorColors": {
+        "trunk": "#8a5a2b",
+        "canopy": [
+          "#4fbf45"
+        ],
+        "rock": "#b9b2a4",
+        "house": "#d9443a",
+        "roof": "#f6f1e2",
+        "wood": "#a8784a",
+        "hay": "#f0c85a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.25,
+        "meteorSpeed": 0.9,
+        "clockInterval": 0.9,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 0.9
+      },
+      "decor": {
+        "trees": 3,
+        "rocks": 0,
+        "houses": 0,
+        "cows": 6,
+        "fences": 6,
+        "barn": 1,
+        "haybales": 5
       }
     },
     {
       "id": "wario",
       "name": "Stade de Terre",
-      "tagline": "Boue et bosses sous les projecteurs, murs de pneus et tremplins pour s'envoler.",
+      "tagline": "Boue, bosses et flaques sous les projecteurs ; tremplins pour s'envoler.",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.5,
@@ -156,20 +208,19 @@
       "decor": {
         "trees": 0,
         "rocks": 0,
-        "houses": 0,
-        "floodlights": 5,
-        "tirestacks": 8
+        "houses": 0
       },
       "kart": {
         "boosts": 4,
         "items": 4,
-        "ramps": 5
+        "ramps": 5,
+        "spinners": 3
       }
     },
     {
       "id": "fantome",
       "name": "Lac Fantôme",
-      "tagline": "Une eau violette semée de radeaux de planches, lanternes flottantes et petits fantômes.",
+      "tagline": "Une eau violette semée de radeaux de planches.",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.3,
@@ -215,21 +266,19 @@
       "decor": {
         "trees": 0,
         "rocks": 0,
-        "houses": 0,
-        "ghosts": 5,
-        "lanterns": 8,
-        "deadtrees": 4
+        "houses": 0
       },
       "kart": {
         "boosts": 4,
         "items": 5,
-        "ramps": 0
+        "ramps": 0,
+        "spinners": 3
       }
     },
     {
       "id": "bowser",
       "name": "Forteresse de Lave",
-      "tagline": "Pavés de pierre, fissures de lave, blocs écraseurs et torches sous un ciel rouge.",
+      "tagline": "Pavés de pierre clairs, fissures de lave et blocs écraseurs qui tombent du ciel !",
       "difficulty": 4,
       "style": "toon",
       "radius": 1.4,
@@ -271,19 +320,20 @@
         "trees": 0,
         "rocks": 0,
         "houses": 0,
-        "thwomps": 4,
         "torches": 6
       },
       "kart": {
         "boosts": 4,
         "items": 4,
-        "ramps": 3
-      }
+        "ramps": 3,
+        "spinners": 3
+      },
+      "hazard": "thwomp"
     },
     {
       "id": "arcenciel",
       "name": "Arc-en-ciel Céleste",
-      "tagline": "Des dalles arc-en-ciel lumineuses au milieu des étoiles, accélérateurs et cubes bonus.",
+      "tagline": "Un damier arc-en-ciel lumineux suspendu dans les étoiles, anneaux dorés et accélérateurs.",
       "difficulty": 5,
       "style": "toon",
       "radius": 1.7,
@@ -292,7 +342,7 @@
       "sky": "space",
       "vehicle": "hover",
       "reticle": "#ffffff",
-      "emis": 0.7,
+      "emis": 0.85,
       "palette": {
         "light": "#1a1450",
         "mid": "#110e38",
@@ -325,12 +375,14 @@
         "trees": 0,
         "rocks": 0,
         "houses": 0,
-        "stars": 10
+        "goldrings": 4,
+        "stars": 6
       },
       "kart": {
         "boosts": 7,
         "items": 6,
-        "ramps": 0
+        "ramps": 0,
+        "spinners": 3
       }
     },
     {
@@ -482,7 +534,7 @@
     {
       "id": "herbes",
       "name": "Prairie des Herbes Hautes",
-      "tagline": "Hautes herbes qui frémissent, mares, centres au toit rouge et balles rouge et blanc.",
+      "tagline": "Hautes herbes qui frémissent au passage et mares bleues.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.0,
@@ -524,12 +576,9 @@
         "craterDamage": 1.0
       },
       "decor": {
-        "trees": 2,
+        "trees": 0,
         "rocks": 0,
-        "houses": 0,
-        "cabins": 2,
-        "tallgrass": 10,
-        "balls": 3
+        "houses": 0
       }
     },
     {
@@ -584,7 +633,7 @@
     {
       "id": "candy",
       "name": "Planète Bonbons",
-      "tagline": "Glaçage rose, flaques de chocolat, sucettes géantes et bonbons qui brillent.",
+      "tagline": "Glaçage rose ondulé, flaques de chocolat, sucettes géantes et boules de gomme.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.0,
@@ -637,26 +686,26 @@
     {
       "id": "pixar",
       "name": "Chambre de Jouets",
-      "tagline": "Une planète papier peint ciel et nuages, cubes à lettres, balle à étoile et lampe de bureau.",
+      "tagline": "Une moquette moelleuse et des jouets à bousculer : ballons et cubes volent sous le véhicule !",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.0,
       "unlock": null,
       "atmosphere": "#bfe6ff",
-      "sky": "day",
+      "sky": "clouds",
       "vehicle": "hover",
       "reticle": "#ff2e0d",
       "palette": {
-        "light": "#7cc6ff",
-        "mid": "#6ab9f5",
-        "dark": "#5aa8ea",
-        "path": "#ffffff",
-        "pathDark": "#dceeff",
-        "accent1": "#ffffff",
-        "accent2": "#ffffff",
+        "light": "#8aa8e0",
+        "mid": "#7898d4",
+        "dark": "#6888c8",
+        "path": "#5ad08a",
+        "pathDark": "#ffffff",
+        "accent1": "#ffd23a",
+        "accent2": "#ff6a5a",
         "line": "#2a4a7a"
       },
-      "pattern": "nuages",
+      "pattern": "moquette",
       "decorColors": {
         "trunk": "#9aa3ad",
         "canopy": [
@@ -681,15 +730,17 @@
         "trees": 0,
         "rocks": 0,
         "houses": 0,
-        "toyblocks": 6,
-        "luxoballs": 2,
         "lamps": 1
+      },
+      "toys": {
+        "balls": 5,
+        "blocks": 9
       }
     },
     {
       "id": "disney",
       "name": "Royaume Enchanté",
-      "tagline": "Château de conte de fées aux flèches bleues, prés en fleurs et lacs sous les étoiles.",
+      "tagline": "Prés en fleurs et lacs bleus sous un ciel étoilé de conte de fées.",
       "difficulty": 2,
       "style": "toon",
       "radius": 1.05,
@@ -728,16 +779,174 @@
         "craterDamage": 1.0
       },
       "decor": {
-        "trees": 4,
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0
+      }
+    },
+    {
+      "id": "poudlard",
+      "name": "Poudlard",
+      "tagline": "Hautes terres écossaises, château aux tours pointues, anneaux de Quidditch et chandelles flottantes.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.25,
+      "unlock": null,
+      "atmosphere": "#9ab8ff",
+      "sky": "space",
+      "vehicle": "hover",
+      "palette": {
+        "light": "#5a8a4a",
+        "mid": "#4a7a40",
+        "dark": "#3a6a36",
+        "path": "#8a8a92",
+        "pathDark": "#6a6a72",
+        "accent1": "#e8e4ff",
+        "accent2": "#8a6aa8",
+        "line": "#20302a"
+      },
+      "pattern": "poudlard",
+      "decorColors": {
+        "trunk": "#4a3a2a",
+        "canopy": [
+          "#2f5a2a"
+        ],
+        "rock": "#8a8a92",
+        "house": "#9a948a",
+        "roof": "#2a3a6a",
+        "window": "#ffd36a",
+        "gold": "#ffc93a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.05,
+        "meteorSpeed": 1.0,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
         "rocks": 0,
         "houses": 0,
-        "castles": 1
+        "hogcastle": 1,
+        "hoops": 3,
+        "candles": 10
+      }
+    },
+    {
+      "id": "halloween",
+      "name": "Ville d'Halloween",
+      "tagline": "Colline en spirale, citrouilles illuminées, tombes et lune géante.",
+      "difficulty": 3,
+      "style": "toon",
+      "radius": 1.15,
+      "unlock": null,
+      "atmosphere": "#9a7aff",
+      "sky": "halloween",
+      "vehicle": "hover",
+      "reticle": "#7dff6a",
+      "palette": {
+        "light": "#5a5068",
+        "mid": "#4a4258",
+        "dark": "#3a3448",
+        "path": "#c8641a",
+        "pathDark": "#3a5a2a",
+        "accent1": "#c8c0d8",
+        "accent2": "#ff8a2a",
+        "line": "#1a1424"
+      },
+      "pattern": "halloween",
+      "decorColors": {
+        "trunk": "#2a2430",
+        "canopy": [
+          "#2a2430"
+        ],
+        "rock": "#7a7484",
+        "house": "#7a7484",
+        "roof": "#2a2430",
+        "pumpkin": "#ff8a1a"
+      },
+      "gameplay": {
+        "meteorInterval": 1.0,
+        "meteorSpeed": 1.05,
+        "clockInterval": 1.0,
+        "carSpeed": 1.0,
+        "grip": 1.0,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "spiralhill": 1,
+        "pumpkins": 8,
+        "gravestones": 7,
+        "deadtrees": 3
+      }
+    },
+    {
+      "id": "noel",
+      "name": "Village de Noël",
+      "tagline": "Neige épaisse, sapins illuminés, cadeaux, sucres d'orge géants et bonshommes de neige.",
+      "difficulty": 2,
+      "style": "toon",
+      "radius": 1.2,
+      "unlock": null,
+      "atmosphere": "#bfe0ff",
+      "sky": "xmas",
+      "vehicle": "hover",
+      "reticle": "#ff2e0d",
+      "palette": {
+        "light": "#ffffff",
+        "mid": "#eef4fc",
+        "dark": "#cfdcf0",
+        "path": "#bfe0f6",
+        "pathDark": "#8ab8e0",
+        "accent1": "#ffffff",
+        "accent2": "#bfe0ff",
+        "line": "#2a3a5a"
+      },
+      "pattern": "noel",
+      "decorColors": {
+        "trunk": "#6a4a2a",
+        "canopy": [
+          "#2f8a4a",
+          "#3a9a54"
+        ],
+        "rock": "#dfe8f4",
+        "house": "#fff",
+        "roof": "#e8333a",
+        "gift": [
+          "#e8333a",
+          "#2f8a4a",
+          "#3a7bff",
+          "#ffc93a",
+          "#b05aff"
+        ]
+      },
+      "gameplay": {
+        "meteorInterval": 1.1,
+        "meteorSpeed": 0.95,
+        "clockInterval": 0.95,
+        "carSpeed": 1.0,
+        "grip": 0.6,
+        "craterDamage": 1.0
+      },
+      "decor": {
+        "trees": 0,
+        "rocks": 0,
+        "houses": 0,
+        "xmastrees": 6,
+        "gifts": 8,
+        "candycanes": 5,
+        "snowmen": 3
       }
     },
     {
       "id": "ocean",
       "name": "Grand Océan",
-      "tagline": "Une planète-océan semée d'îles à palmiers : rase les vagues en voiture volante. Gare aux tourbillons !",
+      "tagline": "Rien que de l'eau à perte de vue : tremplins, accélérateurs et tourbillons.",
       "difficulty": 3,
       "style": "toon",
       "radius": 1.05,
@@ -778,8 +987,13 @@
       "decor": {
         "trees": 0,
         "rocks": 0,
-        "houses": 0,
-        "palms": 5
+        "houses": 0
+      },
+      "kart": {
+        "boosts": 7,
+        "items": 3,
+        "ramps": 6,
+        "spinners": 3
       }
     },
     {
@@ -825,8 +1039,8 @@
         "craterDamage": 1.0
       },
       "decor": {
-        "trees": 4,
-        "rocks": 3,
+        "trees": 0,
+        "rocks": 0,
         "houses": 0
       },
       "sky": "space",
@@ -928,16 +1142,17 @@
         "trees": 3,
         "rocks": 0,
         "houses": 2,
-        "clocktowers": 1
+        "clocktowers": 1,
+        "signs": 2
       }
     },
     {
       "id": "petitprince",
       "name": "Astéroïde B 612",
-      "tagline": "Minuscule astéroïde de sable doré : une rose sous sa cloche, deux volcans et des baobabs à surveiller.",
+      "tagline": "L'astéroïde du petit prince : sable doré, une rose sous sa cloche, des volcans et des baobabs.",
       "difficulty": 4,
       "style": "toon",
-      "radius": 0.62,
+      "radius": 1.2,
       "unlock": null,
       "atmosphere": "#ffe7a8",
       "sky": "space",
@@ -984,7 +1199,7 @@
     {
       "id": "banquise",
       "name": "Banquise",
-      "tagline": "Sol gelé : la voiture glisse et tourne avec retard.",
+      "tagline": "Un monde de cases gelées où la voiture glisse.",
       "difficulty": 3,
       "style": "toon",
       "radius": 0.9,
@@ -994,11 +1209,11 @@
       },
       "atmosphere": "#c8f0ff",
       "palette": {
-        "light": "#eaf6fd",
+        "light": "#e2f4ff",
         "mid": "#cfe8f7",
         "dark": "#a9d0ec",
-        "path": "#9fd8ff",
-        "pathDark": "#5ea8e0",
+        "path": "#bfe6fa",
+        "pathDark": "#6aa8d8",
         "accent1": "#ffffff",
         "accent2": "#d0f0ff",
         "line": "#3a6f9a"

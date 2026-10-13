@@ -101,8 +101,10 @@ async function main(): Promise<void> {
   const isOriginal = preset === 'original';
   // Planète : la planète d'origine en préréglage Original, sinon la dernière choisie
   let planetId = isOriginal ? 'origine' : params.get('planet') ?? selectedPlanet();
-  if (!isUnlocked(planetById(planetId), settings.unlockAll === true)) planetId = 'prairie';
+  if (!isUnlocked(planetById(planetId), settings.unlockAll === true) || planetById(planetId).style === 'galaxy') planetId = 'prairie';
   world.planetDef = planetById(planetId);
+  // ?planet=galaxie (tests) : lance directement le voyage galactique
+  if (params.get('planet') === 'galaxie') world.planetDef = planetById('galaxie');
 
   // --- contrôles tactiles
   const touch = matchMedia('(pointer: coarse)').matches || params.has('touch');
@@ -126,7 +128,7 @@ async function main(): Promise<void> {
   (document.querySelector('.health') as HTMLElement).hidden = settings.healthDisplay === 'ring';
   $('minimap').hidden = settings.minimap !== true;
   const click = () => {
-    if (settings.extraSounds === true) world.audio.playOneShot('Click', 0.6);
+    if (settings.extraSounds === true) world.audio.playOneShot('ui_click', 0.5);
   };
 
   // --- tailles (mises en cache, pas de mesure DOM par frame)
@@ -181,6 +183,8 @@ async function main(): Promise<void> {
   };
   const toMenu = () => {
     paused = false;
+    world.select.show(false);
+    if (world.planetDef.style === 'galaxy') world.planetDef = planetById(planetId);
     compose('home');
     updateChip();
     hud.show(false);
@@ -189,49 +193,74 @@ async function main(): Promise<void> {
     records();
     screens.show('menu-main');
   };
+  // --- Choix de la planète : carrousel 3D (façon sélection de royaume)
+  const choosable = PLANETS.filter((p) => p.style !== 'galaxy');
+  const diffLabel = ['', 'Facile', 'Tranquille', 'Corsé', 'Difficile', 'Extrême'];
   const renderPlanets = () => {
-    const list = $('planet-list');
-    list.textContent = '';
-    const best = bestDistances();
-    for (const p of PLANETS) {
-      const unlocked = isUnlocked(p, settings.unlockAll === true);
-      const card = document.createElement('button');
-      card.className = 'planet-card' + (p.id === planetId ? ' selected' : '') + (unlocked ? '' : ' locked');
-      card.setAttribute('role', 'option');
-      card.setAttribute('aria-selected', String(p.id === planetId));
-      const prev = assets.planetPreviews.get(p.id);
-      const pic = prev ? Object.assign(document.createElement('img'), { src: prev, alt: '' }) : Object.assign(document.createElement('div'), { className: 'orig' });
-      const name = Object.assign(document.createElement('div'), { className: 'planet-name', textContent: p.name });
-      const diff = Object.assign(document.createElement('div'), { className: 'planet-stars' });
-      stars(diff, p.difficulty);
-      const info = Object.assign(document.createElement('div'), { className: 'planet-info', textContent: p.tagline });
-      card.append(pic, name, diff, info);
-      if (unlocked && best[p.id]) card.append(Object.assign(document.createElement('div'), { className: 'planet-best', textContent: `Record : ${Math.floor(best[p.id])} m` }));
-      if (!unlocked && p.unlock) card.append(Object.assign(document.createElement('div'), { className: 'planet-lock', textContent: `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` }));
-      card.onclick = () => {
-        click();
-        if (!unlocked) return;
-        planetId = p.id;
-        selectPlanet(p.id);
-        world.planetDef = p;
-        world.enterMenu();
-        updateChip();
-        renderPlanets();
-      };
-      list.appendChild(card);
-    }
-    list.querySelector('.selected')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    world.select.setPlanets(choosable.map((def) => ({ def, locked: !isUnlocked(def, settings.unlockAll === true) })));
+    world.select.select(Math.max(0, choosable.findIndex((p) => p.id === planetId)), true);
+    updatePlanetCard();
   };
+  const updatePlanetCard = () => {
+    const i = world.select.target;
+    const p = choosable[i];
+    if (!p) return;
+    const unlocked = isUnlocked(p, settings.unlockAll === true);
+    const best = bestDistances()[p.id];
+    $('ps-count').textContent = `${i + 1} / ${choosable.length}`;
+    $('ps-kicker').textContent = `Monde ${i + 1} · ${diffLabel[p.difficulty] ?? ''}`;
+    $('ps-name').textContent = p.name;
+    stars($('ps-stars'), p.difficulty);
+    $('ps-info').textContent = p.tagline;
+    $('ps-best').textContent = !unlocked && p.unlock ? `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` : best ? `Record : ${Math.floor(best)} m` : '';
+    $('ps-best').classList.toggle('locked', !unlocked);
+    ($('btn-planet-go') as HTMLButtonElement).disabled = !unlocked;
+    if (unlocked && p.id !== planetId) {
+      planetId = p.id;
+      selectPlanet(p.id);
+      world.planetDef = p;
+      updateChip();
+    }
+  };
+  const movePlanet = (d: number) => {
+    const n = Math.max(0, Math.min(choosable.length - 1, world.select.target + d));
+    if (n === world.select.target) return;
+    world.select.select(n);
+    if (settings.extraSounds === true) world.audio.playOneShot('ui_select', 0.45);
+    updatePlanetCard();
+  };
+  {
+    // Glisser horizontalement pour faire défiler
+    const sw = $('ps-swipe');
+    let x0: number | null = null;
+    sw.addEventListener('pointerdown', (e) => (x0 = e.clientX));
+    sw.addEventListener('pointerup', (e) => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 30) movePlanet(dx < 0 ? 1 : -1);
+    });
+    $('ps-prev').addEventListener('click', () => movePlanet(-1));
+    $('ps-next').addEventListener('click', () => movePlanet(1));
+    window.addEventListener('keydown', (e) => {
+      if (screens.current !== 'menu-planets') return;
+      if (e.key === 'ArrowLeft') movePlanet(-1);
+      else if (e.key === 'ArrowRight') movePlanet(1);
+    });
+  }
   const showPlanets = () => {
     paused = false;
+    if (world.planetDef.style === 'galaxy') world.planetDef = planetById(planetId);
     compose('planets');
     hud.show(false);
     if (world.mode !== 'menu') world.enterMenu();
     renderPlanets();
+    world.select.show(true);
     screens.show('menu-planets');
   };
   const play = () => {
     paused = false;
+    world.select.show(false);
     compose('game');
     input.reset();
     hud.clearMessages();
@@ -249,10 +278,11 @@ async function main(): Promise<void> {
     world.setPaused(p);
   };
   // --- Modes de jeu : bascules rapides (mêmes réglages que la page Réglages)
-  const modeDefs = SCHEMA.filter((d) => d.group === 'Modes de jeu');
+  const MODE_ORDER = ['modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'modeSuddenDeath', 'modeZen', 'modeInfiniteTurbo', 'planetShrink'];
+  const modeDefs = MODE_ORDER.map((k) => SCHEMA.find((d) => d.key === k)!).filter(Boolean);
   const updateModes = () => {
     const on = modeDefs.filter((d) => settings[d.key] === true && d.key !== 'planetShrink').map((d) => d.label);
-    $('modes-summary').textContent = on.length ? `Modes : ${on.join(' · ')}` : 'Modes de jeu : classique';
+    $('modes-summary').textContent = on.length ? `Actifs : ${on.join(' · ')}` : 'Voyage galactique, défis…';
     $('btn-modes').classList.toggle('active', on.length > 0);
   };
   function renderModes(): void {
@@ -266,12 +296,12 @@ async function main(): Promise<void> {
         b.classList.toggle('on', settings[d.key] === true);
         b.setAttribute('aria-checked', String(settings[d.key] === true));
       };
-      b.innerHTML = `<span class="mode-text"><b></b><small></small></span><span class="mode-switch"><i></i></span>`;
+      b.innerHTML = `<span class="mode-ico mi-${d.key}"></span><span class="mode-text"><b></b><small></small></span><span class="mode-switch"><i></i></span>`;
       b.querySelector('b')!.textContent = d.label;
       b.querySelector('small')!.textContent = d.help ?? '';
       b.addEventListener('click', () => {
-        click();
         settings[d.key] = settings[d.key] !== true;
+        if (settings.extraSounds === true) world.audio.playOneShot(settings[d.key] ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
         // Zen et Mort subite s'excluent
         if (d.key === 'modeZen' && settings.modeZen) settings.modeSuddenDeath = false;
         if (d.key === 'modeSuddenDeath' && settings.modeSuddenDeath) settings.modeZen = false;
@@ -313,13 +343,37 @@ async function main(): Promise<void> {
   on('btn-planets-back', toMenu);
   on('btn-pause-planets', showPlanets);
   on('btn-over-planets', showPlanets);
-  on('btn-help', () => screens.show('menu-help'));
   on('btn-modes', () => {
     renderModes();
     screens.show('menu-modes');
   });
   on('btn-modes-back', () => screens.show('menu-main'));
-  on('btn-help-back', () => screens.show('menu-main'));
+  // Voyage galactique : un mode à part entière (suite de planètes)
+  on('btn-galaxy', () => {
+    world.planetDef = planetById('galaxie');
+    play();
+  });
+  // Tutoriel en diapositives
+  let slide = 0;
+  const slides = [...document.querySelectorAll<HTMLElement>('.tuto-slide')];
+  const dots = $('tuto-dots');
+  dots.innerHTML = slides.map(() => '<i></i>').join('');
+  const showSlide = (i: number) => {
+    slide = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((el, k) => el.classList.toggle('on', k === slide));
+    [...dots.children].forEach((el, k) => el.classList.toggle('on', k === slide));
+    $('btn-tuto-prev').style.visibility = slide === 0 ? 'hidden' : 'visible';
+    $('btn-help-back').textContent = slide === slides.length - 1 ? "C'est parti !" : 'Suivant';
+  };
+  on('btn-help', () => {
+    showSlide(0);
+    screens.show('menu-help');
+  });
+  on('btn-tuto-prev', () => showSlide(slide - 1));
+  on('btn-help-back', () => {
+    if (slide < slides.length - 1) showSlide(slide + 1);
+    else screens.show('menu-main');
+  });
   on('btn-pause', () => setPause(true));
   on('btn-resume', () => setPause(false));
   on('btn-restart', play);
@@ -383,6 +437,9 @@ async function main(): Promise<void> {
         for (const c of world.craters.list) items.push({ pos: toWorld(c.pos), kind: 'crater' });
         const sd = world.starDir;
         if (sd) items.push({ pos: toWorld(sd.clone().multiplyScalar(5)), kind: 'star' });
+        const sn = world.snitch.dir;
+        if (sn) items.push({ pos: toWorld(sn.clone().multiplyScalar(5)), kind: 'star' });
+        for (const b of world.bills.dirs()) items.push({ pos: toWorld(b.clone().multiplyScalar(5)), kind: 'meteor' });
         minimap.draw(world.car, world.planet.getWorldPosition(center), items, world.chrono);
       }
     }

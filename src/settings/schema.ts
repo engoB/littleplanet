@@ -30,6 +30,8 @@ export const SCHEMA: SettingDef[] = [
   { key: 'modeTimeAttack', label: 'Contre-la-montre', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: '60 s au départ, chaque horloge ajoute 5 s ; la partie s’arrête à 0 (pas de record).' },
   { key: 'modeStorm', label: 'Tempête de météores', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Deux fois plus de météores, 30 % plus rapides.' },
   { key: 'modeInfiniteTurbo', label: 'Turbo infini', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'La jauge ne se vide jamais (pas de record).' },
+  { key: 'modeSnitch', label: 'Attrape le Vif d’or', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Une balle dorée ailée file au ras de la planète : rattrape-la (+10 santé à chaque prise).' },
+  { key: 'modeBullet', label: 'Fuis le Bullet Bill', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Des obus te prennent en chasse : esquive-les jusqu’à ce qu’ils s’éteignent (turbo conseillé).' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },

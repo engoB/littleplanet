@@ -9,6 +9,7 @@ import { getComponent, scriptFields, type NodeData } from '../unity/types';
 import { makeOBB, obbFromBox, obbOverlap, type OBB } from './collision';
 import { bool, type GameContext } from './context';
 import { clockBeacon } from './fx';
+import { itemBoxMesh } from './itemBox';
 
 export interface CollectibleSpawnerFields {
   repairCollectiblePrefab: { prefab: string };
@@ -45,6 +46,10 @@ export class CollectibleSpawner {
   onCollect: (name: string, at: THREE.Vector3) => void = () => undefined;
   /** Rayon local d'apparition ; null = formule de l'original. */
   spawnRadius: (() => number) | null = null;
+  /** Arcade : la case arc-en-ciel « ? » remplace l'horloge. */
+  boxLook = false;
+  private readonly boxes: THREE.InstancedMesh;
+  private time = 0;
 
   constructor(private readonly ctx: GameContext, readonly f: CollectibleSpawnerFields, poolSize = 5) {
     const node: NodeData = ctx.assets.project.prefabs[f.repairCollectiblePrefab.prefab];
@@ -69,6 +74,8 @@ export class CollectibleSpawner {
       ctx.planet.add(beacon.group);
       this.pool.push({ inst, beacon, base: new THREE.Vector3(), active: false, age: 0, inside: false, obb: makeOBB() });
     }
+    this.boxes = itemBoxMesh(poolSize, 0.3);
+    ctx.planet.add(this.boxes);
   }
 
   get instances(): THREE.Object3D[] {
@@ -90,6 +97,9 @@ export class CollectibleSpawner {
       }
     }
     const blinkFrom = this.lifetime - this.f.blinkStart;
+    this.time += dt;
+    (this.boxes.material as THREE.ShaderMaterial).uniforms.time.value = this.time;
+    let nb = 0;
     for (const c of this.pool) {
       if (!c.active) continue;
       c.age += dt;
@@ -102,7 +112,7 @@ export class CollectibleSpawner {
         continue;
       }
       const meshVisible = c.age < blinkFrom || Math.floor((c.age - blinkFrom) / this.f.blinkRate) % 2 === 1;
-      for (const m of c.inst.meshes) m.visible = meshVisible;
+      for (const m of c.inst.meshes) m.visible = meshVisible && !this.boxLook;
       if (c.beacon.group.visible) {
         // Arcade : l'horloge flotte doucement et un faisceau la signale
         const up = c.base.clone().normalize();
@@ -111,6 +121,12 @@ export class CollectibleSpawner {
         const fade = c.age < blinkFrom ? 1 : meshVisible ? 0.6 : 0.2;
         c.beacon.beam.uniforms.opacity.value = Math.min(1, c.age * 2) * fade;
         c.beacon.glow.opacity = 0.55 * fade;
+      }
+      if (this.boxLook && meshVisible) {
+        // Case « ? » : même position que l'horloge, tourne sur elle-même
+        const sc = 1 / this.ctx.planet.scale.x;
+        const q = r.quaternion.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.45, c.age * 2.2, 0.3)));
+        this.boxes.setMatrixAt(nb++, new THREE.Matrix4().compose(r.position.clone().addScaledVector(c.base.clone().normalize(), 0.12 * sc), q, new THREE.Vector3(sc, sc, sc)));
       }
       // OnTriggerEnter (joueur) : son + destruction ; HealthManager soigne
       if (alive && carOBB) {
@@ -125,6 +141,8 @@ export class CollectibleSpawner {
         c.inside = inside;
       }
     }
+    this.boxes.count = nb;
+    this.boxes.instanceMatrix.needsUpdate = true;
   }
 
   private spawn(): void {
@@ -147,7 +165,7 @@ export class CollectibleSpawner {
     // transform.up = direction radiale
     r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), local.clone().normalize());
     r.visible = true;
-    for (const m of c.inst.meshes) m.visible = true;
+    for (const m of c.inst.meshes) m.visible = !this.boxLook;
     c.active = true;
     c.age = 0;
     c.inside = false;

@@ -107,7 +107,24 @@
   "sfx_engine": "audio/sfx_engine.wav",
   "sfx_explosion": "audio/sfx_explosion.mp3",
   "sfx_whistle": "audio/sfx_whistle.mp3",
-  "sfx_whoosh": "audio/sfx_whoosh.mp3"
+  "sfx_whoosh": "audio/sfx_whoosh.mp3",
+  "ui_click": "audio/ui_click.mp3",
+  "ui_select": "audio/ui_select.mp3",
+  "ui_back": "audio/ui_back.mp3",
+  "ui_toggle_on": "audio/ui_toggle_on.mp3",
+  "ui_toggle_off": "audio/ui_toggle_off.mp3",
+  "sfx_pickup": "audio/sfx_pickup.mp3",
+  "sfx_turbo_pickup": "audio/sfx_turbo_pickup.mp3",
+  "sfx_boost": "audio/sfx_boost.mp3",
+  "sfx_jump": "audio/sfx_jump.mp3",
+  "sfx_land": "audio/sfx_land.mp3",
+  "sfx_spin": "audio/sfx_spin.mp3",
+  "sfx_stage": "audio/sfx_stage.mp3",
+  "sfx_star": "audio/sfx_star.mp3",
+  "sfx_launch": "audio/sfx_launch.mp3",
+  "sfx_warning": "audio/sfx_warning.mp3",
+  "sfx_snitch": "audio/sfx_snitch.mp3",
+  "sfx_hurt": "audio/sfx_hurt.mp3"
  },
  "fonts": {
   "LiberationSans": {
@@ -392,6 +409,46 @@
    "e_nz": "planet_arcenciel_e_nz.jpg",
    "surface": "planet_arcenciel_surface.png",
    "preview": "planet_arcenciel_preview.png"
+  },
+  "meuh": {
+   "px": "planet_meuh_px.jpg",
+   "nx": "planet_meuh_nx.jpg",
+   "py": "planet_meuh_py.jpg",
+   "ny": "planet_meuh_ny.jpg",
+   "pz": "planet_meuh_pz.jpg",
+   "nz": "planet_meuh_nz.jpg",
+   "surface": "planet_meuh_surface.png",
+   "preview": "planet_meuh_preview.png"
+  },
+  "poudlard": {
+   "px": "planet_poudlard_px.jpg",
+   "nx": "planet_poudlard_nx.jpg",
+   "py": "planet_poudlard_py.jpg",
+   "ny": "planet_poudlard_ny.jpg",
+   "pz": "planet_poudlard_pz.jpg",
+   "nz": "planet_poudlard_nz.jpg",
+   "surface": "planet_poudlard_surface.png",
+   "preview": "planet_poudlard_preview.png"
+  },
+  "halloween": {
+   "px": "planet_halloween_px.jpg",
+   "nx": "planet_halloween_nx.jpg",
+   "py": "planet_halloween_py.jpg",
+   "ny": "planet_halloween_ny.jpg",
+   "pz": "planet_halloween_pz.jpg",
+   "nz": "planet_halloween_nz.jpg",
+   "surface": "planet_halloween_surface.png",
+   "preview": "planet_halloween_preview.png"
+  },
+  "noel": {
+   "px": "planet_noel_px.jpg",
+   "nx": "planet_noel_nx.jpg",
+   "py": "planet_noel_py.jpg",
+   "ny": "planet_noel_ny.jpg",
+   "pz": "planet_noel_pz.jpg",
+   "nz": "planet_noel_nz.jpg",
+   "surface": "planet_noel_surface.png",
+   "preview": "planet_noel_preview.png"
   }
  },
  "space": {
@@ -423,5 +480,31 @@
   "pz": "sky_red_pz.jpg",
   "nz": "sky_red_nz.jpg"
  },
- "galaxyPreview": "galaxy_preview.png"
+ "galaxyPreview": "galaxy_preview.png",
+ "skies": {
+  "clouds": {
+   "px": "sky_clouds_px.jpg",
+   "nx": "sky_clouds_nx.jpg",
+   "py": "sky_clouds_py.jpg",
+   "ny": "sky_clouds_ny.jpg",
+   "pz": "sky_clouds_pz.jpg",
+   "nz": "sky_clouds_nz.jpg"
+  },
+  "halloween": {
+   "px": "sky_halloween_px.jpg",
+   "nx": "sky_halloween_nx.jpg",
+   "py": "sky_halloween_py.jpg",
+   "ny": "sky_halloween_ny.jpg",
+   "pz": "sky_halloween_pz.jpg",
+   "nz": "sky_halloween_nz.jpg"
+  },
+  "xmas": {
+   "px": "sky_xmas_px.jpg",
+   "nx": "sky_xmas_nx.jpg",
+   "py": "sky_xmas_py.jpg",
+   "ny": "sky_xmas_ny.jpg",
+   "pz": "sky_xmas_pz.jpg",
+   "nz": "sky_xmas_nz.jpg"
+  }
+ }
 }

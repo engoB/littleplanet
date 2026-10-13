@@ -57,6 +57,8 @@ export class Assets {
   skyDb: THREE.CubeTexture | null = null;
   /** Ciel rouge de forteresse. */
   skyRed: THREE.CubeTexture | null = null;
+  /** Autres ciels (nuages, Halloween, Noël…). */
+  readonly skies = new Map<string, THREE.CubeTexture>();
   /** Cartes de surface (équirectangulaires, classe = valeur / 50) : eau, lave, glace… */
   readonly planetSurfaces = new Map<string, Surface>();
   fxAtlas!: THREE.Texture;
@@ -129,6 +131,7 @@ export class Assets {
     if (manifest.space) void track(cube(manifest.space).then((c) => (this.space = c)));
     if (manifest.skyDb) void track(cube(manifest.skyDb).then((c) => (this.skyDb = c)));
     if (manifest.skyRed) void track(cube(manifest.skyRed).then((c) => (this.skyRed = c)));
+    for (const [name, files] of Object.entries(manifest.skies ?? {})) void track(cube(files).then((c) => this.skies.set(name, c)));
     if (manifest.galaxyPreview) this.planetPreviews.set('galaxie', this.url('textures/' + manifest.galaxyPreview));
     for (const [id, files] of Object.entries(manifest.planets ?? {})) {
       this.planetPreviews.set(id, this.url('textures/' + files.preview));

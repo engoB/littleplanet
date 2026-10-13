@@ -151,12 +151,22 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         paint(w < 0.24, pal['pathDark'], 12, smooth(0.25, 0.22, w))
         surf[w < 0.31] = SURF_WATER
     elif kind == 'banquise':
-        w = nz.fbm(d * 2.4 + 90, 4)
-        paint(w < 0.36, pal['path'], 10, smooth(0.365, 0.35, w))
-        surf[w < 0.36] = SURF_ICE
-        paint(w < 0.27, pal['pathDark'], 11, smooth(0.28, 0.255, w) * 0.7)
-        r = 1 - np.abs(2 * nz.fbm(d * 5 + 120, 3) - 1)
-        paint((r > 0.93) & (w >= 0.36), pal['pathDark'], 12, smooth(0.925, 0.95, r) * smooth(0.36, 0.38, w) * 0.5)
+        # Monde de cases gelées : dalles de glace (grille 3D), joints de neige, fissures
+        g = d * 16
+        fr = np.abs(g - np.round(g))
+        joint = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1)
+        tint = nz.fbm(np.floor(g) * 0.41 + 3, 2)
+        ice = lerp(hexc(pal['path']), hexc(pal['light']), smooth(0.3, 0.7, tint))
+        # Reflet en biseau sur chaque dalle
+        bevel = smooth(0.12, 0.05, joint)
+        ice = ice * (1 + 0.18 * bevel[..., None])
+        col = np.where((joint < 0.04)[..., None], hexc('#f4fbff'), ice)
+        r = 1 - np.abs(2 * nz.fbm(d * 6 + 120, 3) - 1)
+        col = np.where(((r > 0.955) & (joint > 0.05))[..., None], hexc(pal['pathDark']), col)
+        snow = nz.fbm(d * 3 + 60, 3)
+        paint(snow > 0.7, '#ffffff', 12, smooth(0.7, 0.72, snow))
+        cls = np.where(joint < 0.04, 10, 0)
+        surf[:] = SURF_ICE
     elif kind == 'volcan':
         r = 1 - np.abs(2 * nz.fbm(d * 3.2 + 150, 4) - 1)
         paint(r > 0.88, pal['path'], 10, smooth(0.875, 0.9, r))
@@ -184,24 +194,24 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         emis_rgb = emis_rgb + (smooth(w * 7, w, dl)[..., None] * cy + (smooth(w * 7, w, dm) * smooth(0.97, 0.9, np.abs(d[..., 1])))[..., None] * mg) * 0.25
         emis = emis_rgb
     elif kind == 'sage':
-        # Petite planète d'entraînement : prés dorés en taches
+        # Route jaune autour de l'équateur (décor : on roule où l'on veut) et prés dorés
+        band = np.abs(d[..., 1] + 0.04 * (nz.fbm(d * 3 + 7, 2) - 0.5))
+        paint(band < 0.11, pal['pathDark'], 10, smooth(0.115, 0.1, band) * 0.85)
+        paint(band < 0.095, pal['path'], 11, smooth(0.098, 0.088, band))
         mead = nz.fbm(d * 2.6 + 7, 3)
-        paint(mead > 0.66, pal['path'], 10, smooth(0.66, 0.68, mead) * 0.75)
+        paint((mead > 0.68) & (band > 0.13), pal['accent2'], 12, smooth(0.68, 0.7, mead) * 0.6 * (band > 0.13))
     elif kind == 'ocean':
-        # Océan, hauts-fonds, écume et îles de sable et d'herbe
+        # Grand océan : uniquement de l'eau (hauts-fonds, vaguelettes, écume)
         w = nz.fbm(d * 1.7 + 5, 5)
         deep, mid, light = hexc(pal['dark']), hexc(pal['mid']), hexc(pal['light'])
-        col = lerp(lerp(deep, mid, smooth(0.42, 0.5, w)), light, smooth(0.57, 0.62, w))
-        # Vaguelettes stylisées
+        col = lerp(lerp(deep, mid, smooth(0.42, 0.5, w)), light, smooth(0.6, 0.68, w))
         wave = np.sin(d @ np.array([3.0, 41.0, 7.0]) + 9 * nz.fbm(d * 3 + 50, 2)) * np.sin(d @ np.array([37.0, 5.0, 11.0]) + 6 * nz.fbm(d * 4 + 90, 2))
-        streak = smooth(0.82, 0.9, wave) * smooth(0.6, 0.5, w)
+        streak = smooth(0.82, 0.9, wave)
         col = col * (1 - 0.5 * streak[..., None]) + np.ones(3) * 0.5 * streak[..., None]
+        foam = nz.fbm(d * 6 + 300, 3)
+        col = col + (smooth(0.74, 0.8, foam) * 0.35)[..., None]
         cls = np.zeros(d.shape[:-1], int)
         surf[:] = SURF_WATER
-        paint(np.abs(w - 0.635) < 0.012, pal['accent1'], 9, smooth(0.012, 0.004, np.abs(w - 0.635)))
-        paint(w > 0.64, pal['path'], 10, smooth(0.64, 0.648, w))
-        paint(w > 0.675, pal['accent2'], 11, smooth(0.675, 0.685, w))
-        surf[w > 0.64] = SURF_GROUND
     elif kind == 'champi':
         # Collines rondes (taches plus sombres avec reflet)
         hills = nz.fbm(d * 3.0 + 60, 3)
@@ -234,29 +244,14 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         paint(hit & (cr > 0.72), pal['pathDark'], 10, (smooth(0.7, 0.78, cr) * smooth(1.0, 0.94, cr)) * hit * 0.9)
         paint(hit & (cr <= 0.72), pal['path'], 11, smooth(0.74, 0.66, cr) * hit * 0.8)
     elif kind == 'candy':
-        # Glaçage rose, flaques de chocolat, gros bonbons ronds et vermicelles
+        # Glaçage rose ondulé et flaques de chocolat (sans petits points)
+        swirl = nz.fbm(d * 2.0 + 2.5 * nz.fbm(d * 1.5 + 4, 2)[..., None], 3)
+        col = lerp(col, hexc(pal['light']), smooth(0.55, 0.6, swirl) * 0.8)
         choc = nz.fbm(d * 2.4 + 33, 4)
         paint(choc > 0.69, pal['pathDark'], 10, smooth(0.685, 0.7, choc))
         paint(choc > 0.71, pal['path'], 11, smooth(0.705, 0.72, choc))
-        band = np.where(choc > 0.68, 0.0, 1.0)
-        candies = ['#ff3b4e', '#ff9a1f', '#ffe14d', '#3fd65a', '#3a8bff', '#a54dff']
-        pts = sphere_points(70, 77)
-        ci, cr = spots(d, pts, np.full(70, 0.07))
-        ok = (ci >= 0) & (band > 0.14)
-        for k, c in enumerate(candies):
-            m = ok & (ci % len(candies) == k)
-            paint(m, c, 30 + k, smooth(1.0, 0.9, cr) * m)
-        # Reflet blanc en haut à gauche de chaque bonbon
-        paint(ok & (cr < 0.35), '#ffffff', 36, smooth(0.35, 0.2, cr) * ok * 0.55)
-        cell = np.floor(d * 70)
-        hh = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
-        hh = hh - np.floor(hh)
-        cen = (cell + 0.5) / 70
-        dist = np.linalg.norm(d - cen / np.linalg.norm(cen, axis=-1, keepdims=True), axis=-1)
-        spr = (dist < 0.0045) & (hh < 0.07) & (cls <= 2)
-        for k, c in enumerate(candies):
-            m = spr & (np.floor(hh * 100) % 6 == k)
-            paint(m, c, 40 + k, m * 0.9)
+        gloss = (choc > 0.735) & (choc < 0.745)
+        paint(gloss, '#a0644a', 12, gloss * 0.8)
     elif kind == 'futur':
         # Banlieue : pelouses, massifs de fleurs, haies et places pavées (taches, aucune rue)
         bed = nz.fbm(d * 6 + 20, 2)
@@ -314,50 +309,37 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         surf[lake > 0.72] = SURF_WATER
         gold = nz.fbm(d * 5 + 950, 2)
         paint((gold > 0.74) & (lake < 0.7), pal['path'], 12, smooth(0.74, 0.75, gold) * 0.85)
-    elif kind == 'nuages':
-        # Papier peint de chambre d'enfant : ciel bleu et gros nuages blancs dessinés
-        pts = sphere_points(46, 1995)
-        c = np.zeros(d.shape[:-1])
-        rng = np.random.default_rng(1996)
-        for i in range(46):
-            # Nuage = trois bulles (centre + deux côtés), ombre bleutée en dessous
-            base = pts[i]
-            t = np.cross(base, [0, 1, 0])
-            t = t / (np.linalg.norm(t) + 1e-9)
-            r = rng.uniform(0.09, 0.15)
-            for off, rr in ((0, 1.0), (-1.1, 0.75), (1.1, 0.7), (0.5, 0.8)):
-                cen = base + t * off * r + (np.array([0, 1, 0]) - base * base[1]) * (0.35 * r if off == 0.5 else 0)
-                cen = cen / np.linalg.norm(cen)
-                ang = np.arccos(np.clip(d @ cen, -1, 1))
-                c = np.maximum(c, smooth(r * rr, r * rr * 0.92, ang))
-        shadow = np.zeros_like(c)
-        paint(c > 0.5, pal['accent1'], 10, c * 0.98)
-        cls = np.where(c > 0.5, 10, 0)
+    elif kind == 'moquette':
+        # Moquette de chambre d'enfant : fibres, et quelques tapis ronds colorés
+        fib = nz.fbm(d * 140 + 3, 2)
+        tuft = nz.fbm(d * 18 + 9, 2)
+        col = col * (0.9 + 0.16 * fib[..., None]) * (0.95 + 0.1 * tuft[..., None])
+        pts = sphere_points(7, 1995)
+        ci, cr = spots(d, pts, np.full(7, 0.32))
+        rug = ci >= 0
+        rings = [pal['accent1'], pal['accent2'], pal['path'], pal['pathDark']]
+        ring = (np.floor(cr * 5).astype(int) + ci) % len(rings)
+        rc = np.stack([hexc(c) for c in rings])[ring] * (0.9 + 0.16 * fib[..., None])
+        col = np.where(rug[..., None], rc, col)
+        cls = np.where(rug, 10 + ring, 0)
     elif kind == 'arcenciel':
-        # Espace étoilé et dalles arc-en-ciel lumineuses (partout, pas de route)
+        # Damier arc-en-ciel lumineux et translucide (bandes de couleurs, joints clairs)
         neb = nz.fbm(d * 2.5 + 3, 4)
-        col = lerp(hexc('#07061e'), hexc('#1a1450'), smooth(0.4, 0.7, neb))
-        col = col + smooth(0.6, 0.8, nz.fbm(d * 4 + 70, 3))[..., None] * np.array([0.12, 0.03, 0.18])
-        emis = np.zeros(d.shape)
-        cell = np.floor(d * 90)
-        hh = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
-        hh = hh - np.floor(hh)
-        cen = (cell + 0.5) / 90
-        sd = np.linalg.norm(d - cen / np.linalg.norm(cen, axis=-1, keepdims=True), axis=-1)
-        star = smooth(0.006, 0.002, sd) * (hh < 0.12)
-        col = col + star[..., None] * 0.9
-        emis = emis + star[..., None] * 0.6
-        rb = np.stack([hexc(c) for c in ['#ff4a5a', '#ff9a3a', '#ffe24a', '#5ae26a', '#3ac8ff', '#5a7aff', '#b05aff']])
-        pts = sphere_points(110, 7)
-        cid, edge = voronoi(d, pts)
-        show = (np.sin(cid * 91.7) * 43758.5453) % 1 < 0.5
-        tc = rb[cid % 7]
-        tile = show & (edge > 0.012)
-        border = show & (edge <= 0.012)
-        col = np.where(tile[..., None], tc * 0.85, col)
-        col = np.where(border[..., None], np.array([1.0, 1.0, 1.0]), col)
-        emis = emis + tile[..., None] * tc * 0.45 + border[..., None] * 0.9
-        cls = np.where(show, 10 + cid % 7, 0)
+        space_c = lerp(hexc('#07061e'), hexc('#1a1450'), smooth(0.4, 0.7, neb))
+        g = d * 22
+        fr = np.abs(g - np.round(g))
+        joint = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1)
+        cell = np.floor(g)
+        chk = (cell.sum(-1) % 2)
+        hue = (d[..., 1] * 1.1 + 0.25 * nz.fbm(d * 1.5 + 8, 2)) % 1.0
+        hh = (hue[..., None] * 6 + np.array([0.0, 4.0, 2.0])) % 6
+        rb = np.clip(np.abs(hh - 3) - 1, 0, 1)
+        rb = rb * 0.8 + 0.2
+        glow_edge = smooth(0.16, 0.03, joint)
+        tile = space_c * (0.35 + 0.15 * chk[..., None]) + rb * (0.5 + 0.15 * chk[..., None] + 0.45 * glow_edge[..., None])
+        col = np.where((joint < 0.03)[..., None], np.array([1.0, 0.95, 0.85]), tile)
+        emis = rb * (0.35 + 0.6 * glow_edge[..., None]) + (joint < 0.03)[..., None] * 0.6
+        cls = np.where(joint < 0.03, 10, 0)
     elif kind == 'wario':
         # Stade de terre : boue, bosses de terre claire, flaques
         mud = nz.fbm(d * 3.5 + 20, 4)
@@ -370,16 +352,16 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         surf[pud > 0.68] = SURF_WATER
         cls = np.where(pud > 0.68, 10, 0)
     elif kind == 'bowser':
-        # Pavés de pierre (grille 3D : aucune déformation aux pôles) et fissures de lave
+        # Pavés de pierre clairs (grille 3D) et fissures de lave
         emis = np.zeros(d.shape)
         g = d * 24
         fr = np.abs(g - np.round(g))
         grout = np.min(np.where(np.abs(d) > 0.5, 9, fr), axis=-1) < 0.07
-        stone = lerp(hexc('#3a3438'), hexc('#5a5258'), smooth(0.3, 0.7, nz.fbm(np.floor(g) * 0.37, 2)))
-        col = np.where(grout[..., None], hexc('#221e22'), stone)
+        stone = lerp(hexc('#8e8894'), hexc('#b0aab6'), smooth(0.3, 0.7, nz.fbm(np.floor(g) * 0.37, 2)))
+        col = np.where(grout[..., None], hexc('#5e5864'), stone)
         r = 1 - np.abs(2 * nz.fbm(d * 3.0 + 150, 4) - 1)
-        lava = r > 0.965
-        lc = lerp(hexc('#ff5a10'), hexc('#ffd040'), smooth(0.965, 0.99, r))
+        lava = r > 0.97
+        lc = lerp(hexc('#ff5a10'), hexc('#ffd040'), smooth(0.97, 0.99, r))
         col = np.where(lava[..., None], lc, col)
         emis = emis + lava[..., None] * lc
         surf[lava] = SURF_LAVA
@@ -415,6 +397,40 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         # Planète bonbon : taches tourbillonnantes (aucune rayure)
         sw = nz.fbm(d * 3.0 + 3 * nz.fbm(d * 2 + 9, 2)[..., None], 3)
         paint(sw > 0.6, pal['path'], 10, smooth(0.6, 0.63, sw))
+    elif kind == 'poudlard':
+        # Hautes terres : herbe sombre, bruyère violette, rochers, lac noir
+        heath = nz.fbm(d * 3.0 + 10, 3)
+        paint(heath > 0.64, pal['accent2'], 5, smooth(0.64, 0.66, heath) * 0.8)
+        rock = nz.fbm(d * 4.2 + 40, 3)
+        paint(rock > 0.7, pal['path'], 10, smooth(0.7, 0.71, rock))
+        paint(rock > 0.74, pal['pathDark'], 11, smooth(0.74, 0.75, rock) * 0.6)
+        lake = nz.fbm(d * 2.2 + 70, 3)
+        paint(lake > 0.71, '#2a3a4a', 12, smooth(0.71, 0.72, lake))
+        paint(lake > 0.72, '#14202e', 13, smooth(0.72, 0.73, lake))
+        surf[lake > 0.72] = SURF_WATER
+    elif kind == 'halloween':
+        # Ville d'Halloween : terre violacée, herbe morte, champs de citrouilles, brume
+        dead = nz.fbm(d * 7 + 5, 2)
+        col = col * (0.9 + 0.2 * dead[..., None])
+        field = nz.fbm(d * 2.6 + 30, 3)
+        paint(field > 0.68, pal['path'], 10, smooth(0.68, 0.7, field))
+        rows = (np.sin(d @ np.array([60.0, 11.0, 37.0])) > 0.6) & (field > 0.7)
+        paint(rows, pal['pathDark'], 11, rows * 0.8)
+        mist = nz.fbm(d * 1.8 + 90, 3)
+        col = col + (smooth(0.6, 0.75, mist) * 0.12)[..., None] * np.array([0.6, 0.7, 0.8])
+    elif kind == 'noel':
+        # Neige épaisse, ombres bleutées, plaques de glace et paillettes
+        drift = nz.fbm(d * 2.5 + 5, 4)
+        col = lerp(hexc(pal['dark']), hexc(pal['light']), smooth(0.35, 0.65, drift))
+        ice = nz.fbm(d * 3.0 + 50, 3)
+        paint(ice > 0.71, pal['path'], 10, smooth(0.71, 0.72, ice))
+        surf[ice > 0.71] = SURF_ICE
+    elif kind == 'meuh':
+        # Prairie Meuh Meuh : herbe éclatante, bosquets de fleurs, coins de terre battue
+        mead = nz.fbm(d * 2.4 + 3, 3)
+        paint(mead > 0.64, pal['accent2'], 5, smooth(0.64, 0.66, mead) * 0.5)
+        dirt = nz.fbm(d * 3.6 + 200, 3)
+        paint(dirt > 0.73, pal['path'], 10, smooth(0.725, 0.74, dirt))
     # Petits points (fleurs, cristaux, paillettes) sur une grille 3D
     cell = np.floor(d * 34)
     h = np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453
@@ -423,7 +439,8 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
     dist = np.linalg.norm(d - center / np.linalg.norm(center, axis=-1, keepdims=True), axis=-1)
     density = {'prairie': 0.05, 'emeraude': 0.02, 'banquise': 0.03, 'volcan': 0.0, 'naine': 0.05, 'ocean': 0.0, 'cubes': 0.0, 'sage': 0.04, 'champi': 0.05,
                'petitprince': 0.02, 'candy': 0.0, 'futur': 0.02, 'comte': 0.03, 'herbes': 0.04, 'enchante': 0.08, 'nuages': 0.0,
-               'arcenciel': 0.0, 'wario': 0.0, 'bowser': 0.0, 'circuit': 0.03, 'fantome': 0.0}.get(kind, 0.03)
+               'arcenciel': 0.0, 'wario': 0.0, 'bowser': 0.0, 'circuit': 0.03, 'fantome': 0.0,
+               'moquette': 0.0, 'poudlard': 0.02, 'halloween': 0.015, 'noel': 0.06, 'meuh': 0.07}.get(kind, 0.03)
     dots = (dist < 0.009) & (h < density) & (cls <= 2)
     soft = smooth(0.009, 0.004, dist) * 0.85
     paint(dots & (h < density / 2), pal['accent1'], 20, soft * (dots & (h < density / 2)))
@@ -590,6 +607,76 @@ def sky_red(out: str, size: int = 256) -> dict:
         files[f] = fn
     print('   ciel rouge')
     return files
+
+
+def sky_generic(out: str, name: str, fn, size: int = 256) -> dict:
+    files = {}
+    nz = Noise3(len(name) * 101)
+    for f in FACES:
+        d = face_dirs(f, size)
+        col = fn(d, nz)
+        fname = f'sky_{name}_{f}.jpg'
+        to_img(col).save(os.path.join(out, fname), quality=86, optimize=True)
+        files[f] = fname
+    print('   ciel', name)
+    return files
+
+
+def _sky_clouds(d, nz):
+    """Ciel bleu et gros nuages de dessin animé (bulles blanches ombrées)."""
+    y = d[..., 1]
+    col = lerp(hexc('#5aa8f0'), hexc('#bfe4ff'), np.clip(0.6 - y * 0.6, 0, 1))
+    pts = sphere_points(60, 404)
+    rng = np.random.default_rng(405)
+    c = np.zeros(d.shape[:-1])
+    sh = np.zeros(d.shape[:-1])
+    for i in range(60):
+        base = pts[i]
+        t = np.cross(base, [0, 1, 0])
+        t = t / (np.linalg.norm(t) + 1e-9)
+        r = rng.uniform(0.08, 0.16)
+        for off, rr, lift in ((0, 1.0, 0.3), (-1.1, 0.75, 0), (1.1, 0.7, 0), (0.5, 0.8, 0.5)):
+            cen = base + t * off * r + (np.array([0, 1, 0]) - base * base[1]) * lift * r
+            cen = cen / np.linalg.norm(cen)
+            ang = np.arccos(np.clip(d @ cen, -1, 1))
+            c = np.maximum(c, smooth(r * rr, r * rr * 0.93, ang))
+            cen2 = base + t * off * r - (np.array([0, 1, 0]) - base * base[1]) * 0.25 * r
+            cen2 = cen2 / np.linalg.norm(cen2)
+            sh = np.maximum(sh, smooth(r * rr, r * rr * 0.93, np.arccos(np.clip(d @ cen2, -1, 1))))
+    cloud = lerp(hexc('#dbe8f8'), hexc('#ffffff'), np.clip(c - 0.6 * sh + 0.6, 0, 1))
+    return lerp(col, cloud, c)
+
+
+def _sky_halloween(d, nz):
+    """Nuit d'Halloween : bleu-vert sombre, grosse lune pâle, nuées."""
+    y = d[..., 1]
+    col = lerp(hexc('#0e1a24'), hexc('#2a3a48'), np.clip(0.5 - y * 0.5, 0, 1))
+    moon = np.array([0.35, 0.55, -0.76])
+    moon = moon / np.linalg.norm(moon)
+    a = np.arccos(np.clip(d @ moon, -1, 1))
+    disc = smooth(0.2, 0.19, a)
+    crater = nz.fbm(d * 18 + 4, 3)
+    mc = lerp(hexc('#e8e4c8'), hexc('#fffbe6'), crater)
+    col = col + smooth(0.6, 0.18, a)[..., None] * np.array([0.25, 0.28, 0.22])
+    col = lerp(col, mc, disc)
+    wisp = nz.fbm(d * np.array([2.0, 5.0, 2.0]) + 7, 4)
+    col = col * (1 - smooth(0.55, 0.7, wisp)[..., None] * 0.5 * (1 - disc[..., None]))
+    return col
+
+
+def _sky_xmas(d, nz):
+    """Nuit de Noël : bleu profond, aurore verte et violette, flocons."""
+    y = d[..., 1]
+    col = lerp(hexc('#081830'), hexc('#1c3a66'), np.clip(0.5 - y * 0.5, 0, 1))
+    band = nz.fbm(d * np.array([1.5, 6.0, 1.5]) + 11, 4)
+    au = smooth(0.55, 0.72, band) * np.clip(y * 1.5 + 0.2, 0, 1)
+    col = col + au[..., None] * (np.array([0.2, 0.9, 0.5]) * 0.5 + np.array([0.5, 0.2, 0.7]) * 0.2 * smooth(0.65, 0.8, band)[..., None])
+    cell = np.floor(d * 70)
+    hh = (np.sin(cell @ np.array([12.9898, 78.233, 37.719])) * 43758.5453) % 1
+    cen = (cell + 0.5) / 70
+    sd = np.linalg.norm(d - cen / np.linalg.norm(cen, axis=-1, keepdims=True), axis=-1)
+    col = col + (smooth(0.0035, 0.001, sd) * (hh < 0.12))[..., None] * 0.8
+    return col
 
 
 def main(src: str, out: str, only: list[str] | None = None) -> dict:

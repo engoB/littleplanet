@@ -127,9 +127,37 @@ export class CameraRig {
     _m.makeBasis(_x, y, _fwd);
     this.node.quaternion.setFromRotationMatrix(_m);
     this.pivot.updateMatrixWorld(true);
+    this.applyBlend(dt);
+    this.updateFov();
   }
 
+  /** Élargissement du champ (degrés) pendant un vol. */
+  flightFov = 0;
+  private blend: { pos: THREE.Vector3; q: THREE.Quaternion; t: number; dur: number } | null = null;
+  /** Transition douce depuis une pose de caméra (monde) vers le suivi normal. */
+  blendFrom(pos: THREE.Vector3, q: THREE.Quaternion, dur: number): void {
+    this.blend = { pos: pos.clone(), q: q.clone(), t: 0, dur };
+  }
+  private applyBlend(dt: number): void {
+    const b = this.blend;
+    if (!b) return;
+    b.t += dt;
+    const k = Math.min(1, b.t / b.dur);
+    const e = k * k * (3 - 2 * k);
+    // Le nœud est à la racine (pivot identité) en mode adaptatif / poursuite
+    this.node.position.lerpVectors(b.pos, this.node.position.clone(), e);
+    this.node.quaternion.slerpQuaternions(b.q, this.node.quaternion.clone(), e);
+    if (k >= 1) this.blend = null;
+    this.pivot.updateMatrixWorld(true);
+  }
+  private lastFlightFov = 0;
+  private updateFov(): void {
+    if (this.flightFov === this.lastFlightFov) return;
+    this.lastFlightFov = this.flightFov;
+    this.setAspect(this.lastAspect);
+  }
   private chasePos = new THREE.Vector3();
+  private chaseTime = 0;
   private chaseInit = false;
   /** Caméra de poursuite (vol entre deux planètes) : derrière et au-dessus du véhicule. */
   chase(target: THREE.Object3D, up: THREE.Vector3, dt: number, focus?: THREE.Vector3): void {
@@ -140,20 +168,25 @@ export class CameraRig {
     if (!this.chaseInit) {
       this.chasePos.copy(this.node.getWorldPosition(new THREE.Vector3()));
       this.chaseInit = true;
+      this.chaseTime = 0;
     }
+    this.chaseTime += dt;
     this.chasePos.lerp(want, 1 - Math.exp(-dt * 4));
     this.pivot.position.set(0, 0, 0);
     this.pivot.quaternion.identity();
     this.pivot.scale.set(1, 1, 1);
     this.node.scale.set(1, 1, 1);
     this.node.position.copy(this.chasePos);
-    const look = focus ? target.position.clone().lerp(focus, 0.3) : target.position.clone().addScaledVector(f, 2);
+    // Au départ on regarde le véhicule, puis le regard glisse vers la destination
+    const k = Math.min(1, this.chaseTime / 0.8);
+    const look = focus ? target.position.clone().lerp(focus, 0.3 * k * k * (3 - 2 * k)) : target.position.clone().addScaledVector(f, 2);
     _fwd.copy(look).sub(this.chasePos).normalize();
     _x.crossVectors(up, _fwd).normalize();
     const y = new THREE.Vector3().crossVectors(_fwd, _x);
     _m.makeBasis(_x, y, _fwd);
     this.node.quaternion.setFromRotationMatrix(_m);
     this.pivot.updateMatrixWorld(true);
+    this.updateFov();
   }
 
   /** Fin de poursuite : la prochaine poursuite repart de la caméra courante. */
@@ -184,6 +217,7 @@ export class CameraRig {
       const t = Math.tan((this.baseFov * Math.PI) / 360) * 1.25;
       this.camera.fov = Math.min(80, (Math.atan(t / aspect) * 360) / Math.PI);
     } else this.camera.fov = this.baseFov;
+    this.camera.fov += this.flightFov;
     this.camera.updateProjectionMatrix();
   }
 }

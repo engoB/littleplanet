@@ -21,7 +21,7 @@ export interface PlanetDef {
   gameplay: { meteorInterval: number; meteorSpeed: number; clockInterval: number; carSpeed: number; grip: number; craterDamage: number };
   decor: { trees: number; rocks: number; houses: number; [kind: string]: number | undefined };
   /** Ciel : espace, ciel doré façon « au-delà », ciel de jour ou celui d'origine. */
-  sky?: 'space' | 'db' | 'day' | 'original' | 'red';
+  sky?: string;
   /** Véhicule du préréglage Arcade. */
   vehicle?: 'original' | 'hover';
   /** Couleur des réticules de chute de météore (lisibilité selon le sol). */
@@ -32,6 +32,10 @@ export interface PlanetDef {
   emis?: number;
   /** Voyage galactique : planètes visitées l'une après l'autre. */
   galaxy?: string[];
+  /** Danger propre à la planète (blocs écraseurs qui tombent…). */
+  hazard?: 'thwomp';
+  /** Jouets bousculables (Chambre de Jouets). */
+  toys?: { balls: number; blocks: number };
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */
