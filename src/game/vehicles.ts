@@ -132,6 +132,8 @@ export function buildHover(): VehicleRig {
 export function animateVehicle(v: VehicleRig, t: number, steer: number, turbo: boolean): void {
   if (v.kind === 'hover') {
     v.body.position.y = 0.45 + 0.06 * Math.sin(t * 3.1);
+    // Remis à zéro à chaque frame : les effets (toupie, saut) s'y ajoutent ensuite
+    v.body.rotation.y = 0;
     v.body.rotation.z = -steer * 0.32;
     v.body.rotation.x = -0.04 + 0.03 * Math.sin(t * 2.3) - (turbo ? 0.08 : 0);
     const k = turbo ? 1.8 : 1 + 0.15 * Math.sin(t * 20);

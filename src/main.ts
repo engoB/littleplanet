@@ -444,9 +444,14 @@ async function main(): Promise<void> {
       }
     }
   };
+  // Pas de temps lissé : les horodatages rAF ont une gigue de quelques ms qui,
+  // appliquée telle quelle, fait trembler la caméra et le véhicule
+  let avgDt = 1 / 60;
   const loop = (now: number) => {
-    const dt = Math.min(0.25, Math.max(0, (now - last) / 1000));
+    const raw = Math.min(0.25, Math.max(0, (now - last) / 1000));
     last = now;
+    avgDt += (raw - avgDt) * 0.12;
+    const dt = Math.abs(raw - avgDt) < avgDt * 0.35 ? avgDt : raw;
     frame(dt);
     // FPS et qualité adaptative (densité de pixels, quantité de particules)
     fpsAcc += dt;

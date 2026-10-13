@@ -101,19 +101,7 @@ export class CameraRig {
     const curUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.smoothQ);
     this.smoothQ.premultiply(new THREE.Quaternion().setFromUnitVectors(curUp, up));
     const f = new THREE.Vector3(0, 0, 1).applyQuaternion(this.smoothQ);
-    // 0 : planète grosse (caméra proche) → 1 : planète petite (planète entière)
-    const x = Math.min(1, Math.max(0, (4.2 - this.radius) / 2.2));
-    const k = x * x * (3 - 2 * x);
-    const a = this.closeTilt * Deg2Rad;
-    const h = this.closeHeight;
-    const pos0 = target.position.clone().addScaledVector(up, h * Math.cos(a)).addScaledVector(f, -h * Math.sin(a));
-    const tgt0 = target.position.clone().addScaledVector(f, 1.1);
-    const half = Math.min(this.camera.fov, (Math.atan(Math.tan((this.camera.fov * Math.PI) / 360) * this.camera.aspect) * 360) / Math.PI) * 0.5;
-    const D = (this.radius * 1.3) / Math.tan(half * Deg2Rad);
-    const b = 14 * Deg2Rad;
-    const pos1 = this.center.clone().addScaledVector(up, Math.cos(b) * D).addScaledVector(f, -Math.sin(b) * D);
-    const pos = pos0.lerp(pos1, k);
-    const tgt = tgt0.lerp(this.center, k);
+    const { pos, tgt } = this.adaptivePose(target.position, up, f, this.center, this.radius);
     this.pivot.position.set(0, 0, 0);
     this.pivot.quaternion.identity();
     this.pivot.scale.set(1, 1, 1);
@@ -129,6 +117,22 @@ export class CameraRig {
     this.pivot.updateMatrixWorld(true);
     this.applyBlend(dt);
     this.updateFov();
+  }
+
+  /** Pose de la caméra adaptative pour un véhicule (position, haut, avant) sur une planète. */
+  adaptivePose(at: THREE.Vector3, up: THREE.Vector3, f: THREE.Vector3, center: THREE.Vector3, radius: number): { pos: THREE.Vector3; tgt: THREE.Vector3 } {
+    // 0 : planète grosse (caméra proche) → 1 : planète petite (planète entière)
+    const x = Math.min(1, Math.max(0, (4.2 - radius) / 2.2));
+    const k = x * x * (3 - 2 * x);
+    const a = this.closeTilt * Deg2Rad;
+    const h = this.closeHeight;
+    const pos0 = at.clone().addScaledVector(up, h * Math.cos(a)).addScaledVector(f, -h * Math.sin(a));
+    const tgt0 = at.clone().addScaledVector(f, 1.1);
+    const half = Math.min(this.camera.fov, (Math.atan(Math.tan((this.camera.fov * Math.PI) / 360) * this.camera.aspect) * 360) / Math.PI) * 0.5;
+    const D = (radius * 1.3) / Math.tan(half * Deg2Rad);
+    const b = 14 * Deg2Rad;
+    const pos1 = center.clone().addScaledVector(up, Math.cos(b) * D).addScaledVector(f, -Math.sin(b) * D);
+    return { pos: pos0.lerp(pos1, k), tgt: tgt0.lerp(center, k) };
   }
 
   /** Élargissement du champ (degrés) pendant un vol. */
@@ -160,7 +164,7 @@ export class CameraRig {
   private chaseTime = 0;
   private chaseInit = false;
   /** Caméra de poursuite (vol entre deux planètes) : derrière et au-dessus du véhicule. */
-  chase(target: THREE.Object3D, up: THREE.Vector3, dt: number, focus?: THREE.Vector3): void {
+  chase(target: THREE.Object3D, up: THREE.Vector3, dt: number, focus?: THREE.Vector3, land?: { pos: THREE.Vector3; tgt: THREE.Vector3; up: THREE.Vector3; k: number }): void {
     const f = new THREE.Vector3(0, 0, 1).applyQuaternion(target.quaternion);
     // Derrière le véhicule, côté opposé à la destination : la planète visée reste à l'image
     const away = focus ? target.position.clone().sub(focus).normalize() : f.clone().negate();
@@ -180,12 +184,20 @@ export class CameraRig {
     // Au départ on regarde le véhicule, puis le regard glisse vers la destination
     const k = Math.min(1, this.chaseTime / 0.8);
     const look = focus ? target.position.clone().lerp(focus, 0.3 * k * k * (3 - 2 * k)) : target.position.clone().addScaledVector(f, 2);
-    _fwd.copy(look).sub(this.chasePos).normalize();
-    _x.crossVectors(up, _fwd).normalize();
+    const camUp = up.clone();
+    // Fin du vol : la caméra rejoint la pose de suivi d'après l'atterrissage
+    if (land && land.k > 0) {
+      this.node.position.lerp(land.pos, land.k);
+      look.lerp(land.tgt, land.k);
+      camUp.lerp(land.up, land.k).normalize();
+    }
+    _fwd.copy(look).sub(this.node.position).normalize();
+    _x.crossVectors(camUp, _fwd).normalize();
     const y = new THREE.Vector3().crossVectors(_fwd, _x);
     _m.makeBasis(_x, y, _fwd);
     this.node.quaternion.setFromRotationMatrix(_m);
     this.pivot.updateMatrixWorld(true);
+    this.applyBlend(dt);
     this.updateFov();
   }
 

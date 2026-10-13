@@ -53,6 +53,17 @@ export interface WorldEvents {
 }
 
 const _v = new THREE.Vector3();
+const _q = new THREE.Quaternion();
+const _q2 = new THREE.Quaternion();
+const _q3 = new THREE.Quaternion();
+const _q4 = new THREE.Quaternion();
+const _o1 = new THREE.Vector3();
+const _o2 = new THREE.Vector3();
+const _o3 = new THREE.Vector3();
+const _o4 = new THREE.Vector3();
+const _o5 = new THREE.Vector3();
+const _yAxis = new THREE.Vector3(0, 1, 0);
+const _zAxis = new THREE.Vector3(0, 0, 1);
 
 export class World implements GameContext {
   readonly scene = new THREE.Scene();
@@ -170,9 +181,17 @@ export class World implements GameContext {
   // --- voyage galactique
   galaxy: { index: number; arrivalDist: number; star: THREE.Vector3 | null; visited: number; goal: boolean } | null = null;
   /** Lancement : aspiration vers l'étoile, élan (toupie), vol, atterrissage. */
-  launch: { phase: 'pull' | 'wind' | 'fly'; t: number; from: THREE.Vector3; at: THREE.Vector3; p: THREE.Vector3[]; up0: THREE.Vector3; up1: THREE.Vector3 } | null = null;
+  launch: {
+    phase: 'pull' | 'wind' | 'fly'; t: number; from: THREE.Vector3; at: THREE.Vector3; p: THREE.Vector3[]; up0: THREE.Vector3; up1: THREE.Vector3;
+    /** Pose de départ, angle total de la toupie, cap de vol. */
+    q0: THREE.Quaternion; spin: number; h0: THREE.Vector3;
+    /** Orientations clés du vol et « haut » courant (sans le tonneau). */
+    qs: THREE.Quaternion; qm: THREE.Quaternion; qe: THREE.Quaternion; upNow: THREE.Vector3;
+    land: { at: THREE.Vector3; up: THREE.Vector3; f: THREE.Vector3; center: THREE.Vector3; radius: number } | null;
+  } | null = null;
   /** Rebond d'atterrissage (s restantes). */
   private landT = 0;
+  private readonly launchProxy = new THREE.Object3D();
   private satellite!: THREE.Group;
   private satMat!: THREE.MeshToonMaterial;
   private satAtmo!: THREE.Mesh;
@@ -862,23 +881,26 @@ export class World implements GameContext {
   private obstacles(): void {
     this.bumpCooldown = Math.max(0, this.bumpCooldown - Time.deltaTime);
     const R = this.planetRadius();
-    const up = this.car.position.clone().sub(this.planet.position).normalize();
+    const up = _o1.copy(this.car.position).sub(this.planet.position).normalize();
+    const d = _o2;
     for (const o of this.decor.obstacles) {
-      const d = o.dir.clone().applyQuaternion(this.planet.quaternion);
-      const dist = up.angleTo(d) * R;
+      d.copy(o.dir).applyQuaternion(this.planet.quaternion);
       const min = o.radius + 0.16;
+      // Rejet rapide (cosinus) avant le calcul d'angle
+      if (up.dot(d) < Math.cos(Math.min(Math.PI, min / R))) continue;
+      const dist = up.angleTo(d) * R;
       if (dist >= min) continue;
       // Repousse la voiture hors de l'obstacle, le long de la surface
-      const away = up.clone().sub(d.clone().multiplyScalar(up.dot(d))).normalize();
+      const away = _o3.copy(up).addScaledVector(d, -up.dot(d)).normalize();
       const push = (min - dist) / R;
-      const axis = new THREE.Vector3().crossVectors(up, away).normalize();
-      const q = new THREE.Quaternion().setFromAxisAngle(axis, push);
+      const axis = _o4.crossVectors(up, away).normalize();
+      const q = _q.setFromAxisAngle(axis, push);
       this.car.position.sub(this.planet.position).applyQuaternion(q).add(this.planet.position);
       this.car.quaternion.premultiply(q);
       // Réflexion du cap si la voiture fonce dans l'obstacle
-      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
+      const fwd = _o5.set(0, 0, 1).applyQuaternion(this.car.quaternion);
       if (fwd.dot(away) < 0) {
-        const left = new THREE.Vector3(1, 0, 0).applyQuaternion(this.car.quaternion);
+        const left = _o5.set(1, 0, 0).applyQuaternion(this.car.quaternion);
         this.vehicle.bump((left.dot(away) > 0 ? -1 : 1) * 70);
       }
       if (this.bumpCooldown <= 0) {
@@ -944,11 +966,18 @@ export class World implements GameContext {
     // LateUpdate : caméra
     if (this.mode === 'menu') this.rig.pivot.updateMatrixWorld(true);
     else {
-      if (this.launch && this.launch.phase === 'fly') this.rig.chase(this.car, this.launchUp(), realDt, this.satellite.position);
+      if (this.launch && this.launch.phase === 'fly') this.rig.chase(this.car, this.launchUp(), realDt, this.satellite.position, this.landingCamera());
       else if (this.launch) {
+        // Aspiration / toupie : la caméra suit une pose sans la rotation de la toupie
+        // (qui tourne doucement du cap d'arrivée vers le cap de vol)
+        const L = this.launch;
+        const u = L.phase === 'pull' ? (L.t * 0.55) / 0.9 : (0.55 + L.t * 0.35) / 0.9;
+        this.launchProxy.position.copy(this.car.position);
+        this.launchProxy.quaternion.slerpQuaternions(L.q0, L.qs, u * u * (3 - 2 * u));
+        this.launchProxy.scale.copy(this.car.scale);
         this.rig.center.copy(this.planet.position);
         this.rig.radius = this.planetRadius();
-        this.rig.follow(this.car, realDt);
+        this.rig.follow(this.launchProxy, realDt);
       }
       else {
         this.rig.center.copy(this.planet.position);
@@ -1260,49 +1289,77 @@ export class World implements GameContext {
     this.meteors.clear();
     const up0 = g.star.clone();
     const at = this.planet.localToWorld(g.star.clone().multiplyScalar(this.planetCollider)).addScaledVector(up0, 0.45);
-    this.launch = { phase: 'pull', t: 0, from: this.car.position.clone(), at, p: [], up0, up1: up0.clone() };
+    // Cap de départ (avant actuel) et cap de vol (vers la planète suivante), dans le plan tangent
+    const f0 = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
+    f0.addScaledVector(up0, -f0.dot(up0));
+    if (f0.lengthSq() < 1e-6) f0.set(1, 0, 0).addScaledVector(up0, -up0.x);
+    f0.normalize();
+    const h0 = this.satellite.position.clone().sub(at);
+    h0.addScaledVector(up0, -h0.dot(up0));
+    if (h0.lengthSq() < 1e-6) h0.copy(f0);
+    h0.normalize();
+    // Toupie : 3 tours + l'angle qui amène le nez face au cap de vol
+    let d = Math.atan2(new THREE.Vector3().crossVectors(f0, h0).dot(up0), f0.dot(h0));
+    if (d < 0) d += Math.PI * 2;
+    const q0 = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(up0, f0).normalize(), up0, f0));
+    const qs = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(up0, h0).normalize(), up0, h0));
+    this.launch = {
+      phase: 'pull', t: 0, from: this.car.position.clone(), at, p: [], up0, up1: up0.clone(),
+      q0, spin: Math.PI * 6 + d, h0, qs, qm: new THREE.Quaternion(), qe: new THREE.Quaternion(), upNow: up0.clone(), land: null,
+    };
     if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_chime', 0.6, 0.9);
   }
 
-  /** Trajectoire du vol (Bézier cubique) depuis l'étoile vers la planète suivante. */
+  /** Trajectoire du vol (Bézier cubique) et orientations clés (départ, mi-vol, arrivée). */
   private planFlight(): void {
     const L = this.launch!;
     const Rn = this.planetCollider * this.satDef!.radius + this.vehicle.f.desiredDistanceFromSurface;
     const p0 = L.at.clone();
-    const toSat = this.satellite.position.clone().sub(p0).normalize();
     const up1 = this.planet.position.clone().sub(this.satellite.position).normalize().addScaledVector(L.up0, 0.6).normalize();
     const p3 = this.satellite.position.clone().addScaledVector(up1, Rn);
+    // Cap d'arrivée : le cap de départ ramené dans le plan tangent d'arrivée
+    const h1 = L.h0.clone().addScaledVector(up1, -L.h0.dot(up1));
+    if (h1.lengthSq() < 1e-4) h1.set(1, 0, 0).addScaledVector(up1, -up1.x);
+    h1.normalize();
     const span = p0.distanceTo(p3);
-    L.p = [p0, p0.clone().addScaledVector(L.up0, span * 0.6).addScaledVector(toSat, span * 0.2), p3.clone().addScaledVector(up1, span * 0.5), p3];
+    L.p = [p0, p0.clone().addScaledVector(L.up0, span * 0.55).addScaledVector(L.h0, span * 0.25), p3.clone().addScaledVector(up1, span * 0.4).addScaledVector(h1, -span * 0.15), p3];
     L.up1 = up1;
+    const basis = (up: THREE.Vector3, f: THREE.Vector3) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(up, f).normalize(), up, f));
+    // Mi-vol : nez dans le sens du vol (rotation minimale depuis la pose de départ)
+    const [a, b, c, d] = L.p;
+    const midTan = c.clone().add(d).sub(a).sub(b).normalize();
+    L.qm = new THREE.Quaternion().setFromUnitVectors(L.h0, midTan).multiply(L.qs);
+    L.qe = basis(up1, h1);
+    if (L.qm.dot(L.qs) < 0) L.qm.set(-L.qm.x, -L.qm.y, -L.qm.z, -L.qm.w);
+    if (L.qe.dot(L.qm) < 0) L.qe.set(-L.qe.x, -L.qe.y, -L.qe.z, -L.qe.w);
+    // Pose de caméra d'après l'atterrissage (rejointe pendant la fin du vol)
+    L.land = { at: p3, up: up1, f: h1, center: this.satellite.position.clone(), radius: this.planetCollider * this.satDef!.radius };
   }
 
   private launchUp(): THREE.Vector3 {
-    const L = this.launch!;
-    if (L.phase !== 'fly') return L.up0.clone();
-    const e = Math.min(1, L.t);
-    return L.up0.clone().lerp(L.up1, e * e * (3 - 2 * e)).normalize();
+    return this.launch!.upNow.clone();
   }
 
-  /** Aspiration → élan → vol ; puis bascule sur la planète suivante. */
+  /** Aspiration → élan → vol ; puis bascule sur la planète suivante. Tout est calculé (pas de lissage cumulé) : aucun tremblement. */
   private updateLaunch(dt: number): void {
     const L = this.launch!;
     const star = this.launchStar.children[0];
+    const spinAt = (u: number) => _q.setFromAxisAngle(_yAxis, L.spin * (u * u * (3 - 2 * u)));
     if (L.phase === 'pull') {
       // Aspiré vers le centre de l'étoile en tournoyant
       L.t = Math.min(1, L.t + dt / 0.55);
       const e = 1 - Math.pow(1 - L.t, 3);
       this.car.position.lerpVectors(L.from, L.at, e);
-      this.car.rotateY(dt * (6 + 14 * e));
+      this.car.quaternion.copy(L.q0).multiply(spinAt((L.t * 0.55) / 0.9));
       this.launchStar.rotation.y += dt * (4 + 20 * e);
       if (L.t >= 1) {
         L.phase = 'wind';
         L.t = 0;
       }
     } else if (L.phase === 'wind') {
-      // Élan : l'étoile se tasse puis se détend, la toupie accélère
+      // Élan : l'étoile se tasse puis se détend, la toupie finit face au cap de vol
       L.t = Math.min(1, L.t + dt / 0.35);
-      this.car.rotateY(dt * 26);
+      this.car.quaternion.copy(L.q0).multiply(spinAt((0.55 + L.t * 0.35) / 0.9));
       this.launchStar.rotation.y += dt * 28;
       star.scale.set(1 + 0.25 * L.t, 1 - 0.3 * L.t, 1 + 0.25 * L.t);
       this.car.position.copy(L.at).addScaledVector(L.up0, -0.12 * L.t);
@@ -1313,35 +1370,34 @@ export class World implements GameContext {
         this.planFlight();
         L.phase = 'fly';
         L.t = 0;
+        this.rig.blendFrom(this.rig.node.getWorldPosition(new THREE.Vector3()), this.rig.node.getWorldQuaternion(new THREE.Quaternion()), 0.7);
         this.events.message('Décollage !', 'good');
         if (bool(this.settings, 'extraSounds')) {
           this.audio.playOneShot('sfx_launch', 0.9);
           this.audio.playOneShot('sfx_whoosh', 0.9, 0.7);
         }
-        this.shaker.start({ enabled: true, delay: 0, duration: 0.35, space: 0, strength: [0.12, 0.12, 0.25], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
       }
     } else {
-      L.t = Math.min(1, L.t + dt / 2.3);
-      // Départ très rapide, arrivée qui ralentit (ease-out)
-      const t = 1 - Math.pow(1 - L.t, 2.2);
+      L.t = Math.min(1, L.t + dt / 2.4);
+      // Départ rapide, arrivée ralentie mais sans arrêt brutal
+      const x = L.t;
+      const t = 0.85 * (1 - (1 - x) * (1 - x)) + 0.15 * x;
       const [a, b, c, d] = L.p;
       const u = 1 - t;
-      const pos = a.clone().multiplyScalar(u * u * u).addScaledVector(b, 3 * u * u * t).addScaledVector(c, 3 * u * t * t).addScaledVector(d, t * t * t);
-      const tan = b.clone().sub(a).multiplyScalar(3 * u * u).addScaledVector(c.clone().sub(b), 6 * u * t).addScaledVector(d.clone().sub(c), 3 * t * t);
-      if (tan.lengthSq() < 1e-8) tan.copy(d).sub(a);
-      tan.normalize();
-      const up = this.launchUp();
-      const x = new THREE.Vector3().crossVectors(up, tan).normalize();
-      const y = new THREE.Vector3().crossVectors(tan, x).normalize();
-      const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, tan));
-      // Tonneau qui ralentit, puis se redresse avant l'arrivée
-      q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 4 * (1 - Math.pow(1 - Math.min(1, L.t / 0.8), 2))));
-      this.car.position.copy(pos);
-      this.car.quaternion.slerp(q, 1 - Math.exp(-dt * 12));
+      this.car.position.copy(a).multiplyScalar(u * u * u).addScaledVector(b, 3 * u * u * t).addScaledVector(c, 3 * u * t * t).addScaledVector(d, t * t * t);
+      // Orientation : Bézier de quaternions (départ → mi-vol → arrivée), continue et lisse
+      const s1 = _q.slerpQuaternions(L.qs, L.qm, t);
+      const s2 = _q2.slerpQuaternions(L.qm, L.qe, t);
+      const base = _q3.slerpQuaternions(s1, s2, t * t * (3 - 2 * t));
+      L.upNow.set(0, 1, 0).applyQuaternion(base);
+      // Tonneau (2 tours) qui démarre vite et se termine à plat avant l'arrivée
+      const r = Math.min(1, Math.max(0, (x - 0.08) / 0.62));
+      const roll = Math.PI * 4 * (r * r * (3 - 2 * r));
+      this.car.quaternion.copy(base).multiply(_q4.setFromAxisAngle(_zAxis, roll));
       // Champ de vision élargi pendant le vol
-      this.rig.flightFov = 10 * Math.sin(Math.PI * L.t);
-      (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * (1 - Math.min(1, Math.max(0, (L.t - 0.35) / 0.35)));
-      (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * Math.max(0, 1 - L.t / 0.2);
+      this.rig.flightFov = 10 * Math.sin(Math.PI * x);
+      (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * (1 - Math.min(1, Math.max(0, (x - 0.35) / 0.35)));
+      (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * Math.max(0, 1 - x / 0.2);
     }
     this.car.updateMatrixWorld(true);
     this.sparkle.gravityDir = this.launchUp().negate();
@@ -1350,6 +1406,15 @@ export class World implements GameContext {
     this.clocks.update(dt, null, false);
     this.craters.update(dt, num(this.settings, 'craterLifetime'), false);
     if (L.phase === 'fly' && L.t >= 1) this.land();
+  }
+
+  /** Pose de caméra cible de fin de vol (celle du suivi après l'atterrissage). */
+  private landingCamera(): { pos: THREE.Vector3; tgt: THREE.Vector3; up: THREE.Vector3; k: number } | undefined {
+    const L = this.launch;
+    if (!L || !L.land || !this.rig.adaptive) return undefined;
+    const { pos, tgt } = this.rig.adaptivePose(L.land.at, L.land.up, L.land.f, L.land.center, L.land.radius);
+    const k = Math.min(1, Math.max(0, (L.t - 0.55) / 0.45));
+    return { pos, tgt, up: L.land.f, k: k * k * (3 - 2 * k) };
   }
 
   private land(): void {
@@ -1388,13 +1453,12 @@ export class World implements GameContext {
     const shift = this.satellite.position.clone().sub(this.planet.position);
     this.rig.endChase();
     this.rig.follow(this.car, 0, true);
-    this.rig.blendFrom(camPos.sub(shift), camQ, 0.8);
+    this.rig.blendFrom(camPos.sub(shift), camQ, 0.35);
     this.landT = 0.5;
     this.burstAt(this.car.position.clone(), [0.9, 0.85, 0.75, 1]);
     this.events.stage?.(g.visited, next.name, `Planète ${g.visited}`);
     const ang = g.index * 2.4;
     this.placeSatellite(this.resolve(this.selected, g.index + 1), new THREE.Vector3(Math.cos(ang), 0.6, Math.sin(ang)));
-    this.shaker.start({ enabled: true, delay: 0, duration: 0.3, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
     if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_land', 0.8);
   }
 
