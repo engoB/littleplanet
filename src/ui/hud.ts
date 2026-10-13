@@ -23,6 +23,8 @@ export class Hud {
   private readonly messages = $('messages');
   private readonly turboRing = $<HTMLCanvasElement>('turbo-ring');
   private readonly turboCtx = this.turboRing.getContext('2d');
+  private readonly flameH = new Float32Array(40).fill(1);
+  private readonly flameTarget = new Float32Array(40).fill(1);
   private turboLevel = -1;
   private turboShown = 0;
   readonly turboBtn = $('btn-turbo');
@@ -162,7 +164,12 @@ export class Hud {
       for (let i = 0; i < lit; i++) {
         const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
         const wob = Math.sin(time * 9 + i * 1.7) * 0.5 + Math.sin(time * 15.3 + i * 3.1) * 0.5;
-        const len = (pass === 0 ? 13 : 8) * boost * (0.75 + 0.35 * wob) * (i === lit - 1 ? 0.6 : 1);
+        // Hauteur aléatoire par flamme (cible tirée au hasard, rejointe en douceur)
+        if (pass === 0) {
+          if (Math.random() < 0.18) this.flameTarget[i] = 0.35 + Math.random() * 1.45;
+          this.flameH[i] += (this.flameTarget[i] - this.flameH[i]) * 0.35;
+        }
+        const len = (pass === 0 ? 14 : 8) * boost * this.flameH[i] * (0.85 + 0.2 * wob) * (i === lit - 1 ? 0.6 : 1);
         const w = (Math.PI * 2) / n * (pass === 0 ? 0.95 : 0.6);
         const tipA = a + Math.sin(time * 5 + i) * 0.04;
         const x0 = c + Math.cos(a - w) * (r0 - 4);

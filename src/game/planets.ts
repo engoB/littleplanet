@@ -13,7 +13,6 @@ export interface PlanetDef {
   /** Planète nocturne : sol sombre, voiture et impacts lumineux. */
   neon?: boolean;
   radius: number;
-  unlock: { planet: string; distance: number } | null;
   atmosphere: string;
   palette?: Record<string, string>;
   pattern?: string;
@@ -112,25 +111,18 @@ export function bestDistances(): Record<string, number> {
   }
 }
 
-/** Enregistre la distance ; renvoie les planètes nouvellement débloquées. */
-export function recordDistance(planet: string, distance: number): PlanetDef[] {
-  const before = PLANETS.filter((p) => isUnlocked(p, false));
+/** Enregistre la meilleure distance d'un monde. */
+export function recordDistance(planet: string, distance: number): void {
   const b = bestDistances();
   if (distance > (b[planet] ?? 0)) {
     b[planet] = distance;
     set(BEST, JSON.stringify(b));
   }
-  return PLANETS.filter((p) => isUnlocked(p, false) && !before.includes(p));
 }
 
-export function isUnlocked(p: PlanetDef, all: boolean): boolean {
-  if (all || !p.unlock) return true;
-  return (bestDistances()[p.unlock.planet] ?? 0) >= p.unlock.distance;
-}
-
-/** Efface la progression : records par planète, défis, planète choisie, meilleures distances. */
+/** Efface la progression : mondes et succès, records, défis, planète choisie, meilleures distances. */
 export function resetProgress(): void {
-  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1']) {
+  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1', 'mpp.progress.v2']) {
     try {
       localStorage.removeItem(k);
     } catch {

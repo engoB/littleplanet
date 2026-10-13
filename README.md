@@ -56,9 +56,25 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Banquise | ★★★ | — | **monde de cases gelées** : la voiture glisse (adhérence 0,35), flocons |
 | Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
 
-Banquise et Naine se débloquent en parcourant 100 m sur la planète
-précédente (réglage « Toutes les planètes débloquées » pour tout ouvrir).
-Records par planète.
+**Progression classique** (0.13) : au départ seul le Monde 1 est ouvert.
+Réussir 3 objectifs sur un monde débloque le suivant ; débloquer le dernier
+ouvre les **défis** (Chrono d'abord) et le **Voyage galactique**. Les autres
+défis s'ouvrent en décrochant des **succès** : Survivant (2 min) → Tempête,
+Globe-trotteur (2 000 m au total) → Miroir, Collectionneur (30 bonus de soin)
+→ Vif d'or, Grand voyageur (un voyage réussi) → Bullet Bill, Démolisseur
+(10 éléments de décor détruits) → Rétrécit ; plus Premiers tours, Monde
+conquis, Lanceur d'orbite et Champion. Écran « Succès » avec le pourcentage
+d'avancement, annonce « Succès débloqué » en fin de partie. La version 0.13
+remet la progression à 0 % une fois (`mpp.progress.version`). Le réglage
+« Toutes les planètes débloquées » ouvre tout. Records par planète.
+
+**Difficulté** (Facile / Normal / Difficile, sur la carte du monde et dans les
+Options) : en Facile et Normal on roule sans contrainte — ni poteaux, ni
+planète qui rétrécit, météores plus rares (Facile : plus lents, dégâts
+divisés par deux ; Normal : dégâts × 0,75 et montée douce). Difficile garde
+la montée en puissance : poteaux, rétrécissement, pluie de météores des
+étapes. Le préréglage Original reste en Difficile (comportement Unity
+inchangé).
 
 Chaque planète a une **carte de surface** générée avec ses textures (sol, eau,
 lave, glace, hautes herbes) : le jeu sait sur quoi roule la voiture et
@@ -136,10 +152,10 @@ l'herbe réaliste et la terre du projet Unity d'origine
 (`Texture_Grass_Diffuse`, `Texture_Dirt_Diffuse`, exportées par
 `tools/classic_textures.py`) en projection triplanaire, avec un **chemin de
 terre** qui fait le tour du monde, et l'**aéro-voiture** (la voiture volante
-du jeu) qui le suit en boucle. Toucher l'écran ouvre l'accueil. La planète classique est aussi
-jouable (Monde 11). Réglage de test **« Herbe en relief »** (désactivé par
-défaut) : coques d'herbe superposées (shell texturing) qui donnent un tapis de
-brins en relief, plus lourd pour le téléphone.
+du jeu) qui le suit à bonne allure ; la caméra reste fixe et la planète tourne
+doucement. Toucher l'écran ouvre l'accueil. La planète classique est aussi
+jouable (Monde 11). L'herbe en relief (coques superposées, `grassShells`) est
+mise de côté : trop lourde pour le téléphone.
 
 Analyse du projet d'origine : le modèle `GroundTrack.fbx` et les textures
 d'herbe réaliste, de terre et de brins existent dans le dépôt Unity mais ne
@@ -162,12 +178,23 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
   (cible de météore), ramasser (caisse, basket, accélérateur, ressort),
   progresser (défis, voyage).
 - **Difficulté** en étoiles (★ à ★★★★★).
-- **Réglages → Progression** : « Réinitialiser la progression » efface les
-  records, les planètes débloquées et les défis choisis (pas les réglages).
+- **Espace perso → Progression** : « Réinitialiser la progression » efface
+  les records, les mondes débloqués, les succès et les défis choisis (pas les
+  réglages).
 - Le jeu se joue **en portrait uniquement** (manifeste de l'application et
   réglage « Orientation » ; écart assumé avec l'APK Unity, qui était en
   paysage). Tous les menus tiennent dans l'écran, sans défilement.
-- **Réglages** : roue crantée discrète en haut à droite.
+- **Options** (roue crantée en haut à droite) : difficulté, musique, sons,
+  vibrations, qualité, Succès, et **Espace perso** (la page de tous les
+  réglages avancés, ancienne page Réglages).
+- **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
+  dans un élément de décor le détruit en éclats ; certains partent en orbite.
+  L'explosion du véhicule projette aussi des débris en orbite.
+- **Victoire du voyage** : vrai écran de victoire (trophée, planètes, distance,
+  temps, confettis) ; plus aucun météore ni explosion ne fait trembler la
+  caméra derrière.
+- **Choix des mondes** : fond magique façon Mario Galaxy (nébuleuses,
+  étoiles scintillantes en croix, fragments d'étoile qui dérivent).
 
 ### Véhicule (préréglage Arcade)
 

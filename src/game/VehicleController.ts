@@ -58,6 +58,16 @@ export class VehicleController {
     this.bumpVel = 0;
   }
 
+  /** Dérapage imposé (rad) : la trajectoire s'écarte du cap puis le rattrape (adhérence < 1). */
+  kickSlip(rad: number): void {
+    this.slip = rad;
+  }
+
+  /** Angle de glisse courant (rad). */
+  get slipAngle(): number {
+    return this.grip >= 1 ? 0 : this.slip;
+  }
+
   /** Écart de trajectoire aléatoire (cratère, préréglage Arcade), en degrés. */
   bump(deg: number): void {
     this.bumpVel += deg * 7;

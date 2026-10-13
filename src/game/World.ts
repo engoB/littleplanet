@@ -3,6 +3,7 @@
  * dans une seule scène three (mêmes objets, aucune création en cours de partie)
  * et exécute les scripts portés dans l'ordre Update puis LateUpdate.
  */
+import type { RunStats } from './progress';
 import * as THREE from 'three';
 import { SURF, type Assets } from '../unity/assets';
 import { AudioManager, type AudioSourceLite } from '../unity/audio';
@@ -26,7 +27,7 @@ import { HealthManager, type HealthManagerFields } from './HealthManager';
 import { MeteorSpawner, type MeteorSpawnerFields } from './Meteors';
 import { RotatePlanet, ShrinkPlanet } from './RotatePlanet';
 import { Stages } from './Stages';
-import { Decor } from './Decor';
+import { Decor, type Obstacle } from './Decor';
 import { PLANETS, planetById, type PlanetDef } from './planets';
 import { atmosphere, planetToonMaterial, toonGradient, toToon } from './toon';
 import { Starfield } from './Starfield';
@@ -39,14 +40,14 @@ import { DEFAULT_KART, KartProps } from './KartProps';
 import { Toys } from './Toys';
 import { BulletBills, Snitch } from './Chasers';
 import { PlanetSelect } from './PlanetSelect';
-import { classicPathPoint, classicPlanetMaterial, grassShells } from './classicPlanet';
+import { classicPathPoint, classicPlanetMaterial } from './classicPlanet';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
 export interface WorldEvents {
   health(hp: number, max: number, delta: number): void;
   message(text: string, kind?: 'good' | 'bad' | 'info'): void;
-  gameOver(stats: { distance: number; time: number; stage: number; clocks: number; victory?: boolean; planets?: number }): void;
+  gameOver(stats: RunStats): void;
   turbo(level: number, active: boolean): void;
   /** Étape réussie : numéro de la nouvelle étape et son objectif. */
   stage?(next: number, label: string, title?: string): void;
@@ -65,6 +66,7 @@ const _o3 = new THREE.Vector3();
 const _o4 = new THREE.Vector3();
 const _o5 = new THREE.Vector3();
 const SPIN_TIME = 0.7;
+const LAND_DRIFT = 1.8;
 const HOP_TIME = 1.0;
 const _yAxis = new THREE.Vector3(0, 1, 0);
 const _zAxis = new THREE.Vector3(0, 0, 1);
@@ -173,7 +175,6 @@ export class World implements GameContext {
   private planetStdMat!: THREE.Material;
   private readonly planetToonMat = planetToonMaterial();
   private classicMat: THREE.MeshStandardMaterial | null = null;
-  private shells: THREE.Group | null = null;
   /** Écran titre : la voiture fait le tour de la planète classique sur son chemin. */
   title = false;
   private titlePhi = 0;
@@ -215,6 +216,7 @@ export class World implements GameContext {
   private readonly burstObj = new THREE.Object3D();
   private bursts: ParticleSystem[] = [];
   private smokes: ParticleSystem[] = [];
+  private meteorTrails: { root: THREE.Object3D; ps: ParticleSystem }[] = [];
   private smokeIdx = 0;
   private burstIdx = 0;
   private boostTime = 0;
@@ -237,6 +239,8 @@ export class World implements GameContext {
   private landT = 0;
   /** Rebonds après l'atterrissage (s restantes). */
   private landBounce = 0;
+  /** Dérapage après l'atterrissage (s restantes). */
+  private landDrift = 0;
   private readonly launchProxy = new THREE.Object3D();
   private satellite!: THREE.Group;
   private satMat!: THREE.MeshToonMaterial;
@@ -372,6 +376,7 @@ export class World implements GameContext {
     this.toys.onOrbit = () => {
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.6, 1.3);
       this.events.message('En orbite !', 'info');
+      this.orbited++;
     };
     this.snitch = new Snitch(this.planet);
     this.snitch.onCatch = (at) => {
@@ -535,6 +540,12 @@ export class World implements GameContext {
     const msNode = this.findRoot(this.gameData, 'MeteorSpawner')!;
     const msf = scriptFields<MeteorSpawnerFields>(msNode, 'MeteorSpawner');
     this.meteors = new MeteorSpawner(this, msf);
+    // Traînées de fumée des météores qui tombent (une par météore du pool)
+    this.meteors.forEachMeteor((root) => {
+      const t = fxp.meteorTrail(root, this.assets.manifest.fxAtlas);
+      t.rateScale = 0;
+      this.meteorTrails.push({ root, ps: this.particles.add(t) });
+    });
     const meteorProto = a.project.prefabs[msf.meteorPrefabs[0].prefab];
     const mc = scriptFields<{ craterPrefab: { prefab: string }; explosionEffectPrefab: { prefab: string } }>(meteorProto, 'MeteorCollision');
     this.craters = new Craters(this, a.project.prefabs[mc.craterPrefab.prefab], String(s.craterStyle) === 'box' ? 'box' : 'decal');
@@ -595,6 +606,12 @@ export class World implements GameContext {
         this.mode = 'dying';
         this.dyingTime = 0;
         Time.timeScale = 0.6;
+        // Victoire : plus rien ne tombe ni n'explose (sinon la caméra tremble derrière l'écran)
+        this.meteors.clear();
+        this.explosions.clear();
+        this.shaker.clear();
+        this.turboActive = false;
+        this.skid?.stop();
         return;
       }
       if (this.galaxy && !this.galaxy.goal) {
@@ -661,13 +678,6 @@ export class World implements GameContext {
     } else {
       this.planetMesh.material = this.planetStdMat;
     }
-    // Herbe en relief (test, désactivée par défaut) : planète classique seulement
-    const shells = def.style === 'classic' && bool(this.settings, 'realGrass');
-    if (shells && !this.shells) {
-      this.shells = grassShells(this.planetMesh.geometry, this.assets.textures.get('classic_grass'));
-      this.planetMesh.add(this.shells);
-    }
-    if (this.shells) this.shells.visible = shells;
     this.atmo.visible = premium;
     (this.atmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
     (this.atmo.material as THREE.ShaderMaterial).uniforms.intensity.value = def.neon || def.glass ? 0.3 : 0.6;
@@ -793,7 +803,7 @@ export class World implements GameContext {
     const g = this.def.gameplay;
     this.vehicle.speed = num(s, 'carSpeed') * g.carSpeed;
     this.vehicle.grip = g.grip;
-    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1);
+    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1) * (this.difficulty === 'easy' ? 0.8 : 1);
     this.vehicle.steerSpeed = num(s, 'steerSpeed');
     this.vehicle.fatigue = num(s, 'steerFatigue');
     this.vehicle.fatigueHold = Math.min(num(s, 'steerFatigueHold') || 0, Math.max(0, num(s, 'steerFatigue') - 0.2));
@@ -838,7 +848,8 @@ export class World implements GameContext {
   }
 
   private updateTitle(dt: number): void {
-    this.titlePhi += dt * 0.42;
+    // Caméra fixe ; la planète tourne doucement et la voiture file sur le chemin
+    this.titlePhi += dt * 0.95;
     const R = this.planetRadius() + this.vehicle.f.desiredDistanceFromSurface;
     const d = classicPathPoint(this.titlePhi, _o1);
     const ahead = classicPathPoint(this.titlePhi + 0.01, _o2);
@@ -852,27 +863,7 @@ export class World implements GameContext {
     this.car.updateMatrixWorld(true);
     // La voiture volante flotte et se balance comme en jeu
     if (this.rig3d) animateVehicle(this.rig3d, Time.time, 0, false);
-    // Caméra du titre : de trois-quarts, en retrait derrière la voiture, la planète entière à l'image
-    const D = this.planetRadius() * 2.9;
     this.healthRing.mesh.visible = false;
-    const c = this.planet.position;
-    const pos = _o4.copy(c).addScaledVector(up, D * 0.82).addScaledVector(f, -D * 0.62);
-    const look = _o5.copy(c).addScaledVector(up, this.planetRadius() * 0.45);
-    const n = this.rig.node;
-    this.rig.pivot.position.set(0, 0, 0);
-    this.rig.pivot.quaternion.identity();
-    this.rig.pivot.scale.set(1, 1, 1);
-    n.scale.set(1, 1, 1);
-    const k = dt > 0 ? 1 - Math.exp(-dt * 3) : 1;
-    n.position.lerp(pos, k);
-    // Le nœud suit la convention Unity (+Z vers l'avant) : base (x, haut, avant)
-    const fw = look.sub(n.position).normalize();
-    const x2 = new THREE.Vector3().crossVectors(f, fw).normalize();
-    const y2 = new THREE.Vector3().crossVectors(fw, x2);
-    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x2, y2, fw));
-    if (dt > 0) n.quaternion.slerp(q, k);
-    else n.quaternion.copy(q);
-    this.rig.pivot.updateMatrixWorld(true);
   }
 
   enterMenu(): void {
@@ -935,6 +926,7 @@ export class World implements GameContext {
     this.galaxy = this.selected.style === 'galaxy' ? { index: 0, arrivalDist: 0, star: null, visited: 1, goal: false } : null;
     this.landT = 0;
     this.landBounce = 0;
+    this.landDrift = 0;
     this.carDir.set(0, 1, 0);
     if (bool(this.settings, 'modeSnitch') && bool(this.settings, 'premiumFx')) this.snitch.start(this.carDir);
     else this.snitch.stop();
@@ -963,6 +955,8 @@ export class World implements GameContext {
     this.timeLeft = this.galaxy && this.galaxyTime ? this.galaxyTime : 60;
     this.dyingTime = 0;
     this.won = false;
+    this.decorBroken = 0;
+    this.orbited = 0;
     this.startDelay = bool(this.settings, 'countdown') ? 3 : 0;
     if (this.startDelay > 0) this.events.countdown?.(3);
     this.stages.start();
@@ -1010,6 +1004,9 @@ export class World implements GameContext {
       this.dyingTime = 0;
       this.explosions.spawn(this.car.getWorldPosition(new THREE.Vector3()));
       this.car.visible = false;
+      // Débris du véhicule : une partie part en orbite
+      const C = (h: number) => new THREE.Color(h);
+      this.toys.debris(this.carDir.clone(), [C(0xffffff), C(0xe8413c), C(0x3a7bd5), C(0xffc531), C(0x444444)], 16, 0.55, 4);
       Time.timeScale = 0.35;
     } else {
       this.finishGameOver();
@@ -1021,10 +1018,12 @@ export class World implements GameContext {
     this.shaker.clear();
     Time.timeScale = 0; // Time.timeScale = 0 : le jeu s'arrête
     this.music?.stop(); // mainCameraAudioSource.Stop()
-    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited });
+    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited, decor: this.decorBroken, orbit: this.orbited });
   }
 
   private damage(points: number, label: string): void {
+    // Difficulté : dégâts réduits en Facile et Normal
+    if (this.difficulty !== 'hard') points = Math.max(1, Math.round(points * (this.difficulty === 'easy' ? 0.5 : 0.75)));
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
       if (bool(this.settings, 'extraSounds')) {
@@ -1069,6 +1068,11 @@ export class World implements GameContext {
   private revealKart(stage: number, announce = false): void {
     const kinds = this.kart.kinds();
     const progressive = bool(this.settings, 'stages');
+    // Facile et Normal : jamais de poteaux (contraintes réservées au Difficile)
+    if (this.difficulty !== 'hard') {
+      const i = kinds.indexOf('spinners');
+      if (i >= 0) kinds.splice(i, 1);
+    }
     const n = progressive ? Math.min(kinds.length, stage) : kinds.length;
     this.kart.reveal(kinds.slice(0, n));
     const added = kinds[n - 1];
@@ -1080,7 +1084,12 @@ export class World implements GameContext {
 
   private obstacles(): void {
     this.bumpCooldown = Math.max(0, this.bumpCooldown - Time.deltaTime);
-    for (const o of this.decor.obstacles) if (this.pushOut(o.dir, o.radius)) this.bumpFx();
+    for (const o of [...this.decor.obstacles]) {
+      if (!this.pushOut(o.dir, o.radius)) continue;
+      // Un choc compte une fois par contact (délai du bruit de choc)
+      if (this.bumpCooldown <= 0 && ++o.hits >= o.maxHits) this.breakDecor(o);
+      this.bumpFx();
+    }
     // Poteaux : rebond, un tour de toupie du côté de l'impact, accélération
     for (const p of this.kart.activePoles()) {
       const away = this.pushOut(p.dir, this.kart.poleRadius, false);
@@ -1130,6 +1139,21 @@ export class World implements GameContext {
     return away;
   }
 
+  /** Élément de décor détruit : il disparaît dans une gerbe d'éclats (certains partent en orbite). */
+  private breakDecor(o: Obstacle): void {
+    const c = this.decor.destroy(o);
+    const dirs = o.dir.clone().normalize();
+    this.toys.debris(dirs, [c, c.clone().multiplyScalar(0.75), new THREE.Color(0.85, 0.8, 0.7)], 10, 0.3, 2.6);
+    this.burstAt(this.planet.localToWorld(dirs.clone().multiplyScalar(this.planetCollider + 0.1)), [1, 0.9, 0.7, 1]);
+    this.events.message('Détruit !', 'info');
+    this.decorBroken++;
+    if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.9, 0.75);
+  }
+
+  /** Éléments de décor détruits et objets envoyés en orbite pendant la partie (succès). */
+  decorBroken = 0;
+  orbited = 0;
+
   private bumpFx(): void {
     if (this.bumpCooldown <= 0) {
       this.bumpCooldown = 0.4;
@@ -1138,13 +1162,30 @@ export class World implements GameContext {
     }
   }
 
+  /**
+   * Difficulté choisie (Arcade) : en Facile et Normal on roule sans contrainte
+   * (ni poteaux, ni rétrécissement, météores plus rares) ; Difficile garde la
+   * montée en puissance (étapes, poteaux, planète qui rétrécit).
+   */
+  get difficulty(): 'easy' | 'normal' | 'hard' {
+    const v = String(this.settings.difficulty ?? 'hard');
+    return v === 'easy' || v === 'normal' ? v : 'hard';
+  }
+
+  /** La planète rétrécit : défi « Rétrécit », ou niveau Difficile (étapes). */
+  get shrinking(): boolean {
+    return bool(this.settings, 'planetShrink') || (this.difficulty === 'hard' && bool(this.settings, 'stages'));
+  }
+
   private updateDifficulty(): void {
     const s = this.settings;
     let interval = num(s, 'meteorInterval');
     let aim = 0;
+    const d = this.difficulty;
     if (bool(s, 'stages')) {
-      interval *= this.stages.intervalFactor;
-      aim = this.stages.aim;
+      // Facile : rythme constant ; Normal : montée adoucie ; Difficile : celle des étapes
+      interval *= d === 'easy' ? 1.6 : d === 'normal' ? 1.2 * Math.sqrt(this.stages.intervalFactor) : this.stages.intervalFactor;
+      aim = d === 'easy' ? 0 : d === 'normal' ? this.stages.aim * 0.5 : this.stages.aim;
     } else if (bool(s, 'meteorRamp')) {
       interval *= Math.max(0.35, 1 - this.chrono / 240);
       aim = 0.3;
@@ -1198,7 +1239,15 @@ export class World implements GameContext {
         if (this.dyingTime > 1.6) this.finishGameOver();
       }
     }
-    this.select.update(realDt);
+    this.select.update(realDt, this.viewH);
+    // Fumée des météores en chute (Arcade)
+    const trails = bool(this.settings, 'impactSmoke');
+    this.meteors.forEachMeteor((root, active) => {
+      const t = this.meteorTrails.find((x) => x.root === root);
+      if (!t) return;
+      t.ps.rateScale = trails && active ? 1 : 0;
+      if (t.ps.rateScale > 0 && !t.ps.playing) t.ps.play();
+    });
     this.particles.update(dt);
     this.explosions.update(dt);
     // Temps réel : une secousse en cours se termine même jeu figé (fin de partie)
@@ -1250,7 +1299,13 @@ export class World implements GameContext {
     this.boostCd = Math.max(0, this.boostCd - dt);
     this.hop = Math.max(0, this.hop - dt);
     this.vehicle.speedMultiplier = (this.turboActive ? 1.7 : 1) * (this.boostTime > 0 ? 1.55 : 1);
-    if (bool(s, 'planetShrink') && !this.galaxy) {
+    if (this.landDrift > 0) {
+      // Reprise d'adhérence progressive après l'atterrissage (dérapage contrôlé)
+      this.landDrift = Math.max(0, this.landDrift - dt);
+      const k = 1 - this.landDrift / LAND_DRIFT;
+      this.vehicle.grip = 0.22 + (this.def.gameplay.grip - 0.22) * k * k;
+    }
+    if (this.shrinking && !this.galaxy) {
       const dur = num(s, 'shrinkDuration');
       const min = num(s, 'shrinkMin');
       if (dur > 0) {
@@ -1270,7 +1325,7 @@ export class World implements GameContext {
     }
     this.planet.updateMatrixWorld(true);
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
-    const radius = bool(s, 'planetShrink') || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
+    const radius = this.shrinking || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
     if (alive) {
       this.vehicle.update(dt, input.horizontal, this.planet.position, radius);
       this.tracker.update();
@@ -1282,8 +1337,8 @@ export class World implements GameContext {
       if (bool(s, 'stages')) this.stages.update(this.tracker.totalDistance, this.chrono, this.clocksCollected);
       this.updateDifficulty();
     }
-    this.meteors.update(dt, alive ? { obb: this.carOBB, position: this.car.position } : null, alive);
-    this.craters.update(dt, num(s, 'craterLifetime'), bool(s, 'planetShrink'));
+    if (!this.won) this.meteors.update(dt, alive ? { obb: this.carOBB, position: this.car.position } : null, alive);
+    this.craters.update(dt, num(s, 'craterLifetime'), this.shrinking);
     // OnTriggerEnter : cratères (couche DamageObject)
     if (alive) {
       for (const c of this.craters.list) {
@@ -1307,6 +1362,7 @@ export class World implements GameContext {
     this.clocks.update(dt, alive ? this.carOBB : null, alive);
     if (alive) this.obstacles();
     if (alive) this.kartEvents(dt);
+    if (!alive) this.toys.update(dt, null, new THREE.Vector3(), this.planetRadius(), false);
     if (alive) {
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.quaternion);
       const Rp = this.planetRadius();
@@ -1333,7 +1389,7 @@ export class World implements GameContext {
     // Son moteur : hauteur selon le turbo ; dérapage selon le braquage
     if (this.engine === this.engineOriginal) this.engine?.setPitch(0.65 * (this.turboActive ? 1.35 : 1));
     else this.engine?.setPitch((this.turboActive ? 1.35 : 1) * (1 + 0.12 * Math.abs(this.vehicle.steer)) * this.def.gameplay.carSpeed);
-    if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5);
+    if (this.skid && bool(s, 'extraSounds')) this.skid.setVolume(Math.max(Math.max(0, Math.abs(this.vehicle.steer) - 0.55) * 0.5, (0.45 * this.landDrift) / LAND_DRIFT));
   }
 
   /** Animation du véhicule Arcade et effets selon le sol (eau, lave). */
@@ -1718,6 +1774,10 @@ export class World implements GameContext {
     this.rig.blendFrom(camPos.sub(shift), camQ, 0.35);
     this.landT = 0.5;
     this.landBounce = 1.1;
+    // Sortie de vol : le véhicule glisse, dérape, puis reprend le contrôle
+    this.landDrift = LAND_DRIFT;
+    this.vehicle.grip = 0.22;
+    this.vehicle.kickSlip((Math.random() < 0.5 ? -1 : 1) * 0.75);
     this.burstAt(this.car.position.clone(), [0.9, 0.85, 0.75, 1]);
     this.events.stage?.(g.visited, next.name, this.galaxyCount > 0 ? `Planète ${g.visited} / ${this.galaxyCount}` : `Planète ${g.visited}`);
     const ang = g.index * 2.4;

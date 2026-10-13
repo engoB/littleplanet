@@ -15,6 +15,12 @@ export interface Obstacle {
   dir: THREE.Vector3;
   /** Rayon de collision (unités monde). */
   radius: number;
+  /** Chocs reçus et chocs avant destruction (aléatoire ; Infinity pour les monuments). */
+  hits: number;
+  maxHits: number;
+  /** Instance du décor (pièces et indice), pour la détruire. */
+  ps?: Part[];
+  k?: number;
 }
 
 interface Part {
@@ -888,7 +894,11 @@ export class Decor {
         });
         this.setInstance(ps, k, d, yaw, sc * sizeMul, (spec.lift ?? 0) * sizeMul);
         if (spec.float || spec.face) this.anims.push({ ps, k, dir: d, yaw, sc: sc * sizeMul, lift: (spec.lift ?? 0) * sizeMul, phase: rng.range(0, Math.PI * 2), spec, look: yaw });
-        if (spec.hit > 0) this.obstacles.push({ dir: d, radius: spec.hit * sc });
+        if (spec.hit > 0) {
+          // Fonce plusieurs fois dans un élément : il finit par céder (nombre de chocs aléatoire)
+          const maxHits = spec.monument ? Infinity : 2 + Math.floor(Math.random() * 4);
+          this.obstacles.push({ dir: d, radius: spec.hit * sc, hits: 0, maxHits, ps, k });
+        }
       }
     }
     for (const ps of this.parts.values()) {
@@ -938,6 +948,25 @@ export class Decor {
       touched.add(a.ps);
     }
     for (const ps of touched) for (const p of ps) p.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /**
+   * Détruit un élément de décor (obstacle) : il disparaît. Renvoie sa couleur
+   * principale (pour les éclats).
+   */
+  destroy(o: Obstacle): THREE.Color {
+    const color = new THREE.Color(0.8, 0.8, 0.8);
+    const i = this.obstacles.indexOf(o);
+    if (i >= 0) this.obstacles.splice(i, 1);
+    if (!o.ps || o.k === undefined) return color;
+    o.ps[0].mesh.getColorAt(o.k, color);
+    _m.makeScale(0, 0, 0);
+    for (const p of o.ps) {
+      p.mesh.setMatrixAt(o.k, _m);
+      p.mesh.instanceMatrix.needsUpdate = true;
+    }
+    this.anims = this.anims.filter((a) => !(a.ps === o.ps && a.k === o.k));
+    return color;
   }
 
   /** Libère les maillages (décor des planètes du menu). */

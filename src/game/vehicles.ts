@@ -125,36 +125,30 @@ export function buildHover(): VehicleRig {
     body.add(l);
   }
   body.add(hull, skirt, dome, head, hair, emb, embRing, spoiler);
-  // Néons « années 80 » : anneaux magenta / cyan autour des patins et halo au sol
+  // Néons « années 80 » : fins anneaux sous les quatre patins et petite lueur au sol
+  // juste sous chacun (rien sur la caisse)
   const neon = new THREE.Group();
   const pink = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.0, 0.4, 2.4) });
   const cyan = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.4, 3.0) });
-  [[-0.82, 0.78], [0.82, 0.78], [-0.82, -0.82], [0.82, -0.82]].forEach(([x, z], i) => {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.035, 8, 28), i < 2 ? pink : cyan);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.set(x, 0.36, z);
-    neon.add(ring);
-  });
-  const tube = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 6, 56), pink);
-  tube.rotation.x = Math.PI / 2;
-  tube.scale.set(0.84, 1.22, 1);
-  tube.position.y = 0.42;
-  neon.add(tube);
-  // Halo au sol (additif) sous la caisse
   const c = document.createElement('canvas');
   c.width = c.height = 64;
   const g = c.getContext('2d')!;
-  const grd = g.createRadialGradient(32, 32, 4, 32, 32, 32);
-  grd.addColorStop(0, 'rgba(255,255,255,0.9)');
+  const grd = g.createRadialGradient(32, 32, 2, 32, 32, 32);
+  grd.addColorStop(0, 'rgba(255,255,255,0.8)');
   grd.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = grd;
   g.fillRect(0, 0, 64, 64);
-  const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), color: new THREE.Color(1.6, 0.35, 1.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const halo = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 4.2), haloMat);
-  halo.rotation.x = -Math.PI / 2;
-  halo.position.y = 0.05;
-  halo.renderOrder = 2;
-  neon.add(halo);
+  const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), color: new THREE.Color(1.3, 0.3, 1.2), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  [[-0.82, 0.78], [0.82, 0.78], [-0.82, -0.82], [0.82, -0.82]].forEach(([x, z], i) => {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.018, 6, 28), i < 2 ? pink : cyan);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(x, 0.33, z);
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), haloMat);
+    halo.rotation.x = -Math.PI / 2;
+    halo.position.set(x, 0.05, z);
+    halo.renderOrder = 2;
+    neon.add(ring, halo);
+  });
   neon.visible = false;
   body.add(neon);
   body.traverse((o) => {

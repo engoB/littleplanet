@@ -3,8 +3,8 @@
  * projet Unity d'origine, en projection triplanaire (aucune couture), et un
  * chemin de terre qui fait le tour de la planète (grand cercle du départ,
  * légèrement sinueux) que la voiture suit en boucle sur l'écran titre.
- * Option « Herbe en relief » (test, désactivée par défaut) : coques
- * d'herbe superposées (shell texturing) qui donnent un tapis de brins.
+ * `grassShells` (herbe en relief, shell texturing) : essai mis de côté,
+ * trop lourd pour les téléphones ; non branché pour le moment.
  */
 import * as THREE from 'three';
 

@@ -165,12 +165,15 @@ const KINDS: Record<string, ToyKind> = {
   fence: { size: 0.14, breaks: 'plank', parts: () => [
     { geo: merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.04, 0.22, 0.04).translate(x, -0.03, 0)).concat([new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, 0.02, 0), new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, -0.06, 0)])), mat: toon({ color: 0xffffff }), tinted: true },
   ], colors: ['#a8784a'] },
+  chunk: { size: 0.04, debris: true, colors: ['#ffffff'], parts: () => [
+    { geo: new THREE.BoxGeometry(0.13, 0.09, 0.11), mat: toon({ color: 0xffffff }), tinted: true },
+  ] },
   plank: { size: 0.04, debris: true, parts: () => [
     { geo: new THREE.BoxGeometry(0.34, 0.035, 0.03), mat: toon({ color: 0xa8784a }) },
   ] },
 };
 
-const MAX = 18;
+const MAX = 32;
 const _m = new THREE.Matrix4();
 const _p = new THREE.Vector3();
 const _s = new THREE.Vector3();
@@ -219,6 +222,34 @@ export class Toys {
   prepare(defs: (Record<string, number> | undefined)[]): void {
     for (const d of defs) for (const k of Object.keys(d ?? {})) if (KINDS[k]) this.meshesOf(k);
     if (defs.some((d) => d?.fence)) this.meshesOf('plank');
+  }
+
+  /**
+   * Éclats projetés depuis `dir` (espace planète) : décor détruit, véhicule
+   * qui explose. `orbit` : part des éclats qui partent en orbite.
+   */
+  debris(dir: THREE.Vector3, colors: THREE.Color[], n: number, orbit: number, speed = 3): void {
+    this.meshesOf('chunk');
+    let t1 = new THREE.Vector3(0, 1, 0).cross(dir);
+    if (t1.lengthSq() < 1e-4) t1 = new THREE.Vector3(1, 0, 0).cross(dir);
+    t1.normalize();
+    const t2 = new THREE.Vector3().crossVectors(dir, t1);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const p = this.make('chunk', dir, Math.random() * 6.28, colors[i % colors.length].clone());
+      p.vel.copy(t1).multiplyScalar(Math.cos(a)).addScaledVector(t2, Math.sin(a)).multiplyScalar(speed * (0.4 + Math.random() * 0.8));
+      p.vUp = 2.5 + Math.random() * 3;
+      p.h = 0.05;
+      p.spin.set(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
+      p.life = 2.5 + Math.random() * 1.5;
+      p.size = 0.03 + Math.random() * 0.03;
+      if (Math.random() < orbit) {
+        p.escape = true;
+        p.vUp = 4 + Math.random() * 3;
+        p.life = 99;
+      }
+      this.toys.push(p);
+    }
   }
 
   /** Place les objets d'une planète : { type: nombre }. */
@@ -324,7 +355,7 @@ export class Toys {
         // Accélère vers l'espace, puis disparaît
         t.vUp += 6 * dt;
         t.h += t.vUp * dt;
-        if (t.h > 9) t.hidden = 10;
+        if (t.h > 9) t.hidden = spec.debris ? Infinity : 10;
       } else if (t.h > 0 || t.vUp > 0) {
         t.vUp -= g * dt;
         t.h += t.vUp * dt;
