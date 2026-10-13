@@ -6,6 +6,22 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.15.0 — lot 15
+
+- Le véhicule devient une **DeLorean volante** (inox, persiennes, roues
+  couchées lumineuses, Mr. Fusion).
+- Voyage galactique : la trajectoire d'arrivée est corrigée (elle finissait
+  trop haut depuis la 0.14) ; on voit la voiture **plonger dans le canon
+  champignon**, qui l'avale, gonfle en se dandinant, s'incline vers l'avant
+  et la **tire devant lui** dans une bouffée de fumée blanche (plus
+  d'onomatopée). La voiture est à l'abri des météores dans le canon.
+- Écran titre : plus de clignotement noir (le redimensionnement de la qualité
+  adaptative se fait juste avant le rendu).
+- Toutes les planètes démarrent plus grosses (rayon 1,3 au minimum, Naine
+  comprise ; planètes du voyage aussi).
+- Grand Océan : houle animée, crêtes d'écume et reflets (réglage « Vagues et
+  écume »).
+
 ## 0.14.0 — lot 14
 
 - Voyage galactique : nouvel atterrissage. La voiture plonge dans un **canon

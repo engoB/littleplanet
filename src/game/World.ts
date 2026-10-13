@@ -54,8 +54,6 @@ export interface WorldEvents {
   stage?(next: number, label: string, title?: string): void;
   /** Compte à rebours de départ : 3, 2, 1 puis 0 (« Partez ! »). */
   countdown?(n: number): void;
-  /** Onomatopée de bande dessinée (« BOUM ! ») au centre de l'écran. */
-  boom?(text: string): void;
 }
 
 const _v = new THREE.Vector3();
@@ -72,6 +70,11 @@ const SPIN_TIME = 0.7;
 const HOP_TIME = 1.0;
 /** Taille du canon champignon d'arrivée. */
 const CANNON_SCALE = 1;
+/** Plongée dans le canon (s). */
+const ENTER_TIME = 0.55;
+/** Saut « tir du canon » (repère de hopScale) et hauteur de la bouche en unités du corps (échelle 0,2). */
+const EJECT = 2;
+const MOUTH_LOCAL = (0.98 * CANNON_SCALE) / 0.2;
 /** Durée des étoiles d'étourdissement après un choc (s). */
 const DIZZY_TIME = 1.4;
 const _yAxis = new THREE.Vector3(0, 1, 0);
@@ -175,7 +178,7 @@ export class World implements GameContext {
     if (d.style !== 'galaxy') return d;
     if (!this.route.length) this.newRoute();
     const sub = planetById(this.route[i % this.route.length]);
-    return { ...sub, radius: Math.min(sub.radius, 1.05) };
+    return { ...sub, radius: Math.min(sub.radius, 1.3) };
   }
   private planetMesh!: THREE.Mesh;
   private planetStdMat!: THREE.Material;
@@ -222,6 +225,7 @@ export class World implements GameContext {
   private readonly burstObj = new THREE.Object3D();
   private bursts: ParticleSystem[] = [];
   private smokes: ParticleSystem[] = [];
+  private cannonSmoke!: ParticleSystem;
   private meteorTrails: { root: THREE.Object3D; ps: ParticleSystem }[] = [];
   private smokeIdx = 0;
   private burstIdx = 0;
@@ -234,7 +238,7 @@ export class World implements GameContext {
   galaxy: { index: number; arrivalDist: number; star: THREE.Vector3 | null; visited: number; goal: boolean } | null = null;
   /** Lancement : aspiration vers l'étoile, élan (toupie), vol, atterrissage. */
   launch: {
-    phase: 'pull' | 'wind' | 'fly'; t: number; from: THREE.Vector3; at: THREE.Vector3; p: THREE.Vector3[]; up0: THREE.Vector3; up1: THREE.Vector3;
+    phase: 'pull' | 'wind' | 'fly' | 'enter'; t: number; from: THREE.Vector3; at: THREE.Vector3; p: THREE.Vector3[]; up0: THREE.Vector3; up1: THREE.Vector3;
     /** Pose de départ, angle total de la toupie, cap de vol. */
     q0: THREE.Quaternion; spin: number; h0: THREE.Vector3;
     /** Orientations clés du vol et « haut » courant (sans le tonneau). */
@@ -506,6 +510,14 @@ export class World implements GameContext {
       sm.d.playOnAwake = false;
       this.smokes.push(this.particles.add(sm));
     }
+    {
+      // Fumée du canon champignon
+      const o = new THREE.Object3D();
+      this.burstObj.add(o);
+      const cs = fxp.cannonSmoke(o, atlas);
+      cs.d.playOnAwake = false;
+      this.cannonSmoke = this.particles.add(cs);
+    }
     this.surfaceFx = [this.splash, this.embers, this.wake, this.leaves, ...this.fireTrails, this.sparkle];
     // Fumée et feu selon les dégâts (systèmes des prefabs météores réutilisés)
     const smokeNode = findNode(a.project.prefabs['meteor 2 '] ?? a.project.prefabs['meteor3'], 'Smoke');
@@ -678,6 +690,7 @@ export class World implements GameContext {
       const glass = !!def.glass && !!cubes.mask;
       u.planetMask.value = cubes.mask ?? cubes.color;
       u.glass.value = glass ? 1 : 0;
+      u.ocean.value = def.id === 'ocean' && bool(this.settings, 'oceanWaves') ? 1 : 0;
       if (this.planetToonMat.transparent !== glass) {
         this.planetToonMat.transparent = glass;
         this.planetToonMat.side = glass ? THREE.DoubleSide : THREE.FrontSide;
@@ -1223,6 +1236,7 @@ export class World implements GameContext {
     const dt = Time.deltaTime;
     this.decor.update(dt, Time.time, this.mode === 'menu' ? undefined : this.carDir);
     this.planetToonMat.userData.planetUniforms.planetTime.value = Time.realtimeSinceStartup;
+    if (this.satMat) this.satMat.userData.planetUniforms.planetTime.value = Time.realtimeSinceStartup;
     if (this.mode === 'menu') {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
@@ -1273,7 +1287,7 @@ export class World implements GameContext {
     // LateUpdate : caméra
     if (this.mode === 'menu') this.rig.pivot.updateMatrixWorld(true);
     else {
-      if (this.launch && this.launch.phase === 'fly') this.rig.chase(this.car, this.launchUp(), realDt, this.satellite.position, this.landingCamera());
+      if (this.launch && (this.launch.phase === 'fly' || this.launch.phase === 'enter')) this.rig.chase(this.car, this.launchUp(), realDt, this.satellite.position, this.landingCamera());
       else if (this.launch) {
         // Aspiration / toupie : la caméra suit une pose sans la rotation de la toupie
         // (qui tourne doucement du cap d'arrivée vers le cap de vol)
@@ -1364,7 +1378,9 @@ export class World implements GameContext {
       if (bool(s, 'stages')) this.stages.update(this.tracker.totalDistance, this.chrono, this.clocksCollected);
       this.updateDifficulty();
     }
-    if (!this.won) this.meteors.update(dt, alive ? { obb: this.carOBB, position: this.car.position } : null, alive);
+    // Dans le canon champignon : la voiture est à l'abri
+    const exposed = alive && this.cannonT <= 0;
+    if (!this.won) this.meteors.update(dt, exposed ? { obb: this.carOBB, position: this.car.position } : null, alive);
     this.craters.update(dt, num(s, 'craterLifetime'), this.shrinking);
     // OnTriggerEnter : cratères (couche DamageObject)
     if (alive) {
@@ -1375,7 +1391,7 @@ export class World implements GameContext {
         }
         const inside = obbOverlap(this.carOBB, c.obb);
         // Dégâts : damageItems (« Crater » → 10) ou valeur du réglage
-        if (inside && !c.inside && this.hop <= 0 && this.health.getDamagePoints(c.name) > 0) {
+        if (inside && !c.inside && this.hop <= 0 && this.cannonT <= 0 && this.health.getDamagePoints(c.name) > 0) {
           this.damage(Math.round(num(s, 'craterDamage') * this.def.gameplay.craterDamage), 'Cratère');
           if (bool(s, 'craterBump')) {
             // Arcade : déviation aléatoire de 25 à 60° d'un côté ou de l'autre
@@ -1449,10 +1465,14 @@ export class World implements GameContext {
       if (this.hop > 0) {
         // Saut : parabole (unités locales de la voiture, échelle 0,2)
         const k = 1 - this.hop / HOP_TIME;
-        r.body.position.y += 5.5 * this.hopScale * 4 * k * (1 - k);
-        // Éjection du canon : un salto complet ; ressort : petit tangage
-        if (this.hopScale > 1) r.body.rotation.x -= Math.PI * 2 * (k * k * (3 - 2 * k));
-        else r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
+        if (this.hopScale === EJECT) {
+          // Tir du canon : part de la bouche, file vers l'avant en cloche, nez levé puis à plat
+          r.body.position.y += MOUTH_LOCAL * (1 - k) + 6.5 * 4 * k * (1 - k);
+          r.body.rotation.x -= 0.55 * Math.cos(k * Math.PI) * (1 - 0.5 * k);
+        } else {
+          r.body.position.y += 5.5 * 4 * k * (1 - k);
+          r.body.rotation.x -= 0.35 * Math.sin(k * Math.PI * 2) * (1 - k);
+        }
       }
       for (const t of this.thrusters) {
         t.gravityDir = down;
@@ -1616,6 +1636,7 @@ export class World implements GameContext {
     u.planetEmis.value = cubes.emis ?? cubes.color;
     u.emisColor.value.setRGB(def.emis ?? 0, def.emis ?? 0, def.emis ?? 0);
     u.rimColor.value.set(def.atmosphere);
+    u.ocean.value = def.id === 'ocean' && bool(this.settings, 'oceanWaves') ? 1 : 0;
     (this.satAtmo.material as THREE.ShaderMaterial).uniforms.color.value.set(def.atmosphere);
     (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6;
     this.satellite.scale.setScalar(def.radius);
@@ -1659,7 +1680,8 @@ export class World implements GameContext {
     const up1 = this.planet.position.clone().sub(this.satellite.position).normalize().addScaledVector(L.up0, 0.6).normalize();
     // Arrivée dans la bouche du canon champignon posé sur la planète suivante
     this.cannon.place(this.satellite.position.clone().addScaledVector(up1, this.planetCollider * this.satDef!.radius), up1, CANNON_SCALE);
-    const p3 = this.cannon.mouth().addScaledVector(up1, Rn - this.vehicle.f.desiredDistanceFromSurface);
+    // Fin du vol juste au-dessus de la bouche, puis plongée dedans (phase « enter »)
+    const p3 = this.cannon.mouth().addScaledVector(up1, 0.9);
     // Cap d'arrivée : le cap de départ ramené dans le plan tangent d'arrivée
     const h1 = L.h0.clone().addScaledVector(up1, -L.h0.dot(up1));
     if (h1.lengthSq() < 1e-4) h1.set(1, 0, 0).addScaledVector(up1, -up1.x);
@@ -1676,7 +1698,7 @@ export class World implements GameContext {
     if (L.qm.dot(L.qs) < 0) L.qm.set(-L.qm.x, -L.qm.y, -L.qm.z, -L.qm.w);
     if (L.qe.dot(L.qm) < 0) L.qe.set(-L.qe.x, -L.qe.y, -L.qe.z, -L.qe.w);
     // Pose de caméra d'après l'atterrissage (rejointe pendant la fin du vol)
-    L.land = { at: p3, up: up1, f: h1, center: this.satellite.position.clone(), radius: this.planetCollider * this.satDef!.radius };
+    L.land = { at: this.satellite.position.clone().addScaledVector(up1, Rn), up: up1, f: h1, center: this.satellite.position.clone(), radius: this.planetCollider * this.satDef!.radius };
   }
 
   private launchUp(): THREE.Vector3 {
@@ -1720,6 +1742,15 @@ export class World implements GameContext {
           this.audio.playOneShot('sfx_whoosh', 0.9, 0.7);
         }
       }
+    } else if (L.phase === 'enter') {
+      // Plongée nez en avant dans la bouche du canon, la voiture rapetisse
+      L.t = Math.min(1, L.t + dt / ENTER_TIME);
+      const e = L.t * L.t * (3 - 2 * L.t);
+      const m = this.cannon.mouth();
+      this.car.position.copy(L.p[3]).lerp(m.addScaledVector(L.up1, -0.35), e * e);
+      const down = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(L.land!.f, L.up1.clone().negate()).normalize(), L.land!.f, L.up1.clone().negate()));
+      if (down.dot(L.qe) < 0) down.set(-down.x, -down.y, -down.z, -down.w);
+      this.car.quaternion.slerpQuaternions(L.qe, down, Math.min(1, e * 1.4));
     } else {
       L.t = Math.min(1, L.t + dt / 2.6);
       // Départ rapide, arrivée très ralentie (approche en douceur) mais sans arrêt brutal
@@ -1737,8 +1768,6 @@ export class World implements GameContext {
       const r = Math.min(1, Math.max(0, (x - 0.08) / 0.62));
       const roll = Math.PI * 4 * (r * r * (3 - 2 * r));
       this.car.quaternion.copy(base).multiply(_q4.setFromAxisAngle(_zAxis, roll));
-      // Plongée dans le canon : la voiture disparaît dans la bouche
-      this.car.visible = x < 0.97;
       // Champ de vision élargi pendant le vol
       this.rig.flightFov = 10 * Math.sin(Math.PI * x);
       (this.satAtmo.material as THREE.ShaderMaterial).uniforms.intensity.value = 0.6 * (1 - Math.min(1, Math.max(0, (x - 0.35) / 0.35)));
@@ -1748,9 +1777,16 @@ export class World implements GameContext {
     this.sparkle.gravityDir = this.launchUp().negate();
     if (this.rig3d) animateVehicle(this.rig3d, Time.time, 0, true);
     this.surfaceEffects(dt, true);
+    // Après les effets (qui remettent l'échelle du corps à 1)
+    if (this.rig3d) this.rig3d.body.scale.setScalar(L.phase === 'enter' ? 1 - 0.7 * Math.max(0, (L.t - 0.35) / 0.65) : 1);
     this.clocks.update(dt, null, false);
     this.craters.update(dt, num(this.settings, 'craterLifetime'), false);
-    if (L.phase === 'fly' && L.t >= 1) this.land();
+    if (L.phase === 'fly' && L.t >= 1) {
+      L.phase = 'enter';
+      L.t = 0;
+      this.cannon.gulp();
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_whoosh', 0.6, 1.4);
+    } else if (L.phase === 'enter' && L.t >= 1) this.land();
   }
 
   /** Pose de caméra cible de fin de vol (celle du suivi après l'atterrissage). */
@@ -1758,7 +1794,7 @@ export class World implements GameContext {
     const L = this.launch;
     if (!L || !L.land || !this.rig.adaptive) return undefined;
     const { pos, tgt } = this.rig.adaptivePose(L.land.at, L.land.up, L.land.f, L.land.center, L.land.radius);
-    const k = Math.min(1, Math.max(0, (L.t - 0.55) / 0.45));
+    const k = L.phase === 'enter' ? 1 : Math.min(1, Math.max(0, (L.t - 0.55) / 0.45));
     return { pos, tgt, up: L.land.f, k: k * k * (3 - 2 * k) };
   }
 
@@ -1802,8 +1838,8 @@ export class World implements GameContext {
     this.rig.blendFrom(camPos.sub(shift), camQ, 0.35);
     // Canon champignon : il suit la planète (recalée à l'origine), la voiture est dedans
     this.cannon.group.position.sub(shift);
-    this.cannon.charge();
-    this.cannonT = MushroomCannon.CHARGE;
+    this.cannon.charge(f);
+    this.cannonT = MushroomCannon.CHARGE + MushroomCannon.AIM;
     this.car.visible = false;
     this.landT = 0;
     this.events.stage?.(g.visited, next.name, this.galaxyCount > 0 ? `Planète ${g.visited} / ${this.galaxyCount}` : `Planète ${g.visited}`);
@@ -1862,21 +1898,27 @@ export class World implements GameContext {
     });
   }
 
-  /** BOUM : le canon recrache la voiture en l'air (salto), elle retombe en douceur. */
+  /** Tir : le canon incliné expulse la voiture vers l'avant dans une bouffée de fumée. */
   private fireCannon(): void {
+    const mouth = this.cannon.mouth();
+    const dir = this.cannon.barrelDir();
     this.cannon.fire();
     this.car.visible = true;
     this.hop = HOP_TIME;
-    this.hopScale = 2.4;
-    this.boostTime = 0.9;
-    const mouth = this.cannon.mouth();
-    this.burstAt(mouth.clone(), [1, 0.95, 0.8, 1]);
-    if (bool(this.settings, 'impactSmoke')) this.smokeAt(mouth);
-    this.events.boom?.(['BOUM !', 'BOOM !', 'POUF !'][Math.floor(Math.random() * 3)]);
-    this.shaker.start({ enabled: true, delay: 0, duration: 0.35, space: 0, strength: [0.12, 0.12, 0.25], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+    this.hopScale = EJECT;
+    this.boostTime = 1.0;
+    const cs = this.cannonSmoke;
+    cs.obj.position.copy(mouth);
+    cs.obj.quaternion.setFromUnitVectors(_zAxis, dir);
+    cs.obj.updateMatrixWorld(true);
+    cs.gravityDir = mouth.clone().sub(this.planet.position).normalize().negate();
+    cs.stop(true);
+    cs.play();
+    this.burstAt(mouth.clone(), [1, 1, 1, 1]);
+    this.shaker.start({ enabled: true, delay: 0, duration: 0.3, space: 0, strength: [0.1, 0.1, 0.2], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
     if (bool(this.settings, 'extraSounds')) {
-      this.audio.playOneShot('sfx_explosion', 0.8, 1.35);
-      this.audio.playOneShot('sfx_jump', 0.8, 0.8);
+      this.audio.playOneShot('sfx_explosion', 0.7, 1.5);
+      this.audio.playOneShot('sfx_whoosh', 0.8, 0.9);
     }
   }
 

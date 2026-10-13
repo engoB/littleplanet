@@ -1,13 +1,17 @@
 /**
  * Canon champignon du voyage galactique : la voiture plonge dans la bouche
- * du canon posé sur la planète d'arrivée, le champignon gonfle… puis BOUM,
- * il la recrache en l'air.
+ * du canon posé sur la planète d'arrivée ; le champignon l'avale, gonfle en se
+ * dandinant, s'incline vers l'avant et la tire (bouffée de fumée), puis rentre
+ * sous terre.
  */
 import * as THREE from 'three';
 import { toonGradient } from './toon';
 
 const toon = (color: number) => new THREE.MeshToonMaterial({ color, gradientMap: toonGradient() });
 const _y = new THREE.Vector3(0, 1, 0);
+const _q = new THREE.Quaternion();
+const _a = new THREE.Vector3();
+const ease = (x: number) => x * x * (3 - 2 * x);
 
 export class MushroomCannon {
   readonly group = new THREE.Group();
@@ -15,14 +19,21 @@ export class MushroomCannon {
   private readonly stem: THREE.Mesh;
   /** Hauteur de la bouche (unités locales, avant l'échelle). */
   static readonly MOUTH = 0.98;
+  /** Charge (s) : la voiture est dedans, le champignon gonfle et se dandine. */
+  static readonly CHARGE = 0.85;
+  /** Visée (s) : il s'incline vers l'avant juste avant de tirer. */
+  static readonly AIM = 0.25;
+  /** Inclinaison du tir (rad). */
+  static readonly TILT = 0.55;
   /** Temps de la phase en cours (s). */
   private t = 0;
-  private state: 'idle' | 'charge' | 'recoil' | 'linger' | 'hide' = 'idle';
+  private state: 'idle' | 'gulp' | 'charge' | 'recoil' | 'hide' = 'idle';
   private size = 1;
+  /** Orientation dressée (sans inclinaison) et axe d'inclinaison vers l'avant (local). */
+  private readonly base = new THREE.Quaternion();
+  private readonly axis = new THREE.Vector3(1, 0, 0);
   /** Le canon a disparu (rentré sous terre) : nuage de poussière. */
   onGone: (at: THREE.Vector3) => void = () => undefined;
-  /** Charge (s) : durée entre l'entrée de la voiture et le BOUM. */
-  static readonly CHARGE = 0.6;
 
   constructor(parent: THREE.Object3D) {
     // Pied crème, un peu évasé
@@ -62,7 +73,8 @@ export class MushroomCannon {
   /** Pose le canon au point `at` (monde), dressé selon `up`, à l'échelle `s`. */
   place(at: THREE.Vector3, up: THREE.Vector3, s: number): void {
     this.group.position.copy(at);
-    this.group.quaternion.setFromUnitVectors(_y, up);
+    this.base.setFromUnitVectors(_y, up);
+    this.group.quaternion.copy(this.base);
     this.group.scale.setScalar(s);
     this.size = s;
     this.group.visible = true;
@@ -78,13 +90,28 @@ export class MushroomCannon {
     return this.group.localToWorld(out.set(0, MushroomCannon.MOUTH, 0));
   }
 
-  /** La voiture est dedans : le champignon gonfle. */
-  charge(): void {
-    this.state = 'charge';
+  /** Axe du fût (monde), incliné ou non. */
+  barrelDir(out = new THREE.Vector3()): THREE.Vector3 {
+    return out.copy(_y).applyQuaternion(this.group.quaternion).normalize();
+  }
+
+  /** La voiture plonge dedans : le chapeau s'ouvre un peu pour l'avaler. */
+  gulp(): void {
+    this.state = 'gulp';
     this.t = 0;
   }
 
-  /** BOUM : le chapeau s'écrase puis rebondit. */
+  /** Voiture avalée : il gonfle et se dandine, puis s'incline vers `forward` (monde). */
+  charge(forward: THREE.Vector3): void {
+    this.state = 'charge';
+    this.t = 0;
+    // Axe d'inclinaison local : haut × avant (le fût bascule vers l'avant)
+    const up = _a.copy(_y).applyQuaternion(this.base);
+    const f = forward.clone().addScaledVector(up, -forward.dot(up)).normalize();
+    this.axis.crossVectors(up, f).normalize().applyQuaternion(_q.copy(this.base).invert());
+  }
+
+  /** Tir : le chapeau s'écrase puis rebondit, il se redresse et rentre sous terre. */
   fire(): void {
     this.state = 'recoil';
     this.t = 0;
@@ -95,27 +122,44 @@ export class MushroomCannon {
     this.state = 'idle';
   }
 
+  private tilt(angle: number, wobbleX = 0, wobbleZ = 0): void {
+    this.group.quaternion.copy(this.base).multiply(_q.setFromAxisAngle(this.axis, angle));
+    if (wobbleX || wobbleZ) this.group.quaternion.multiply(_q.setFromEuler(new THREE.Euler(wobbleX, 0, wobbleZ)));
+  }
+
   update(dt: number): void {
     if (!this.group.visible) return;
     this.t += dt;
     const t = this.t;
-    if (this.state === 'charge') {
-      // Gonfle en tremblotant
-      const k = Math.min(1, t / MushroomCannon.CHARGE);
-      const w = Math.sin(t * 40) * 0.04 * k;
-      this.cap.scale.set(1 + 0.28 * k + w, 1 - 0.12 * k - w, 1 + 0.28 * k + w);
-      this.stem.scale.set(1 + 0.1 * k, 1 - 0.15 * k, 1 + 0.1 * k);
+    const C = MushroomCannon.CHARGE;
+    if (this.state === 'gulp') {
+      // Bouche qui s'ouvre (chapeau élargi), petit sursaut
+      const k = Math.min(1, t / 0.4);
+      const o = Math.sin(k * Math.PI);
+      this.cap.scale.set(1 + 0.12 * o, 1 - 0.08 * o, 1 + 0.12 * o);
+    } else if (this.state === 'charge') {
+      if (t < C) {
+        // Avale (bosse qui descend), gonfle et se dandine de plus en plus
+        const k = t / C;
+        const gulp = Math.max(0, 1 - t / 0.25);
+        const w = Math.sin(t * 26) * (0.03 + 0.05 * k);
+        this.cap.scale.set(1 + 0.22 * k + w + 0.1 * gulp, 1 + 0.1 * k - w, 1 + 0.22 * k + w + 0.1 * gulp);
+        this.stem.scale.set(1 + 0.18 * k + 0.25 * gulp, 1 - 0.1 * k, 1 + 0.18 * k + 0.25 * gulp);
+        this.tilt(0, Math.sin(t * 17) * 0.1 * k, Math.cos(t * 13) * 0.1 * k);
+      } else {
+        // Visée : bascule vers l'avant, le chapeau se ramasse
+        const k = ease(Math.min(1, (t - C) / MushroomCannon.AIM));
+        this.tilt(MushroomCannon.TILT * k);
+        this.cap.scale.set(1.22 - 0.1 * k, 1.1 - 0.2 * k, 1.22 - 0.1 * k);
+        this.stem.scale.set(1.18, 0.9, 1.18);
+      }
     } else if (this.state === 'recoil') {
-      // Écrasement puis ressort amorti
+      // Recul : écrasement puis ressort amorti, il se redresse
       const e = Math.exp(-5 * t) * Math.cos(t * 22);
       this.cap.scale.set(1 - 0.25 * e, 1 + 0.45 * e, 1 - 0.25 * e);
       this.stem.scale.set(1, 1 + 0.25 * e, 1);
-      if (t > 0.7) {
-        this.state = 'linger';
-        this.t = 0;
-      }
-    } else if (this.state === 'linger') {
-      if (t > 0.3) {
+      this.tilt(MushroomCannon.TILT * (1 - ease(Math.min(1, t / 0.6))) - 0.12 * Math.exp(-6 * t) * Math.sin(t * 18));
+      if (t > 0.9) {
         this.state = 'hide';
         this.t = 0;
       }
@@ -123,7 +167,8 @@ export class MushroomCannon {
       // Usage unique : il se tasse et rentre sous terre, puis disparaît
       const k = Math.min(1, t / 0.45);
       const e = k * k;
-      this.group.scale.set(this.size * (1 + 0.15 * Math.sin(k * Math.PI)), this.size * Math.max(0.01, 1 - e), this.size * (1 + 0.15 * Math.sin(k * Math.PI)));
+      const w = this.size * (1 + 0.15 * Math.sin(k * Math.PI));
+      this.group.scale.set(w, this.size * Math.max(0.01, 1 - e), w);
       if (k >= 1) {
         this.onGone(this.group.position.clone());
         this.hide();

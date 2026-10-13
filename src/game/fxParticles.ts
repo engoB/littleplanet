@@ -152,6 +152,23 @@ export function impactSmoke(obj: THREE.Object3D, atlas: Record<string, [number, 
   return new ParticleSystem(obj, d, renderer(0, 2.5), look);
 }
 
+/** Bouffée de fumée blanche du canon champignon (le long du fût, freinée). */
+export function cannonSmoke(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
+  const d = base({
+    looping: false,
+    duration: 0.3,
+    main: { lifetime: rnd(0.9, 1.7), speed: rnd(1.2, 3.4), size: rnd(0.28, 0.5), gravity: k(-0.12), color: col([0.95, 0.94, 0.92, 0.95]), maxParticles: 60, rotation: rnd(0, 6.28) },
+    shape: { type: 4, angle: 22, radius: 0.12 },
+    emission: { enabled: true, rate: k(40), rateOverDistance: k(0), bursts: [{ time: 0, count: k(24), cycles: 1, interval: 0.01, probability: 1 }] },
+    limitVelocity: { enabled: true, limit: k(0.25), dampen: 0.12, drag: k(0) },
+    sizeOverLifetime: { enabled: true, curve: curve([[0, 0.6], [0.25, 1.6], [1, 3]]) },
+    colorOverLifetime: { enabled: true, gradient: fade([[0, 1, 1, 1], [1, 0.85, 0.85, 0.85]], [[0, 0], [0.05, 0.95], [0.5, 0.6], [1, 0]]) },
+  });
+  const tex = atlas['cfxr smoke cloud x4'] ?? atlas.fx_dot;
+  const look: SpriteLook = { rect: [tex[0], tex[1], tex[0] + (tex[2] - tex[0]) / 2, tex[1] + (tex[3] - tex[1]) / 2], additive: false, tint: [1, 1, 1], hidden: false };
+  return new ParticleSystem(obj, d, renderer(0, 1.5), look);
+}
+
 /** Traînée de fumée d'un météore qui tombe (le météore file : les bouffées s'égrènent). */
 export function meteorTrail(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>): ParticleSystem {
   const d = base({
