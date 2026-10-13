@@ -6,6 +6,28 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.13.0 — lot 13
+
+- **Progression remise à 0 %** (une fois) : tout est à refaire et à débloquer.
+- Progression classique : seul le Monde 1 est ouvert ; 3 objectifs réussis
+  débloquent le monde suivant ; le dernier monde débloque les défis (Chrono)
+  et le Voyage galactique ; les autres défis se débloquent avec des succès.
+  Écran « Succès » et annonces « Succès débloqué ».
+- Difficulté Facile / Normal / Difficile (carte du monde et Options) : poteaux,
+  rétrécissement et montée des météores réservés au Difficile.
+- Roue crantée : vraies Options (difficulté, musique, sons, vibrations,
+  qualité) ; tous les anciens réglages sont dans l'« Espace perso ».
+- Écran titre : caméra fixe, la planète tourne doucement, la voiture file sur
+  le chemin.
+- Voyage réussi : plus de tremblement à la fin, et vrai écran de victoire.
+- Choix des mondes : fond magique (nébuleuses, étoiles scintillantes).
+- Néons des mondes sombres plus fins, concentrés sur les nacelles.
+- Fumée derrière les météores pendant leur chute.
+- Atterrissage du voyage : la voiture dérape puis reprend l'adhérence.
+- Flammes du bouton turbo de tailles aléatoires.
+- Décor destructible (2 à 5 chocs) et débris de l'explosion en orbite.
+- Herbe en relief mise de côté (performances sur téléphone).
+
 ## 0.12.0 — lot 12
 
 - Écran titre : planète classique (herbe réaliste et chemin de terre du projet

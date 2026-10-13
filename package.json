@@ -1,7 +1,7 @@
 {
   "name": "littleplanet",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "description": "Ma Petite Planète — portage web (Three.js + TypeScript, PWA) du jeu Unity MaPetitePlanet",
   "scripts": {

@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import type { Assets } from '../unity/assets';
 import type { PlanetDef } from './planets';
+import { MagicSky } from './MagicSky';
 import { atmosphere, planetToonMaterial } from './toon';
 
 const ORIGIN = new THREE.Vector3(0, 400, 0);
@@ -26,6 +27,8 @@ export class PlanetSelect {
   readonly camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 400);
   private items: Item[] = [];
   private readonly aura: THREE.Mesh;
+  /** Fond magique (nébuleuses, étoiles scintillantes). */
+  private readonly sky = new MagicSky();
   /** Index affiché (flottant, amorti) et index visé. */
   private cur = 0;
   target = 0;
@@ -41,6 +44,7 @@ export class PlanetSelect {
     this.group.position.copy(ORIGIN);
     this.group.visible = false;
     scene.add(this.group);
+    this.group.add(this.sky.group);
     // Aura enfant de la planète sélectionnée (le shader lit l'échelle du parent)
     this.aura = atmosphere(geoScale);
     this.geo = geo;
@@ -99,9 +103,10 @@ export class PlanetSelect {
     this.camera.updateProjectionMatrix();
   }
 
-  update(dt: number): void {
+  update(dt: number, viewH = 720): void {
     if (!this.active) return;
     this.t += dt;
+    this.sky.update(this.t, viewH);
     this.cur += (this.target - this.cur) * (1 - Math.exp(-dt * 7));
     const spacing = this.portrait ? 2.2 : 2.9;
     for (let i = 0; i < this.items.length; i++) {

@@ -137,7 +137,7 @@ async function init(): Promise<void> {
     /* hors ligne sans cache : valeurs de repli du schéma */
   }
   document.getElementById('reset-progress')!.onclick = () => {
-    if (!confirm('Effacer toute la progression (records, planètes débloquées, défis) ?')) return;
+    if (!confirm('Effacer toute la progression (records, mondes débloqués, succès, défis) ?')) return;
     resetProgress();
     document.getElementById('reset-status')!.textContent = 'Progression réinitialisée.';
   };

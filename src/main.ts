@@ -16,7 +16,8 @@ import { setupOrientation } from './ui/orientation';
 import { Screens } from './ui/screens';
 import { Assets } from './unity/assets';
 import { World } from './game/World';
-import { FIRST, PLANETS, type PlanetDef, isUnlocked, setWorldChallenges, worldChallenges, planetById, recordDistance, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
+import { FIRST, PLANETS, type PlanetDef, setWorldChallenges, worldChallenges, planetById, recordDistance, resetProgress, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
+import { GOALS, completion, defiHint, defiUnlocked, goalsOf, isUnlocked, migrateProgress, recordRun, setUnlockAll, trophies, unlockHint, voyageUnlocked, type RunStats } from './game/progress';
 import * as THREE from 'three';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -101,7 +102,11 @@ async function main(): Promise<void> {
   const assets = new Assets('./');
   await assets.loadData();
   bindSchemaToProject(assets.project);
+  // Nouvelle version de la progression : tout est à refaire (une seule fois)
+  if (!TEST) migrateProgress(resetProgress);
   const settings: Settings = settingsFromUrl(loadSettings());
+  // Tests : ?planet= ouvre directement le monde demandé
+  setUnlockAll(settings.unlockAll === true || (TEST && params.has('planet')));
   // Tests déterministes : pas de compte à rebours sauf demande explicite
   if (TEST && !params.has('countdown')) settings.countdown = false;
   // Paramètres d'URL (tests) : les bascules du menu ne sont pas enregistrées
@@ -147,7 +152,7 @@ async function main(): Promise<void> {
   const isOriginal = preset === 'original';
   // Planète : la planète d'origine en préréglage Original, sinon la dernière choisie
   let planetId = isOriginal ? 'origine' : params.get('planet') ?? selectedPlanet();
-  if (!isUnlocked(planetById(planetId), settings.unlockAll === true) || planetById(planetId).style === 'galaxy') planetId = FIRST.id;
+  if (!isUnlocked(planetById(planetId)) || planetById(planetId).style === 'galaxy') planetId = FIRST.id;
   world.planetDef = planetById(planetId);
   // ?planet=galaxie (tests) : lance directement le voyage galactique
   if (params.get('planet') === 'galaxie') world.planetDef = planetById('galaxie');
@@ -178,13 +183,18 @@ async function main(): Promise<void> {
   };
 
   // --- tailles (mises en cache, pas de mesure DOM par frame)
-  const quality = String(settings.quality);
-  let pixelRatio = Math.min(Number(settings.maxPixelRatio), window.devicePixelRatio || 1);
-  if (quality === 'low') pixelRatio = Math.min(pixelRatio, 1);
-  if (quality === 'medium') pixelRatio = Math.min(pixelRatio, 1.5);
-  // Mobile en qualité auto : départ à 1,5 (la boucle monte si le 60 Hz tient)
+  let quality = String(settings.quality);
+  let pixelRatio = 1;
   const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-  if (quality === 'auto' && coarse) pixelRatio = Math.min(pixelRatio, 1.5);
+  const basePixelRatio = () => {
+    quality = String(settings.quality);
+    pixelRatio = Math.min(Number(settings.maxPixelRatio), window.devicePixelRatio || 1);
+    if (quality === 'low') pixelRatio = Math.min(pixelRatio, 1);
+    if (quality === 'medium') pixelRatio = Math.min(pixelRatio, 1.5);
+    // Mobile en qualité auto : départ à 1,5 (la boucle monte si le 60 Hz tient)
+    if (quality === 'auto' && coarse) pixelRatio = Math.min(pixelRatio, 1.5);
+  };
+  basePixelRatio();
   const resize = () => {
     // Taille réelle du canvas (100lvh) : pas de bande vide en bas de l'écran
     const w = Math.max(1, canvas.clientWidth || window.innerWidth);
@@ -248,7 +258,7 @@ async function main(): Promise<void> {
   const choosable = PLANETS.filter((p) => p.style !== 'galaxy');
   const diffLabel = ['', 'Facile', 'Tranquille', 'Corsé', 'Difficile', 'Extrême'];
   const renderPlanets = () => {
-    world.select.setPlanets(choosable.map((def) => ({ def, locked: !isUnlocked(def, settings.unlockAll === true) })));
+    world.select.setPlanets(choosable.map((def) => ({ def, locked: !isUnlocked(def) })));
     world.select.select(Math.max(0, choosable.findIndex((p) => p.id === planetId)), true);
     updatePlanetCard();
   };
@@ -256,18 +266,20 @@ async function main(): Promise<void> {
     const i = world.select.target;
     const p = choosable[i];
     if (!p) return;
-    const unlocked = isUnlocked(p, settings.unlockAll === true);
+    const unlocked = isUnlocked(p);
     const best = bestDistances()[p.id];
+    const goals = Math.min(GOALS, goalsOf(p.id));
     $('ps-count').textContent = `${i + 1} / ${choosable.length}`;
     $('ps-kicker').textContent = `Monde ${i + 1} · ${diffLabel[p.difficulty] ?? ''}`;
     $('ps-name').textContent = p.name;
     stars($('ps-stars'), p.difficulty);
     $('ps-info').textContent = p.tagline;
-    $('ps-best').textContent = !unlocked && p.unlock ? `🔒 ${p.unlock.distance} m sur ${planetById(p.unlock.planet).name}` : best ? `Record : ${Math.floor(best)} m` : '';
+    $('ps-best').textContent = !unlocked ? unlockHint(p) ?? '' : preset === 'original' ? (best ? `Record : ${Math.floor(best)} m` : '') : `Objectifs ${'●'.repeat(goals)}${'○'.repeat(GOALS - goals)}${best ? ` · record ${Math.floor(best)} m` : ''}`;
     $('ps-best').classList.toggle('locked', !unlocked);
     $('ps-defi-help').textContent = '';
     renderDefis(p, !unlocked);
     ($('btn-planet-go') as HTMLButtonElement).disabled = !unlocked;
+    document.querySelector('.ps-card')!.classList.toggle('locked', !unlocked);
     if (unlocked && p.id !== planetId) {
       planetId = p.id;
       selectPlanet(p.id);
@@ -338,13 +350,13 @@ async function main(): Promise<void> {
   const SHORT: Record<string, string> = { modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill', planetShrink: 'Rétrécit' };
   // Valeurs par défaut (réglages) : un monde jamais réglé reprend celles-ci
   const defaultDefis = MODE_ORDER.filter((k) => settings[k] === true);
-  const defisOf = (id: string) => worldChallenges(id) ?? defaultDefis;
+  const defisOf = (id: string) => (worldChallenges(id) ?? defaultDefis).filter((k) => defiUnlocked(k));
   /** Applique les défis du monde (ou aucun pour le voyage) avant une partie. */
   // Voyage : ses propres défis (sans Chrono ni Rétrécit, il a son compte à rebours)
   const VOYAGE_DEFIS = ['modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet'];
   const applyDefis = (def: PlanetDef) => {
     if (urlOverride) return; // tests : réglages imposés par l'URL
-    const on = def.style === 'galaxy' ? (worldChallenges('galaxie') ?? []).filter((k) => VOYAGE_DEFIS.includes(k)) : defisOf(def.id);
+    const on = def.style === 'galaxy' ? (worldChallenges('galaxie') ?? []).filter((k) => VOYAGE_DEFIS.includes(k) && defiUnlocked(k)) : defisOf(def.id);
     for (const k of MODE_ORDER) settings[k] = on.includes(k);
     world.applySettings(settings);
   };
@@ -353,10 +365,24 @@ async function main(): Promise<void> {
     box.innerHTML = '';
     box.hidden = locked || preset === 'original';
     const voyage = def.style === 'galaxy';
-    const on = new Set(voyage ? worldChallenges('galaxie') ?? [] : defisOf(def.id));
+    const on = new Set((voyage ? worldChallenges('galaxie') ?? [] : defisOf(def.id)).filter((k) => defiUnlocked(k)));
+    const help = $(voyage ? 'voy-defi-help' : 'ps-defi-help');
     for (const d of modeDefs.filter((x) => !voyage || VOYAGE_DEFIS.includes(x.key))) {
       const b = document.createElement('button');
       b.className = 'defi';
+      if (!defiUnlocked(d.key)) {
+        // Défi encore verrouillé : cadenas, et l'aide dit comment l'ouvrir
+        b.classList.add('locked');
+        b.innerHTML = `<i class="mode-ico mi-${d.key}"></i><span></span>`;
+        b.querySelector('span')!.textContent = SHORT[d.key] ?? d.label;
+        b.title = defiHint(d.key);
+        b.addEventListener('click', () => {
+          if (settings.extraSounds === true) world.audio.playOneShot('ui_toggle_off', 0.4, 0.7);
+          help.textContent = defiHint(d.key);
+        });
+        box.appendChild(b);
+        continue;
+      }
       b.classList.toggle('on', on.has(d.key));
       b.setAttribute('role', 'switch');
       b.setAttribute('aria-checked', String(on.has(d.key)));
@@ -369,12 +395,13 @@ async function main(): Promise<void> {
         setWorldChallenges(def.id, MODE_ORDER.filter((k) => on.has(k)));
         if (settings.extraSounds === true) world.audio.playOneShot(on.has(d.key) ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
         renderDefis(def, locked, boxId);
-        if (!voyage) $('ps-defi-help').textContent = on.has(d.key) ? `${d.label} : ${d.help ?? ''}` : '';
+        help.textContent = on.has(d.key) ? `${d.label} : ${d.help ?? ''}` : '';
       });
       box.appendChild(b);
     }
   };
   const updateModes = () => {
+    if (!voyageUnlocked()) return;
     const t = world.galaxyTime;
     $('modes-summary').textContent = `${world.galaxyCount ? `${world.galaxyCount} planètes` : 'Sans fin'} · ${t ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')} / planète` : 'temps libre'}`;
   };
@@ -395,6 +422,11 @@ async function main(): Promise<void> {
       click();
       syncSegs();
       updateModes();
+      if (key === 'quality') {
+        basePixelRatio();
+        resize();
+      }
+      if (key === 'difficulty') diffHelp();
     });
   }
   syncSegs();
@@ -419,23 +451,109 @@ async function main(): Promise<void> {
     hudModesTimer = window.setTimeout(() => el.classList.add('compact'), 4500);
   };
 
-  function onGameOver(stats: { distance: number; time: number; stage: number; clocks: number; victory?: boolean; planets?: number }): void {
-    document.querySelector('#menu-over .gameover')!.textContent = stats.victory ? 'VOYAGE RÉUSSI !' : 'GAME OVER';
-    document.querySelector('#menu-over .gameover')!.classList.toggle('victory', !!stats.victory);
+  /** Annonce d'un succès, d'un monde ou d'un défi débloqué (petite carte en haut). */
+  const toast = (title: string, text: string, icon = '🏆', delay = 0) => {
+    window.setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = '<span class="toast-ico"></span><span class="toast-text"><b></b><small></small></span>';
+      el.querySelector('.toast-ico')!.textContent = icon;
+      el.querySelector('b')!.textContent = title;
+      el.querySelector('small')!.textContent = text;
+      $('toasts').appendChild(el);
+      if (settings.extraSounds === true) world.audio.playOneShot('sfx_stage', 0.5, 1.25);
+      window.setTimeout(() => el.classList.add('out'), 3200);
+      window.setTimeout(() => el.remove(), 3700);
+    }, delay);
+  };
+  const updateProgress = () => {
+    const pct = `${Math.round(completion() * 100)} %`;
+    $('home-progress').textContent = pct;
+    $('tro-pct').textContent = pct;
+    $('tro-fill').style.transform = `scaleX(${completion()})`;
+    const locked = !voyageUnlocked();
+    $('btn-modes').classList.toggle('locked', locked);
+    if (locked) $('modes-summary').textContent = `🔒 Débloque ${choosable[choosable.length - 1].name}`;
+    else updateModes();
+  };
+  const renderTrophies = () => {
+    const list = $('tro-list');
+    list.innerHTML = '';
+    for (const { t, got } of trophies()) {
+      const row = document.createElement('div');
+      row.className = `tro${got ? ' got' : ''}`;
+      row.innerHTML = '<span class="tro-badge"></span><span class="tro-text"><b></b><small></small></span>';
+      row.querySelector('.tro-badge')!.textContent = got ? t.icon : '🔒';
+      row.querySelector('b')!.textContent = t.name;
+      const mode = t.unlocks ? modeDefs.find((d) => d.key === t.unlocks) : undefined;
+      row.querySelector('small')!.textContent = t.desc + (mode ? ` · débloque le défi ${SHORT[mode.key] ?? mode.label}` : '');
+      list.appendChild(row);
+    }
+    updateProgress();
+  };
+  /** Confettis de la victoire (éléments CSS, retirés à la sortie de l'écran). */
+  const confetti = () => {
+    const box = $('confetti');
+    box.innerHTML = '';
+    const colors = ['#ffe066', '#ff6b9a', '#6be4ff', '#9b7bff', '#7dff9b', '#ffffff'];
+    for (let i = 0; i < 60; i++) {
+      const c = document.createElement('i');
+      c.style.left = `${Math.random() * 100}%`;
+      c.style.background = colors[i % colors.length];
+      c.style.animationDelay = `${Math.random() * 2.5}s`;
+      c.style.animationDuration = `${2.6 + Math.random() * 2.2}s`;
+      c.style.setProperty('--dx', `${Math.random() * 120 - 60}px`);
+      c.style.setProperty('--r', `${Math.random() * 720 - 360}deg`);
+      box.appendChild(c);
+    }
+  };
+
+  function onGameOver(stats: RunStats): void {
+    document.querySelector('#menu-over .gameover')!.textContent = 'GAME OVER';
     let rank = 0;
     // Modes « faciles » ou au score différent : pas de record
     const noRecord = settings.modeTimeAttack === true;
     if (settings.saveRecords === true && !noRecord) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
     const best = settings.saveRecords === true ? loadRecords()[0]?.distance ?? null : null;
-    screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original', world.stages.item);
     $('stage-banner').hidden = true;
-    const unlocked = isOriginal || noRecord ? [] : recordDistance(world.planetDef.id, stats.distance);
+    if (!isOriginal && !noRecord) recordDistance(world.planetDef.id, stats.distance);
+    // Progression classique : mondes, défis et succès débloqués
+    const lines: string[] = [];
+    if (!isOriginal) {
+      const got = recordRun(world.planetDef, stats);
+      for (const w of got.worlds) {
+        lines.push(`Nouveau monde débloqué : ${w.name} !`);
+        toast('Nouveau monde', w.name, '🪐');
+      }
+      if (got.voyage) {
+        lines.push('Défis et Voyage galactique débloqués !');
+        toast('Voyage galactique', 'Défis et voyage débloqués', '🚀', 600);
+      }
+      got.trophies.forEach((t, i) => toast('Succès débloqué', t.name, t.icon, 900 + i * 700));
+      updateProgress();
+    }
+    vibrate([80, 60, 160], settings.haptics === true);
+    if (stats.victory) {
+      // Vrai écran de victoire du voyage
+      hud.show(false);
+      $('vic-planets').textContent = String(stats.planets ?? world.galaxyCount);
+      $('vic-distance').textContent = `${Math.floor(stats.distance)} m`;
+      $('vic-time').textContent = `${Math.floor(stats.time / 60)}:${String(Math.floor(stats.time % 60)).padStart(2, '0')}`;
+      const vu = $('vic-unlock');
+      vu.hidden = lines.length === 0;
+      vu.textContent = lines.join(' ');
+      confetti();
+      screens.show('menu-victory');
+      if (settings.extraSounds === true) world.audio.playOneShot('sfx_stage', 0.9, 0.9);
+      maybeUpdate();
+      return;
+    }
+    screens.gameOver(stats, rank, rank === 1 ? null : best, preset !== 'original', world.stages.item);
     const un = $('over-unlock');
-    un.hidden = unlocked.length === 0;
-    un.textContent = unlocked.length ? `Nouvelle planète débloquée : ${unlocked.map((p) => p.name).join(', ')} !` : '';
+    un.hidden = lines.length === 0;
+    un.textContent = lines.join(' ');
     hud.show(preset !== 'original');
     screens.show('menu-over');
-    vibrate([80, 60, 160], settings.haptics === true);
     maybeUpdate();
   }
 
@@ -451,6 +569,12 @@ async function main(): Promise<void> {
   on('btn-pause-planets', showPlanets);
   on('btn-over-planets', showPlanets);
   on('btn-modes', () => {
+    if (!voyageUnlocked()) {
+      $('btn-modes').classList.remove('shake');
+      void $('btn-modes').offsetWidth;
+      $('btn-modes').classList.add('shake');
+      return;
+    }
     syncSegs();
     renderDefis(planetById('galaxie'), false, 'voy-defis');
     screens.show('menu-modes');
@@ -488,6 +612,60 @@ async function main(): Promise<void> {
   on('btn-pause-menu', toMenu);
   on('btn-retry', play); // GameOverManager.RetryGame
   on('btn-over-menu', toMenu); // GameOverManager.ReturnToMenu
+  on('btn-vic-again', () => {
+    world.planetDef = planetById('galaxie');
+    play();
+  });
+  on('btn-vic-menu', toMenu);
+  // Options (roue dentée) : difficulté, sons, vibrations, qualité ; tout le reste dans l'Espace perso
+  const diffHelp = () => {
+    const d = String(settings.difficulty);
+    $('opt-diff-help').textContent = d === 'easy' ? 'Météores rares et lents, dégâts réduits, aucune contrainte.' : d === 'hard' ? 'Poteaux, planète qui rétrécit, météores de plus en plus nombreux.' : 'Aucune contrainte, la pluie de météores monte doucement.';
+  };
+  const optRange = (id: string, key: string) => {
+    const el = $<HTMLInputElement>(id);
+    el.value = String(settings[key]);
+    el.addEventListener('input', () => {
+      settings[key] = Number(el.value);
+      world.applySettings(settings);
+    });
+    el.addEventListener('change', () => {
+      if (!urlOverride) saveSetting(key, settings[key]);
+      click();
+    });
+  };
+  optRange('opt-music', 'musicVolume');
+  optRange('opt-sfx', 'sfxVolume');
+  const syncHaptics = () => {
+    $('opt-haptics').classList.toggle('on', settings.haptics === true);
+    $('opt-haptics').setAttribute('aria-checked', String(settings.haptics === true));
+  };
+  on('opt-haptics', () => {
+    settings.haptics = settings.haptics !== true;
+    if (!urlOverride) saveSetting('haptics', settings.haptics);
+    syncHaptics();
+    vibrate(40, settings.haptics === true);
+  });
+  let optionsFrom: 'menu-main' | 'menu-planets' = 'menu-main';
+  on('btn-settings', () => {
+    optionsFrom = 'menu-main';
+    syncSegs();
+    syncHaptics();
+    diffHelp();
+    screens.show('menu-options');
+  });
+  on('btn-options-back', () => {
+    if (screens.current === 'menu-options') screens.show(optionsFrom);
+  });
+  on('btn-trophies', () => {
+    renderTrophies();
+    screens.show('menu-trophies');
+  });
+  on('btn-opt-trophies', () => {
+    renderTrophies();
+    screens.show('menu-trophies');
+  });
+  on('btn-trophies-back', () => screens.show('menu-main'));
   // Le bouton pause ne doit pas déclencher le stick
   $('btn-pause').addEventListener('pointerdown', (e) => e.stopPropagation());
 
@@ -606,6 +784,7 @@ async function main(): Promise<void> {
 
   records();
   updateChip();
+  updateProgress();
   compose('home');
   window.addEventListener('resize', () => {
     if (screens.current === 'menu-main') compose('home');
@@ -653,6 +832,7 @@ async function main(): Promise<void> {
         }
       },
       render: () => frame(0),
+      gameOver: (st: RunStats) => onGameOver(st),
       hud,
       screens,
       input,

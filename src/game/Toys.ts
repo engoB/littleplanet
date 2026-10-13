@@ -166,7 +166,7 @@ const KINDS: Record<string, ToyKind> = {
     { geo: merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.04, 0.22, 0.04).translate(x, -0.03, 0)).concat([new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, 0.02, 0), new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, -0.06, 0)])), mat: toon({ color: 0xffffff }), tinted: true },
   ], colors: ['#a8784a'] },
   chunk: { size: 0.04, debris: true, colors: ['#ffffff'], parts: () => [
-    { geo: new THREE.BoxGeometry(0.08, 0.06, 0.07), mat: toon({ color: 0xffffff }), tinted: true },
+    { geo: new THREE.BoxGeometry(0.13, 0.09, 0.11), mat: toon({ color: 0xffffff }), tinted: true },
   ] },
   plank: { size: 0.04, debris: true, parts: () => [
     { geo: new THREE.BoxGeometry(0.34, 0.035, 0.03), mat: toon({ color: 0xa8784a }) },

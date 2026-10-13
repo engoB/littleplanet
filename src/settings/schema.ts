@@ -37,6 +37,9 @@ export const SCHEMA: SettingDef[] = [
   ], help: 'Temps pour réussir l’objectif de chaque planète et rejoindre l’étoile de lancement.' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
+  { key: 'difficulty', label: 'Difficulté', group: 'Jeu', type: 'select', arcade: 'normal', original: 'hard', options: [
+    { value: 'easy', label: 'Facile : météores rares, dégâts réduits, aucune contrainte' }, { value: 'normal', label: 'Normal : aucune contrainte, montée douce' }, { value: 'hard', label: 'Difficile : poteaux, planète qui rétrécit, montée en puissance' },
+  ], help: 'Les contraintes (poteaux, rétrécissement, météores de plus en plus nombreux) sont réservées au niveau Difficile.' },
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
   { key: 'steerFatigue', label: 'Fatigue de virage', group: 'Jeu', type: 'number', arcade: 3.4, original: 4, min: 0, max: 10, step: 0.5, unit: 's', help: 'maxDirectionDuration : le braquage s’éteint si on garde la même direction. 0 = désactivé.' },
@@ -52,8 +55,8 @@ export const SCHEMA: SettingDef[] = [
     { value: 'ring', label: 'Anneau au sol autour du véhicule' }, { value: 'bar', label: 'Barre en haut de l’écran (Slider d’origine)' },
   ], help: 'La barre du HUD est difficile à regarder en pleine partie.' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
-  { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en parcourant 100 m sur la précédente.' },
-  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Modes de jeu', type: 'bool', arcade: true, original: false, help: 'La planète rapetisse au fil de la partie (script ShrinkPlanet, non attaché dans l’original).' },
+  { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en réussissant 3 objectifs sur la précédente ; la dernière débloque les défis et le voyage galactique.' },
+  { key: 'planetShrink', label: 'Planète qui rétrécit', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'La planète rapetisse au fil de la partie (script ShrinkPlanet, non attaché dans l’original).' },
   { key: 'shrinkDuration', label: 'Durée du rétrécissement', group: 'Jeu', type: 'number', arcade: 150, original: 0, min: 0, max: 400, step: 10, unit: 's', help: 'Temps pour atteindre la taille minimale. 0 = comportement de ShrinkPlanet.cs (× 0,99 par seconde).' },
   { key: 'shrinkMin', label: 'Taille minimale', group: 'Jeu', type: 'number', arcade: 0.4, original: 0.45, min: 0.2, max: 1, step: 0.05 },
   { key: 'saveRecords', label: 'Enregistrer les records', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'HighScoreManager existe mais n’est jamais appelé dans l’original.' },
