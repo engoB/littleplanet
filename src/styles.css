@@ -668,7 +668,7 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 #countdown[hidden] { display: none; }
 #countdown.go { color: #ffd34d; font-size: clamp(56px, 16vmin, 110px); white-space: nowrap; text-shadow: 0 8px 0 rgba(90, 40, 0, 0.6), 0 0 40px rgba(255, 200, 60, 0.7); }
 #countdown.tick { animation: cdtick 0.9s ease-out; }
-@keyframes cdtick { 0% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.2; } }
+@keyframes cdtick { 0% { transform: translate(-50%, -50%) scale(1.45); } 25% { transform: translate(-50%, -50%) scale(0.94); } 45% { transform: translate(-50%, -50%) scale(1.02); } 100% { transform: translate(-50%, -50%) scale(1); } }
 #countdown.go.tick { animation: cdgo 0.8s ease-out forwards; }
 @keyframes cdgo { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
 /* Bannière d'étape : en haut, plus petite, ne masque plus le jeu */
@@ -798,3 +798,4 @@ button.settings-gear { padding: 0; min-width: 0; min-height: 0; color: inherit; 
 .art-progress .tp.done { background: #3ccf6a; color: #fff; }
 .art-progress .tp.cur { background: rgba(10, 12, 32, 0.8); color: #ffd34d; border: 1px solid rgba(255, 211, 77, 0.6); }
 .art-progress .tp.lock { background: #585d6c; color: #fff; font-size: 16px; padding: 4px 8px; }
+.mi-modeZen { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M12%204c2%202.2%202.6%205%200%209-2.6-4-2-6.8%200-9z%27%20fill%3D%27%2390e8a8%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.2%27/%3E%3Cpath%20d%3D%27M12%2015c-2-3.4-5-4.6-8-4%20.6%203.6%203.6%205.4%208%204zM12%2015c2-3.4%205-4.6%208-4-.6%203.6-3.6%205.4-8%204z%27%20fill%3D%27%23ffb3d9%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.2%27/%3E%3Cpath%20d%3D%27M5%2019h14%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27/%3E%3C/svg%3E"); }

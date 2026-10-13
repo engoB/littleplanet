@@ -360,15 +360,15 @@ async function main(): Promise<void> {
     world.setPaused(p);
   };
   // --- Défis : choisis monde par monde, directement sur la carte du monde
-  const MODE_ORDER = ['modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'planetShrink'];
+  const MODE_ORDER = ['modeZen', 'modeTimeAttack', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet', 'planetShrink'];
   const modeDefs = MODE_ORDER.map((k) => SCHEMA.find((d) => d.key === k)!).filter(Boolean);
-  const SHORT: Record<string, string> = { modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill', planetShrink: 'Rétrécit' };
+  const SHORT: Record<string, string> = { modeZen: 'Zen', modeTimeAttack: 'Chrono', modeStorm: 'Tempête', modeMirror: 'Miroir', modeSnitch: 'Vif d’or', modeBullet: 'Bullet Bill', planetShrink: 'Rétrécit' };
   // Valeurs par défaut (réglages) : un monde jamais réglé reprend celles-ci
   const defaultDefis = MODE_ORDER.filter((k) => settings[k] === true);
   const defisOf = (id: string) => (worldChallenges(id) ?? defaultDefis).filter((k) => defiUnlocked(k));
   /** Applique les défis du monde (ou aucun pour le voyage) avant une partie. */
   // Voyage : ses propres défis (sans Chrono ni Rétrécit, il a son compte à rebours)
-  const VOYAGE_DEFIS = ['modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet'];
+  const VOYAGE_DEFIS = ['modeZen', 'modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet'];
   const applyDefis = (def: PlanetDef) => {
     if (urlOverride) return; // tests : réglages imposés par l'URL
     const on = def.style === 'galaxy' ? (worldChallenges('galaxie') ?? []).filter((k) => VOYAGE_DEFIS.includes(k) && defiUnlocked(k)) : defisOf(def.id);
@@ -528,7 +528,7 @@ async function main(): Promise<void> {
     document.querySelector('#menu-over .gameover')!.textContent = 'GAME OVER';
     let rank = 0;
     // Modes « faciles » ou au score différent : pas de record
-    const noRecord = settings.modeTimeAttack === true;
+    const noRecord = settings.modeTimeAttack === true || settings.modeZen === true;
     if (settings.saveRecords === true && !noRecord) rank = submitRecord({ distance: stats.distance, time: stats.time, date: new Date().toISOString(), preset: preset === 'original' ? 'original' : 'arcade' });
     const best = settings.saveRecords === true ? loadRecords()[0]?.distance ?? null : null;
     $('stage-banner').hidden = true;
@@ -636,7 +636,7 @@ async function main(): Promise<void> {
   // Options (roue dentée) : difficulté, sons, vibrations, qualité ; tout le reste dans l'Espace perso
   const diffHelp = () => {
     const d = String(settings.difficulty);
-    $('opt-diff-help').textContent = d === 'easy' ? 'Météores rares et lents, dégâts réduits, aucune contrainte.' : d === 'hard' ? 'Poteaux, planète qui rétrécit, météores de plus en plus nombreux.' : 'Aucune contrainte, la pluie de météores monte doucement.';
+    $('opt-diff-help').textContent = d === 'hard' ? 'Poteaux, planète qui rétrécit, météores de plus en plus nombreux.' : 'Aucune contrainte, la pluie de météores monte doucement.';
   };
   const optRange = (id: string, key: string) => {
     const el = $<HTMLInputElement>(id);

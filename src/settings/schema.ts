@@ -35,10 +35,11 @@ export const SCHEMA: SettingDef[] = [
   { key: 'galaxyTime', label: 'Voyage : temps par planète', group: 'Modes de jeu', type: 'select', arcade: '90', original: '90', options: [
     { value: '60', label: '1 min' }, { value: '90', label: '1 min 30' }, { value: '120', label: '2 min' }, { value: '0', label: 'Illimité' },
   ], help: 'Temps pour réussir l’objectif de chaque planète et rejoindre l’étoile de lancement.' },
+  { key: 'modeZen', label: 'Zen', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Ni météores ni dégâts : on roule tranquille, on ramasse et on explore.' },
   { key: 'modeMirror', label: 'Commandes inversées', group: 'Modes de jeu', type: 'bool', arcade: false, original: false, help: 'Gauche et droite échangées.' },
   // --- Jeu
   { key: 'difficulty', label: 'Difficulté', group: 'Jeu', type: 'select', arcade: 'normal', original: 'hard', options: [
-    { value: 'easy', label: 'Facile : météores rares, dégâts réduits, aucune contrainte' }, { value: 'normal', label: 'Normal : aucune contrainte, montée douce' }, { value: 'hard', label: 'Difficile : poteaux, planète qui rétrécit, montée en puissance' },
+    { value: 'normal', label: 'Normal : aucune contrainte, montée douce' }, { value: 'hard', label: 'Difficile : poteaux, planète qui rétrécit, montée en puissance' },
   ], help: 'Les contraintes (poteaux, rétrécissement, météores de plus en plus nombreux) sont réservées au niveau Difficile.' },
   { key: 'carSpeed', label: 'Vitesse de la voiture', group: 'Jeu', type: 'number', arcade: 5, original: 5, min: 2, max: 10, step: 0.5, unit: 'u/s', help: 'VehicleController.speed' },
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },

@@ -211,8 +211,7 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 ### Véhicule (préréglage Arcade)
 
 **DeLorean volante** (0.15, inspirée de « Retour vers le futur 2 ») : caisse
-en coin en inox brossé, vitres teintées, portes papillon, **persiennes noires**
-sur la lunette arrière, feux rectangulaires, Mr. Fusion, et les **quatre roues
+en coin en inox brossé, vitres teintées, portes papillon, feux rectangulaires, Mr. Fusion, et les **quatre roues
 couchées à l'horizontale** avec leur lueur bleue (mode vol), deux tuyères
 arrière (jets de particules, plus forts en turbo). Elle flotte et s'incline dans les virages. La boîte de collision reste
 celle de la voiture d'origine : le gameplay ne change pas.

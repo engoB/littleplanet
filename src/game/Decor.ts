@@ -895,8 +895,8 @@ export class Decor {
         this.setInstance(ps, k, d, yaw, sc * sizeMul, (spec.lift ?? 0) * sizeMul);
         if (spec.float || spec.face) this.anims.push({ ps, k, dir: d, yaw, sc: sc * sizeMul, lift: (spec.lift ?? 0) * sizeMul, phase: rng.range(0, Math.PI * 2), spec, look: yaw });
         if (spec.hit > 0) {
-          // Fonce plusieurs fois dans un élément : il finit par céder (nombre de chocs aléatoire)
-          const maxHits = spec.monument ? Infinity : 2 + Math.floor(Math.random() * 4);
+          // Monuments infranchissables ; le reste vole en éclats au premier choc
+          const maxHits = spec.monument ? Infinity : 1;
           this.obstacles.push({ dir: d, radius: spec.hit * sc, hits: 0, maxHits, ps, k });
         }
       }

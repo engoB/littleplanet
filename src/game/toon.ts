@@ -143,20 +143,26 @@ export function planetToonMaterial(): THREE.MeshToonMaterial {
           float t = planetTime;
           vec3 q = planetDir;
           float ch = wNoise(q * 18.0 + vec3(0.0, t * 0.35, t * 0.2));
-          // Houle dominante (lignes parallèles, ondulées par le bruit) + houle croisée faible
-          float w1 = sin(dot(q, vec3(46.0, 12.0, 18.0)) + t * 1.8 + ch * 3.0);
-          float w2 = sin(dot(q, vec3(-10.0, 34.0, 15.0)) - t * 2.1 + ch * 1.4);
+          // Le sens de la houle tourne lentement (rotation douce des vecteurs d'onde)
+          float ang = 0.9 * sin(t * 0.045) + 0.45 * sin(t * 0.11 + 1.3);
+          vec3 ax = normalize(vec3(0.25, 1.0, 0.35));
+          vec3 k1 = vec3(46.0, 12.0, 18.0);
+          k1 = k1 * cos(ang) + cross(ax, k1) * sin(ang) + ax * dot(ax, k1) * (1.0 - cos(ang));
+          vec3 k2 = vec3(-10.0, 34.0, 15.0);
+          k2 = k2 * cos(-ang * 0.7) + cross(ax, k2) * sin(-ang * 0.7) + ax * dot(ax, k2) * (1.0 - cos(-ang * 0.7));
+          float w1 = sin(dot(q, k1) + t * 1.8 + ch * 3.0);
+          float w2 = sin(dot(q, k2) - t * 2.1 + ch * 1.4);
           float w = 0.78 * w1 + 0.22 * w2;
           // Creux sombres, dos des vagues clairs
-          diffuseColor.rgb *= 0.62 + 0.5 * smoothstep(-0.9, 0.9, w);
-          // Écume : liseré sur la crête (un peu déchiré) et dentelle sur le dos
-          float brk = 0.55 + 0.45 * smoothstep(0.3, 0.6, wNoise(q * 40.0 + vec3(t * 0.5, 0.0, -t * 0.3)));
-          float crest = smoothstep(0.62, 0.76, w1) * (1.0 - smoothstep(0.86, 0.97, w1)) * brk;
-          float lace = smoothstep(0.6, 0.7, wNoise(q * 120.0 + vec3(t * 0.3, -t * 0.2, t * 0.25))) * smoothstep(0.5, 0.95, w1) * 0.3;
-          oceanFoam = clamp(crest + lace, 0.0, 1.0);
+          diffuseColor.rgb *= 0.66 + 0.44 * smoothstep(-0.9, 0.9, w);
+          // Écume discrète : fin liseré déchiré sur les crêtes seulement
+          float brk = smoothstep(0.45, 0.75, wNoise(q * 40.0 + vec3(t * 0.5, 0.0, -t * 0.3)));
+          float crest = smoothstep(0.8, 0.88, w1) * (1.0 - smoothstep(0.93, 0.99, w1)) * brk;
+          float lace = smoothstep(0.66, 0.72, wNoise(q * 120.0 + vec3(t * 0.3, -t * 0.2, t * 0.25))) * smoothstep(0.7, 0.98, w1) * 0.15;
+          oceanFoam = clamp(crest * 0.75 + lace, 0.0, 1.0);
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.97, 1.0), oceanFoam * 0.85);
           float sp = wNoise(q * 170.0 + vec3(t * 1.2));
-          oceanGlint = smoothstep(0.88, 0.98, sp) * smoothstep(0.2, 0.8, w);
+          oceanGlint = smoothstep(0.9, 0.98, sp) * smoothstep(0.2, 0.8, w);
         }`,
       )
       .replace(

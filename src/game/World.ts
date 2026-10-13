@@ -42,6 +42,7 @@ import { BulletBills, Snitch } from './Chasers';
 import { PlanetSelect } from './PlanetSelect';
 import { classicPathPoint, classicPlanetMaterial } from './classicPlanet';
 import { MushroomCannon } from './MushroomCannon';
+import { WakeTrail } from './WakeTrail';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -66,6 +67,8 @@ const _o2 = new THREE.Vector3();
 const _o3 = new THREE.Vector3();
 const _o4 = new THREE.Vector3();
 const _o5 = new THREE.Vector3();
+const _o6 = new THREE.Vector3();
+const _o7 = new THREE.Vector3();
 const SPIN_TIME = 0.7;
 const HOP_TIME = 1.0;
 /** Taille du canon champignon d'arrivée. */
@@ -77,6 +80,8 @@ const EJECT = 2;
 const MOUTH_LOCAL = (0.98 * CANNON_SCALE) / 0.2;
 /** Durée des étoiles d'étourdissement après un choc (s). */
 const DIZZY_TIME = 1.4;
+/** Dégâts quand on pulvérise un élément de décor. */
+const OBSTACLE_DAMAGE = 5;
 const _yAxis = new THREE.Vector3(0, 1, 0);
 const _zAxis = new THREE.Vector3(0, 0, 1);
 
@@ -249,6 +254,8 @@ export class World implements GameContext {
   private landT = 0;
   /** Canon champignon d'arrivée : voiture dedans (s restantes avant le BOUM). */
   private cannon!: MushroomCannon;
+  /** Sillage d'écume sur l'eau. */
+  private wakeTrail!: WakeTrail;
   private cannonT = 0;
   /** Hauteur du saut en cours (1 : ressort ; plus haut : éjection du canon). */
   private hopScale = 1;
@@ -415,6 +422,7 @@ export class World implements GameContext {
     };
     this.buildGalaxyObjects();
     this.cannon = new MushroomCannon(this.scene);
+    this.wakeTrail = new WakeTrail(this.scene);
     this.dizzy = this.buildDizzy();
     this.cannon.onGone = (at) => this.burstAt(at, [0.95, 0.9, 0.85, 1]);
     const geo = this.planetMesh.geometry;
@@ -829,7 +837,7 @@ export class World implements GameContext {
     const g = this.def.gameplay;
     this.vehicle.speed = num(s, 'carSpeed') * g.carSpeed;
     this.vehicle.grip = g.grip;
-    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1) * (this.difficulty === 'easy' ? 0.8 : 1);
+    this.meteors.speedMul = g.meteorSpeed * (bool(s, 'modeStorm') ? 1.3 : 1);
     this.vehicle.steerSpeed = num(s, 'steerSpeed');
     this.vehicle.fatigue = num(s, 'steerFatigue');
     this.vehicle.fatigueHold = Math.min(num(s, 'steerFatigueHold') || 0, Math.max(0, num(s, 'steerFatigue') - 0.2));
@@ -893,6 +901,7 @@ export class World implements GameContext {
   }
 
   enterMenu(): void {
+    this.wakeTrail?.clear();
     this.mode = 'menu';
     this.title = false;
     Time.timeScale = 1;
@@ -955,6 +964,7 @@ export class World implements GameContext {
     this.hopScale = 1;
     this.dizzyT = 0;
     this.dizzy.visible = false;
+    this.wakeTrail.clear();
     this.cannon.hide();
     this.carDir.set(0, 1, 0);
     if (bool(this.settings, 'modeSnitch') && bool(this.settings, 'premiumFx')) this.snitch.start(this.carDir);
@@ -1051,8 +1061,9 @@ export class World implements GameContext {
   }
 
   private damage(points: number, label: string): void {
-    // Difficulté : dégâts réduits en Facile et Normal
-    if (this.difficulty !== 'hard') points = Math.max(1, Math.round(points * (this.difficulty === 'easy' ? 0.5 : 0.75)));
+    // Défi Zen : rien ne fait mal ; Normal : dégâts réduits
+    if (this.zen) return;
+    if (this.difficulty !== 'hard') points = Math.max(1, Math.round(points * 0.75));
     if (this.health.takeDamage(points)) {
       this.events.message(`${label} −${points}`, 'bad');
       // Arcade : étoiles d'étourdissement au-dessus du véhicule
@@ -1099,8 +1110,8 @@ export class World implements GameContext {
   private revealKart(stage: number, announce = false): void {
     const kinds = this.kart.kinds();
     const progressive = bool(this.settings, 'stages');
-    // Facile et Normal : jamais de poteaux (contraintes réservées au Difficile)
-    if (this.difficulty !== 'hard') {
+    // Normal et Zen : jamais de poteaux (contraintes réservées au Difficile)
+    if (this.difficulty !== 'hard' || this.zen) {
       const i = kinds.indexOf('spinners');
       if (i >= 0) kinds.splice(i, 1);
     }
@@ -1116,9 +1127,17 @@ export class World implements GameContext {
   private obstacles(): void {
     this.bumpCooldown = Math.max(0, this.bumpCooldown - Time.deltaTime);
     for (const o of [...this.decor.obstacles]) {
+      if (o.maxHits !== Infinity) {
+        // Décor ordinaire : on passe à travers, il vole en éclats et ça abîme un peu
+        if (this.touches(o.dir, o.radius)) {
+          this.breakDecor(o);
+          if (this.hop <= 0) this.damage(OBSTACLE_DAMAGE, 'Choc');
+          this.shaker.start({ enabled: true, delay: 0, duration: 0.18, space: 0, strength: [0.06, 0.06, 0.12], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+        }
+        continue;
+      }
+      // Gros monuments : ils restent infranchissables
       if (!this.pushOut(o.dir, o.radius)) continue;
-      // Un choc compte une fois par contact (délai du bruit de choc)
-      if (this.bumpCooldown <= 0 && ++o.hits >= o.maxHits) this.breakDecor(o);
       this.bumpFx();
     }
     // Poteaux : rebond, un tour de toupie du côté de l'impact, accélération
@@ -1145,6 +1164,14 @@ export class World implements GameContext {
    * sur la sphère : repousse la voiture et renvoie la direction d'éloignement
    * (monde), ou null sans contact. `deflect` : réflexion du cap.
    */
+  /** La voiture touche-t-elle l'obstacle (cercle sur la sphère) ? */
+  private touches(dir: THREE.Vector3, radius: number): boolean {
+    const R = this.planetRadius();
+    const up = _o1.copy(this.car.position).sub(this.planet.position).normalize();
+    const d = _o2.copy(dir).applyQuaternion(this.planet.quaternion);
+    return up.angleTo(d) * R < radius + 0.16;
+  }
+
   private pushOut(dir: THREE.Vector3, radius: number, deflect = true): THREE.Vector3 | null {
     const R = this.planetRadius();
     const up = _o1.copy(this.car.position).sub(this.planet.position).normalize();
@@ -1176,7 +1203,6 @@ export class World implements GameContext {
     const dirs = o.dir.clone().normalize();
     this.toys.debris(dirs, [c, c.clone().multiplyScalar(0.75), new THREE.Color(0.85, 0.8, 0.7)], 10, 0.3, 2.6);
     this.burstAt(this.planet.localToWorld(dirs.clone().multiplyScalar(this.planetCollider + 0.1)), [1, 0.9, 0.7, 1]);
-    this.events.message('Détruit !', 'info');
     this.decorBroken++;
     if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.9, 0.75);
   }
@@ -1198,13 +1224,20 @@ export class World implements GameContext {
    * (ni poteaux, ni rétrécissement, météores plus rares) ; Difficile garde la
    * montée en puissance (étapes, poteaux, planète qui rétrécit).
    */
-  get difficulty(): 'easy' | 'normal' | 'hard' {
+  get difficulty(): 'normal' | 'hard' {
+    // (l'ancien niveau « Facile » est devenu le défi Zen : il vaut Normal)
     const v = String(this.settings.difficulty ?? 'hard');
-    return v === 'easy' || v === 'normal' ? v : 'hard';
+    return v === 'easy' || v === 'normal' ? 'normal' : 'hard';
+  }
+
+  /** Défi Zen : ni météores, ni dégâts, ni contraintes ; on roule tranquille. */
+  get zen(): boolean {
+    return bool(this.settings, 'modeZen');
   }
 
   /** La planète rétrécit : défi « Rétrécit », ou niveau Difficile (étapes). */
   get shrinking(): boolean {
+    if (this.zen) return false;
     return bool(this.settings, 'planetShrink') || (this.difficulty === 'hard' && bool(this.settings, 'stages'));
   }
 
@@ -1214,9 +1247,9 @@ export class World implements GameContext {
     let aim = 0;
     const d = this.difficulty;
     if (bool(s, 'stages')) {
-      // Facile : rythme constant ; Normal : montée adoucie ; Difficile : celle des étapes
-      interval *= d === 'easy' ? 1.6 : d === 'normal' ? 1.2 * Math.sqrt(this.stages.intervalFactor) : this.stages.intervalFactor;
-      aim = d === 'easy' ? 0 : d === 'normal' ? this.stages.aim * 0.5 : this.stages.aim;
+      // Normal : montée adoucie ; Difficile : celle des étapes
+      interval *= d === 'normal' ? 1.2 * Math.sqrt(this.stages.intervalFactor) : this.stages.intervalFactor;
+      aim = d === 'normal' ? this.stages.aim * 0.5 : this.stages.aim;
     } else if (bool(s, 'meteorRamp')) {
       interval *= Math.max(0.35, 1 - this.chrono / 240);
       aim = 0.3;
@@ -1380,7 +1413,7 @@ export class World implements GameContext {
     }
     // Dans le canon champignon : la voiture est à l'abri
     const exposed = alive && this.cannonT <= 0;
-    if (!this.won) this.meteors.update(dt, exposed ? { obb: this.carOBB, position: this.car.position } : null, alive);
+    if (!this.won && !this.zen) this.meteors.update(dt, exposed ? { obb: this.carOBB, position: this.car.position } : null, alive);
     this.craters.update(dt, num(s, 'craterLifetime'), this.shrinking);
     // OnTriggerEnter : cratères (couche DamageObject)
     if (alive) {
@@ -1488,6 +1521,9 @@ export class World implements GameContext {
     // Voiture (ou voiture volante qui rase l'eau) : éclaboussures ; bateau : sillage d'écume
     set(this.splash, water ? (this.turboActive ? 1.6 : 1) : 0);
     set(this.wake, water ? (this.turboActive ? 1.4 : 0.8) : 0);
+    // Sillage d'écume posé sur l'eau derrière le véhicule
+    const onWater = water && alive && fx && this.hop <= 0 && this.car.visible && !this.launch;
+    this.wakeTrail.update(dt, Time.time, _o6.copy(this.planet.position).addScaledVector(up, this.planetRadius() + 0.02), _o7.set(1, 0, 0).applyQuaternion(this.car.quaternion), onWater, this.turboActive || this.boostTime > 0 ? 1.6 : 1);
     set(this.embers, this.surface === SURF.LAVA ? 1 : 0);
     set(this.leaves, this.surface === SURF.GRASS ? 0.7 : 0);
     set(this.sparkle, this.launch ? 2 : 0);
@@ -1839,6 +1875,7 @@ export class World implements GameContext {
     // Canon champignon : il suit la planète (recalée à l'origine), la voiture est dedans
     this.cannon.group.position.sub(shift);
     this.cannon.charge(f);
+    this.wakeTrail.clear();
     this.cannonT = MushroomCannon.CHARGE + MushroomCannon.AIM;
     this.car.visible = false;
     this.landT = 0;
