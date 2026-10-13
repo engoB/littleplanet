@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import type { Assets } from '../unity/assets';
 import type { PlanetDef } from './planets';
 import { MagicSky } from './MagicSky';
-import { atmosphere, planetToonMaterial } from './toon';
+import { atmosphere, planetToonMaterial, toonGradient } from './toon';
 
 const ORIGIN = new THREE.Vector3(0, 400, 0);
 
@@ -52,6 +52,7 @@ export class PlanetSelect {
   }
   private readonly geo: THREE.BufferGeometry;
   private readonly geoScale: number;
+  private readonly lockedMat = new THREE.MeshToonMaterial({ color: 0x585d6c, gradientMap: toonGradient() });
 
   /** (Re)construit le carrousel avec la liste des planètes (verrouillées comprises). */
   setPlanets(defs: { def: PlanetDef; locked: boolean }[]): void {
@@ -77,10 +78,8 @@ export class PlanetSelect {
         }
         mat = m;
       } else mat = def.style === 'classic' && this.classicMat ? this.classicMat() : this.origMat;
-      if (locked && (mat as THREE.MeshToonMaterial).color) {
-        mat = mat === this.origMat ? mat.clone() : mat;
-        (mat as THREE.MeshToonMaterial).color.setScalar(0.18);
-      }
+      // Monde verrouillé : bille de pierre grise, sans couleurs ni décor
+      if (locked) mat = this.lockedMat;
       const mesh = new THREE.Mesh(this.geo, mat);
       this.group.add(mesh);
       return { def, mesh, mat, locked, decorated: false };
@@ -131,7 +130,8 @@ export class PlanetSelect {
       if (this.aura.parent !== sel.mesh) sel.mesh.add(this.aura);
       const u = (this.aura.material as THREE.ShaderMaterial).uniforms;
       u.color.value.set(sel.def.atmosphere);
-      u.intensity.value = sel.locked ? 0.15 : 0.75;
+      if (sel.locked) u.color.value.set('#8a90a8');
+      u.intensity.value = sel.locked ? 0.25 : 0.75;
     }
     this.camera.position.copy(ORIGIN).add(new THREE.Vector3(0, this.portrait ? 1.2 : 0.9, 7.2));
     this.camera.lookAt(ORIGIN.clone().add(new THREE.Vector3(0, this.portrait ? 0.3 : 0.2, 0)));

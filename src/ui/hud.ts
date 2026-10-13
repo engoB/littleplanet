@@ -38,12 +38,12 @@ export class Hud {
     this.root.hidden = !v;
   }
 
-  health(hp: number, max: number, delta: number): void {
+  health(hp: number, max: number, delta: number, flash = true): void {
     const k = Math.max(0, Math.min(1, hp / max));
     this.healthFill.style.transform = `scaleX(${k})`;
     this.healthFill.style.setProperty('--hp', String(k));
     this.healthText.textContent = `${Math.round(hp)}`;
-    if (delta < 0) {
+    if (delta < 0 && flash) {
       this.flash.classList.remove('on');
       void this.flash.offsetWidth; // relance l'animation CSS
       this.flash.classList.add('on');
@@ -104,6 +104,20 @@ export class Hud {
     c.classList.add('tick');
     clearTimeout(this.countTimer);
     if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
+  }
+
+  private boomTimer = 0;
+  /** Onomatopée de bande dessinée (« BOUM ! ») qui éclate puis s'efface. */
+  boom(text: string): void {
+    const b = $('boom');
+    $('boom-text').textContent = text;
+    b.hidden = false;
+    b.style.setProperty('--rot', `${Math.round(Math.random() * 16 - 8)}deg`);
+    b.classList.remove('on');
+    void b.offsetWidth;
+    b.classList.add('on');
+    clearTimeout(this.boomTimer);
+    this.boomTimer = window.setTimeout(() => (b.hidden = true), 1100);
   }
 
   stageBanner(stage: number, sub: string, title = `Étape ${stage}`): void {

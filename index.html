@@ -44,6 +44,7 @@
       <div id="messages"></div>
       <div id="stage-banner" hidden><div class="sb-title" id="sb-title">Étape 2</div><div class="sb-sub" id="sb-sub"></div></div>
       <div id="countdown" hidden></div>
+      <div id="boom" class="boom" hidden><span class="boom-burst"></span><b id="boom-text">BOUM !</b></div>
       <div id="touch-zones"></div>
       <div id="stick-zone"></div>
       <button id="btn-turbo" aria-label="Turbo (maintenir)"><canvas id="turbo-ring" width="160" height="160"></canvas><span class="turbo-label">turbo</span></button>
@@ -76,7 +77,7 @@
         </button>
         <div class="home-row2">
           <button id="btn-help" class="btn-glass">Comment jouer</button>
-          <button id="btn-trophies" class="btn-glass btn-trophies arcade-only"><span class="tro-ico"></span>Succès<small id="home-progress">0 %</small></button>
+          <button id="btn-trophies" class="btn-glass btn-trophies arcade-only"><span class="tro-ico"></span><span>Succès</span><small id="home-progress">0 %</small></button>
         </div>
         <div id="records" class="records"></div>
       </div>
@@ -93,6 +94,7 @@
         <h2 class="planets-title">Choisis ta planète</h2>
         <span id="ps-count" class="ps-count"></span>
       </div>
+      <div id="ps-band" class="ps-band" hidden><span>🔒 Verrouillé</span></div>
       <button id="ps-prev" class="ps-arrow left" aria-label="Planète précédente"></button>
       <button id="ps-next" class="ps-arrow right" aria-label="Planète suivante"></button>
       <div class="ps-card glass">
@@ -104,6 +106,7 @@
         <div class="seg seg-diff arcade-only" data-key="difficulty"><button data-v="easy">Facile</button><button data-v="normal">Normal</button><button data-v="hard">Difficile</button></div>
         <div class="ps-defis-wrap arcade-only"><span class="ps-defis-label">Défis</span><div id="ps-defis" class="ps-defis"></div></div>
         <div id="ps-defi-help" class="ps-defi-help"></div>
+        <div id="ps-lockinfo" class="ps-lockinfo" hidden><span class="pl-ico"></span><b>Monde verrouillé</b><small id="ps-lockhint"></small></div>
         <button id="btn-planet-go" class="btn-primary"><span class="play-ico"></span>Jouer</button>
       </div>
     </section>
@@ -156,9 +159,9 @@
             <p>Les <b>caisses</b> réparent, les <b>baskets</b> remplissent le turbo, les <b>flèches</b> accélèrent et les <b>ressorts</b> font sauter. Fonce dans les objets posés au sol&nbsp;: lancé à pleine vitesse, tu les envoies en orbite&nbsp;!</p>
           </div>
           <div class="tuto-slide">
-            <div class="tuto-art art-goal" style="background-image: url(tuto/progresser.jpg)"><span class="tuto-chips"><i class="defi"><i class="mode-ico mi-modeTimeAttack"></i>Chrono</i><i class="defi on"><i class="mode-ico mi-modeSnitch"></i>Vif d'or</i><i class="defi"><i class="mode-ico mi-planetShrink"></i>Rétrécit</i></span></div>
+            <div class="tuto-art art-progress" style="background-image: url(tuto/progresser.jpg)"><span class="tp done" style="left: 31%; top: 60%">✓ 3/3</span><span class="tp cur" style="left: 50%; top: 79%">Objectifs ●○○</span><span class="tp lock" style="left: 69%; top: 58%">🔒</span></div>
             <h2>Progresser</h2>
-            <p>Réussis <b>3 objectifs</b> sur un monde pour débloquer le suivant. Le dernier monde ouvre les <b>défis</b> et le <b>Voyage galactique</b>&nbsp;; décroche des <b>succès</b> pour débloquer les autres défis.</p>
+            <p>Chaque monde a <b>3 objectifs</b>&nbsp;: réussis-les pour débloquer le suivant (les mondes <b>gris</b> sont verrouillés). Le dernier monde ouvre le <b>Voyage galactique</b> et les <b>défis</b>&nbsp;; tes <b>succès</b> 🏆 débloquent les autres.</p>
           </div>
         </div>
         <div id="tuto-dots" class="tuto-dots"></div>
@@ -225,7 +228,6 @@
         <div id="opt-diff-help" class="opt-help arcade-only"></div>
         <label class="opt-row"><span class="opt-label">Musique</span><input id="opt-music" type="range" min="0" max="1" step="0.05" /></label>
         <label class="opt-row"><span class="opt-label">Sons</span><input id="opt-sfx" type="range" min="0" max="1" step="0.05" /></label>
-        <div class="opt-row"><span class="opt-label">Vibrations</span><button id="opt-haptics" class="opt-toggle" role="switch" aria-label="Vibrations"><i></i></button></div>
         <div class="opt-row"><span class="opt-label">Qualité</span><div class="seg" data-key="quality"><button data-v="auto">Auto</button><button data-v="high">Haute</button><button data-v="medium">Moyenne</button><button data-v="low">Basse</button></div></div>
         <div class="opt-actions">
           <button id="btn-opt-trophies" class="btn-glass arcade-only"><span class="tro-ico"></span>Succès</button>

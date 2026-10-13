@@ -6,6 +6,24 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.14.0 — lot 14
+
+- Voyage galactique : nouvel atterrissage. La voiture plonge dans un **canon
+  champignon** posé sur la planète d'arrivée, qui gonfle puis la recrache
+  (« BOUM ! » façon BD, salto) ; le canon rentre ensuite sous terre. Plus de
+  rebonds ni de dérapage.
+- Choc : des **étoiles d'étourdissement** tournent au-dessus du véhicule (plus
+  de contour rouge).
+- Choix des mondes : mondes verrouillés en gris, bandeau « Verrouillé » en
+  travers de la planète et encart sur la carte ; carte toujours de la même
+  taille ; flèches devant la carte, à hauteur de la planète.
+- Écran titre : planète plus basse.
+- Accueil : « Succès 0 % » sur une seule ligne.
+- Tutoriel : diapositive « Progresser » refaite (carrousel des mondes).
+- Options : vibrations retirées (non prises en charge sur iPhone ; le
+  réglage reste dans l'Espace perso).
+- Bannière d'étape sur une seule ligne (« Planète 2 / 5 »).
+
 ## 0.13.0 — lot 13
 
 - **Progression remise à 0 %** (une fois) : tout est à refaire et à débloquer.

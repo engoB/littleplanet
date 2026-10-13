@@ -66,10 +66,11 @@ const CLOSE_UP = `(sel, dist, h) => {
   return 'ok';
 }`;
 
-async function shot(name, { query, w = 720, h = 360, hud = false, run }) {
+async function shot(name, { query, w = 720, h = 360, hud = false, run, init }) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
+  if (init) await page.addInitScript(init);
   page.on('pageerror', (e) => console.log(name, 'pageerror', e.message));
-  await page.goto(`http://localhost:${server.address().port}/index.html?test=1&touch=1&seed=1&preset=arcade&unlockAll=1&${query}`, { timeout: 120000 });
+  await page.goto(`http://localhost:${server.address().port}/index.html?test=1&touch=1&seed=1&preset=arcade${init ? "" : "&unlockAll=1"}&${query}`, { timeout: 120000 });
   await page.waitForFunction(() => window.__mppReady === true, null, { timeout: 120000 });
   await page.evaluate(() => __mpp.seed(12345));
   const r = await page.evaluate(run);
@@ -126,10 +127,11 @@ for (const [sel, d, h] of [['box', 1.6, 0.75], ['item', 1.7, 0.8], ['pad', 1.1, 
     run: `(() => { __mpp.play(); __mpp.step(${sel === 'box' ? 600 : 30}, 1 / 60, 0.2); return (${CLOSE_UP})('${sel}', ${d}, ${h}); })()`,
   });
 }
-// 5. Progresser : le vol vers la planète suivante (voyage galactique)
+// 5. Progresser : le carrousel des mondes (réussi, en cours, verrouillé)
 await shot('progresser', {
-  query: 'planet=galaxie',
-  run: `(() => { __mpp.play(); __mpp.step(560, 1 / 60, 0.2); __mpp.world.galaxy.goal = true; __mpp.world.galaxy.arrivalDist = -100; for (let i = 0; i < 60 && !__mpp.world.launch; i++) __mpp.step(30, 1 / 60, 'auto'); __mpp.step(130, 1 / 60, 0); for (const id of ['hud', 'touch-zones']) document.getElementById(id).style.display = 'none'; return 'ok'; })()`,
+  query: 'preset=arcade',
+  init: `localStorage.setItem('mpp.progress.v2', JSON.stringify({ goals: { prairie: 3, meuh: 1 }, stats: {}, trophies: ['first', 'world'] }))`,
+  run: `(() => { __mpp.showPlanets(); __mpp.world.select.select(1, true); __mpp.step(40, 1 / 60, 0); document.getElementById('menu-planets').style.display = 'none'; return 'ok'; })()`,
 });
 await browser.close();
 server.close();
