@@ -79,6 +79,15 @@ const beachTexture = () =>
     });
   });
 
+/** Bouée de sauvetage : quartiers rouges et blancs. */
+const buoyTexture = () =>
+  canvasTex((g) => {
+    for (let i = 0; i < 8; i++) {
+      g.fillStyle = i % 2 ? '#ffffff' : '#ff3b30';
+      g.fillRect(i * 8, 0, 8, 64);
+    }
+  });
+
 const hayTexture = () =>
   canvasTex((g) => {
     g.fillStyle = '#f0c85a';
@@ -144,6 +153,10 @@ const KINDS: Record<string, ToyKind> = {
   ] },
   beachball: { size: 0.15, rolls: true, orbit: 0.6, parts: () => [
     { geo: new THREE.SphereGeometry(0.15, 24, 16), mat: toon({ color: 0xffffff, map: beachTexture() }) },
+  ] },
+  buoy: { size: 0.06, orbit: 0.5, parts: () => [
+    { geo: new THREE.TorusGeometry(0.13, 0.055, 12, 32).rotateX(Math.PI / 2), mat: toon({ color: 0xffffff, map: buoyTexture(), emissive: new THREE.Color(0x200808) }) },
+    { geo: merge([0, 1, 2, 3].map((i) => new THREE.TorusGeometry(0.035, 0.008, 6, 12).rotateY(Math.PI / 2).translate(0.13, 0, 0).rotateY((i * Math.PI) / 2 + Math.PI / 4))), mat: toon({ color: 0xf2e6c8 }) },
   ] },
   cone: { size: 0.08, orbit: 0.4, parts: () => [
     { geo: new THREE.ConeGeometry(0.07, 0.2, 14).translate(0, 0.02, 0), mat: toon({ color: 0xff6a1a, emissive: new THREE.Color(0x301000) }) },

@@ -27,6 +27,9 @@ Meuh Meuh et d'Halloween, tapis de la Chambre de Jouets, route arc-en-ciel)
 ne sont qu'un décor. Le décor évite routes, lave et eau. Les planètes de
 départ sont plus grosses (×1,25 à ×1,35) pour en profiter.
 
+Dans le menu, les mondes sont rangés **du plus facile au plus difficile** et
+le **Monde 1** (Prairie) est sélectionné par défaut.
+
 Elles s'inspirent d'univers de dessins animés, de films et de jeux très
 connus, avec un style évident mais sans reprendre de personnage ni de logo :
 
@@ -36,7 +39,7 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Stade Champignon | ★★ | Circuit Mario | grosse planète : pelouse de stade en damier, pièces flottantes, cônes bousculables |
 | Prairie Meuh Meuh | ★ | Prairie Meuh Meuh | chemin de terre, vaches, grange géante, ballons ; **clôtures qui se brisent**, bottes de foin bousculables |
 | Forteresse de Lave | ★★★★ | Château de Bowser | pavés clairs, **une rivière de lave qui fait le tour**, torches, **blocs de pierre qui flottent et te fixent** |
-| Arc-en-ciel Céleste | ★★★★★ | Route Arc-en-ciel | **planète de verre** (on voit l'espace et la face opposée au travers), **deux tronçons de route arc-en-ciel droits qui accélèrent**, anneaux dorés, étoiles flottantes |
+| Arc-en-ciel Céleste | ★★★★★ | Route Arc-en-ciel | **planète de verre** (on voit l'espace et la face opposée au travers), **deux tronçons de route arc-en-ciel droits qui accélèrent**, scintillements d'étoiles et petites galaxies spirales dans le verre, anneaux dorés, étoiles flottantes |
 | Planète du Sage | ★★ | Dragon Ball | route jaune, prés dorés, maison-dôme, **sept boules de cristal qui flottent** |
 | Prairie | ★ | — | clairières de terre, maison-dôme ; météores lents et rares |
 | La Comté | ★ | les hobbits | chemin creux, collines-terriers à porte ronde, champs en patchwork, lanternes flottantes |
@@ -46,7 +49,7 @@ connus, avec un style évident mais sans reprendre de personnage ni de logo :
 | Poudlard | ★★★ | Harry Potter | château géant, **grands anneaux de Quidditch**, chandelles flottantes |
 | Ville d'Halloween | ★★★ | L'Étrange Noël de M. Jack | chemin pavé, colline en spirale géante, **grandes croix de cimetière**, chauves-souris, **citrouilles bousculables** |
 | Village de Noël | ★★ | Noël | **sapin géant**, flocons flottants, sucres d'orge, bonshommes de neige, **cadeaux bousculables** |
-| Grand Océan | ★★★ | One Piece | rien que de l'eau : ressorts, accélérateurs, ballons de plage ; adhérence 0,7 |
+| Grand Océan | ★★★ | One Piece | rien que de l'eau : ressorts, accélérateurs, **bouées** à bousculer ; adhérence 0,7 |
 | Monde de Cubes | ★★★ | Minecraft | tout en blocs, îlots de blocs flottants |
 | Hill Valley | ★★★ | Retour vers le futur | rue qui fait le tour, tour de l'horloge, **statue géante de l'hoverboard rose**, panneau qui flotte ; « 88 mph ! » et traînées de feu en turbo |
 | Astéroïde B 612 | ★★★★ | Le Petit Prince | sable doré, rose sous sa cloche, volcans, baobabs, étoiles flottantes |
@@ -77,7 +80,7 @@ Placés au hasard (graine fixe par planète, nombre selon la taille), et
   lui-même** du côté de l'impact et accélère ; le poteau oscille.
 
 **Objets bousculables** (jouets, citrouilles, cadeaux, bottes de foin, cônes,
-ballons de plage) : percutés, ils rebondissent ailleurs sur la planète ;
+bouées) : percutés, ils rebondissent ailleurs sur la planète ;
 percutés à pleine vitesse (turbo, accélérateur), certains **partent en orbite**
 puis réapparaissent à leur place. Les **clôtures** de Meuh Meuh **se brisent**
 en planches.
@@ -90,7 +93,8 @@ planètes du menu.
 
 ### Voyage galactique (mode de jeu)
 
-Un mode à part (bouton « Modes de jeu » → « Partir ») : on choisit le **nombre
+Le seul mode de jeu, avec son propre bouton sur l'accueil (« Voyage
+galactique » → « Partir ») : on choisit le **nombre
 de planètes** (3, 5, 8 ou sans fin) et le **temps par planète** (1:00, 1:30,
 2:00 ou illimité) ; les planètes sont **tirées au hasard**. Le chrono devient
 un compte à rebours (en pause pendant le vol) : à zéro, la partie s'arrête.
@@ -108,28 +112,36 @@ depuis sa pose au décollage, puis **rejoint pendant la fin du vol la pose de
 suivi d'après l'atterrissage** : l'arrivée est continue (écrasement et rebond
 élastique du véhicule, gerbe de poussière).
 
-### Modes de jeu (bouton « Modes de jeu » de l'accueil)
+### Défis (sur la carte de chaque monde)
 
-Défis cumulables, pour toutes les planètes. Les modes actifs s'affichent en
-jeu sous le bouton pause (icône et nom, qui se replient en icônes) :
+Chaque monde a ses propres défis, activés d'un toucher directement sur sa
+carte dans le choix de la planète (mémorisés monde par monde ; un monde jamais
+réglé reprend les valeurs de la page Réglages). Le Voyage galactique n'en a
+pas (il a son compte à rebours). Les défis actifs s'affichent en jeu sous le
+bouton pause (icône et nom, qui se replient en icônes) :
 
-| Mode | Effet |
+| Défi | Effet |
 |---|---|
-| Contre-la-montre | 60 s au départ, chaque case ajoute 5 s, fin à 0 (pas de record) |
+| Chrono (contre-la-montre) | 60 s au départ, chaque case ajoute 5 s, fin à 0 (pas de record) |
 | Tempête de météores | deux fois plus de météores, 30 % plus rapides |
-| Commandes inversées | gauche et droite échangées |
-| **Attrape le Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
-| **Fuis le Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
-| Planète qui rétrécit | activé par défaut en Arcade |
+| Miroir (commandes inversées) | gauche et droite échangées |
+| **Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
+| **Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
+| Rétrécit | la planète rétrécit (activé par défaut en Arcade) |
 
 ### Menus
 
 - **Choix de la planète** façon « sélection de royaume » (Mario Odyssey) :
   les planètes flottent en arc dans l'espace, celle du centre est grande avec
-  son aura ; glisser, flèches ou clavier pour défiler ; carte de nom (monde,
-  difficulté, description, record).
-- **Comment jouer** : tutoriel illustré en 5 diapositives (histoire, tourner,
-  éviter, ramasser, progresser).
+  son aura et ses monuments ; glisser, flèches ou clavier pour défiler ; carte
+  du monde (numéro, difficulté, description, record, **défis**).
+- **Voyage galactique** : bouton de l'accueil (nombre de planètes, temps par
+  planète, « Partir »).
+- **Comment jouer** : tutoriel illustré en 5 diapositives (l'histoire de la
+  galaxie menacée, piloter, éviter, ramasser et bousculer, progresser avec
+  les défis et le voyage).
+- Tous les menus tiennent dans l'écran du téléphone, sans défilement
+  (portrait comme paysage).
 - **Réglages** : roue crantée discrète en haut à droite.
 
 ### Véhicule (préréglage Arcade)
@@ -249,7 +261,7 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Commande tactile | deux demi-écrans (gauche / droite) | stick fixe, en bas à droite |
 | Virage maintenu | pleine force 1,6 s puis retour en ligne droite (3,4 s) | `maxDirectionDuration` 4 s |
 | Véhicule | voiture volante | voiture Unity |
-| Modes de jeu (mort subite, zen, contre-la-montre…) | au choix | non |
+| Défis par monde (chrono, tempête, Vif d'or…) et Voyage galactique | au choix | non |
 | Effets de surface (éclaboussures, sillage, braises, tourbillons) | oui | non |
 | Objets de course (accélérateurs, baskets, ressorts, poteaux), bousculables, décor flottant et voyage galactique | oui | non |
 

@@ -46,8 +46,11 @@ export interface PlanetDef {
 
 export const PLANETS: PlanetDef[] = (data as { planets: PlanetDef[] }).planets;
 
+/** Monde 1 : premier monde du carrousel (sélection par défaut). */
+export const FIRST: PlanetDef = PLANETS.find((p) => p.style !== 'galaxy') ?? PLANETS[0];
+
 export function planetById(id: string | null | undefined): PlanetDef {
-  return PLANETS.find((p) => p.id === id) ?? PLANETS[0];
+  return PLANETS.find((p) => p.id === id) ?? FIRST;
 }
 
 const SEL = 'mpp.planet.v1';
@@ -69,11 +72,34 @@ function set(k: string, v: string): void {
 }
 
 export function selectedPlanet(): string {
-  return get(SEL) ?? 'prairie';
+  return get(SEL) ?? FIRST.id;
 }
 
 export function selectPlanet(id: string): void {
   set(SEL, id);
+}
+
+const DEFIS = 'mpp.defis.v1';
+
+/** Défis choisis pour un monde (null : jamais réglé). */
+export function worldChallenges(id: string): string[] | null {
+  try {
+    const all = JSON.parse(get(DEFIS) ?? '{}') as Record<string, string[]>;
+    return Array.isArray(all[id]) ? all[id] : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setWorldChallenges(id: string, keys: string[]): void {
+  let all: Record<string, string[]> = {};
+  try {
+    all = JSON.parse(get(DEFIS) ?? '{}');
+  } catch {
+    /* données illisibles : on repart de zéro */
+  }
+  all[id] = keys;
+  set(DEFIS, JSON.stringify(all));
 }
 
 export function bestDistances(): Record<string, number> {

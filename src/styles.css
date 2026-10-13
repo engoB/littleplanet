@@ -581,3 +581,52 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 .tuto-dots i.on { background: #ffd36a; transform: scale(1.25); }
 .tuto-actions { display: flex; gap: 10px; justify-content: center; }
 .tuto-actions > * { min-width: 140px; }
+
+/* =====================================================================
+   Lot 9 : défis sur la carte du monde, panneau du voyage, tout tient
+   à l'écran sans défilement (mobile)
+   ===================================================================== */
+.ps-defis-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ps-defis-label { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #aebde8; font-weight: 700; }
+.ps-defis { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.ps-defis[hidden] { display: none; }
+.defi {
+  display: flex; align-items: center; gap: 4px; min-width: 0; min-height: 0; height: 30px; padding: 0 9px 0 3px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; color: #dfe6ff; background: rgba(255, 255, 255, 0.07); border: 1.5px solid rgba(255, 255, 255, 0.18); box-shadow: none;
+}
+.defi .mode-ico { width: 24px; height: 24px; border-radius: 50%; background-color: transparent; opacity: 0.55; }
+.defi.on { background: linear-gradient(180deg, rgba(255, 224, 102, 0.95), rgba(255, 176, 32, 0.95)); color: #3a2400; border-color: #fff3b0; }
+.defi.on .mode-ico { opacity: 1; background-color: rgba(60, 30, 0, 0.35); }
+.ps-defi-help { font-size: 12px; opacity: 0.85; min-height: 1.2em; max-width: 46ch; line-height: 1.25; }
+/* Voyage galactique : panneau compact */
+.mode-hero { flex-direction: column; align-items: stretch; margin-bottom: 12px; }
+.mh-head { display: flex; align-items: center; gap: 14px; }
+.mh-opts { flex-direction: column; align-items: stretch; }
+.seg { justify-content: space-between; }
+.seg button { flex: 1; }
+.mh-actions { display: flex; gap: 10px; justify-content: center; }
+.mh-actions > * { flex: 1; min-width: 0; }
+/* Pas de défilement : les panneaux tiennent dans l'écran */
+.panel { overflow: hidden; }
+@media (max-height: 760px), (max-width: 480px) {
+  .tuto-slides { min-height: 0; }
+  .tuto-art { height: 96px; }
+  .tuto-slide h2 { font-size: 24px; }
+  .tuto-slide p { font-size: 14px; line-height: 1.35; }
+  .tuto-dots { margin: 8px 0; }
+  .panel { padding: 14px 16px; }
+  .mh-art { width: 48px; height: 48px; }
+  .mh-text small { font-size: 12px; }
+  .ps-card { padding: 10px 14px 12px; gap: 4px; }
+  .ps-info { font-size: 13px; min-height: 0; }
+  .ps-name { font-size: clamp(26px, 6vmin, 40px); }
+  .defi { height: 27px; font-size: 11.5px; padding-right: 7px; }
+  .defi .mode-ico { width: 21px; height: 21px; }
+}
+@media (max-height: 430px) {
+  /* Paysage de téléphone : carte du monde plus basse */
+  .ps-info { display: none; }
+  .ps-kicker { font-size: 10px; }
+  .ps-card .btn-primary { padding-top: 8px; padding-bottom: 8px; }
+  .tuto-art { display: none; }
+}

@@ -922,6 +922,7 @@ export class World implements GameContext {
 
   private finishGameOver(): void {
     this.mode = 'over';
+    this.shaker.clear();
     Time.timeScale = 0; // Time.timeScale = 0 : le jeu s'arrête
     this.music?.stop(); // mainCameraAudioSource.Stop()
     this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited });
@@ -1066,6 +1067,7 @@ export class World implements GameContext {
     Time.advance(realDt);
     const dt = Time.deltaTime;
     this.decor.update(dt, Time.time, this.mode === 'menu' ? undefined : this.carDir);
+    this.planetToonMat.userData.planetUniforms.planetTime.value = Time.realtimeSinceStartup;
     if (this.mode === 'menu') {
       this.rotatePlanet.update(dt);
       this.planet.updateMatrixWorld(true);
@@ -1092,7 +1094,8 @@ export class World implements GameContext {
     this.select.update(realDt);
     this.particles.update(dt);
     this.explosions.update(dt);
-    this.shaker.update(dt);
+    // Temps réel : une secousse en cours se termine même jeu figé (fin de partie)
+    this.shaker.update(realDt);
     // LateUpdate : caméra
     if (this.mode === 'menu') this.rig.pivot.updateMatrixWorld(true);
     else {
