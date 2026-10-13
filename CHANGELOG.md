@@ -6,6 +6,18 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.11.0 — lot 11
+
+- Difficulté affichée en étoiles ; réinitialisation de la progression depuis
+  les Réglages.
+- Jeu en portrait uniquement ; planètes du carrousel remontées au-dessus de
+  la carte du monde.
+- Voyage galactique : options qui tiennent dans le panneau et choix des défis
+  (Tempête, Miroir, Vif d'or, Bullet Bill).
+- Correctif : après une étape réussie, la bannière annonce le nouvel objectif
+  (plus de « Parcours 0 m »).
+- Tutoriel illustré par des images rendues par le moteur du jeu.
+
 ## 0.10.0 — mise à jour automatique
 
 - Versionnage du jeu (numéro affiché) et mise à jour automatique de

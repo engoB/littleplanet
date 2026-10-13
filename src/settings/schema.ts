@@ -98,9 +98,9 @@ export const SCHEMA: SettingDef[] = [
   { key: 'engineVolume', label: 'Moteur', group: 'Audio', type: 'number', arcade: 0.45, original: 0.052, min: 0, max: 1, step: 0.01, help: 'AudioSource de la voiture : 0,052 dans Unity (presque inaudible).' },
   { key: 'extraSounds', label: 'Sons supplémentaires (explosions, chocs, turbo…)', group: 'Audio', type: 'bool', arcade: true, original: false },
   // --- Contrôles
-  { key: 'orientation', label: 'Orientation de l’écran', group: 'Contrôles', type: 'select', arcade: 'auto', original: 'landscape', options: [
+  { key: 'orientation', label: 'Orientation de l’écran', group: 'Contrôles', type: 'select', arcade: 'portrait', original: 'portrait', options: [
     { value: 'auto', label: 'Libre (portrait ou paysage)' }, { value: 'landscape', label: 'Paysage' }, { value: 'portrait', label: 'Portrait' },
-  ], help: 'L’APK Unity est en paysage (LandscapeLeft).' },
+  ], help: 'Le jeu se joue en portrait (l’APK Unity était en paysage, LandscapeLeft).' },
   { key: 'controlMode', label: 'Commande tactile', group: 'Contrôles', type: 'select', arcade: 'zones', original: 'stick', options: [
     { value: 'zones', label: 'Écran coupé en deux (gauche / droite)' }, { value: 'stick', label: 'Joystick' },
   ] },

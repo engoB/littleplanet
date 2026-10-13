@@ -562,20 +562,8 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 .tuto-slide h2 { margin: 4px 0 0; font-family: 'Lilita', var(--font); font-weight: 400; font-size: 30px; color: #ffd36a; }
 .tuto-slide p { margin: 0; font-size: 16px; line-height: 1.45; max-width: 40ch; }
 .tuto-art { width: 100%; height: 150px; border-radius: 18px; position: relative; overflow: hidden; background: radial-gradient(ellipse at 50% 120%, #2a7a3a, #0b1530 70%); }
-.art-story { background-image: url('/icons/icon-512.png'); background-size: cover; background-position: center 35%; }
-.art-controls .half { position: absolute; top: 0; bottom: 0; width: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #fff; }
 .art-controls .half.l { left: 0; background: rgba(255, 211, 77, 0.22); border-right: 2px dashed rgba(255,255,255,0.5); }
 .art-controls .half.r { right: 0; background: rgba(120, 200, 255, 0.18); }
-.art-controls .flame { position: absolute; right: 14px; bottom: 12px; width: 54px; height: 54px; border-radius: 50%; border: 6px solid #ffb340; box-shadow: 0 0 16px #ff7a1a, inset 0 0 10px #ff7a1a; }
-.art-danger .reticle { position: absolute; left: 22%; top: 30%; width: 70px; height: 70px; border-radius: 50%; border: 6px solid #ff3a2a; box-shadow: 0 0 18px #ff3a2a; }
-.art-danger .ring { position: absolute; right: 22%; top: 34%; width: 90px; height: 60px; border-radius: 50%; border: 8px dotted #5aff6a; transform: perspective(200px) rotateX(55deg); }
-.art-bonus .qbox { position: absolute; left: 16%; top: 30%; width: 60px; height: 60px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: bold 40px sans-serif; color: #fff;
-  background: linear-gradient(135deg, #ff6a8a, #ffd36a, #6affb0, #6ab8ff); box-shadow: 0 0 18px rgba(255,255,255,0.6); }
-.art-bonus .shoe { position: absolute; left: 44%; top: 34%; width: 64px; height: 44px; border-radius: 10px 30px 8px 8px; background: linear-gradient(#c8ccd4, #eef0f2); box-shadow: 0 6px 0 #fff, 0 0 18px #6adfff; }
-.art-bonus .pad { position: absolute; right: 12%; top: 32%; width: 66px; height: 66px; border-radius: 8px; background: #ff8c00; transform: perspective(200px) rotateX(45deg);
-  background-image: repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,240,180,0.9) 10px 18px); }
-.art-goal .trophy { position: absolute; left: 50%; top: 18%; width: 80px; height: 100px; transform: translateX(-50%); background: center / contain no-repeat;
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M7%203h10v5a5%205%200%200%201-10%200z%27%20fill%3D%27%23ffc93a%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271%27/%3E%3Cpath%20d%3D%27M7%205H4a3%203%200%200%200%203%204M17%205h3a3%203%200%200%201-3%204%27%20fill%3D%27none%27%20stroke%3D%27%23ffc93a%27%20stroke-width%3D%271.6%27/%3E%3Crect%20x%3D%2710.5%27%20y%3D%2713%27%20width%3D%273%27%20height%3D%274%27%20fill%3D%27%23ffc93a%27/%3E%3Crect%20x%3D%278%27%20y%3D%2717%27%20width%3D%278%27%20height%3D%273%27%20rx%3D%271%27%20fill%3D%27%23c8862a%27/%3E%3C/svg%3E"); }
 .tuto-dots { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
 .tuto-dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.3); }
 .tuto-dots i.on { background: #ffd36a; transform: scale(1.25); }
@@ -610,7 +598,7 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 .panel { overflow: hidden; }
 @media (max-height: 760px), (max-width: 480px) {
   .tuto-slides { min-height: 0; }
-  .tuto-art { height: 96px; }
+
   .tuto-slide h2 { font-size: 24px; }
   .tuto-slide p { font-size: 14px; line-height: 1.35; }
   .tuto-dots { margin: 8px 0; }
@@ -634,3 +622,39 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
 /* Numéro de version (accueil, discret) */
 .app-version { position: absolute; right: calc(14px + var(--safe-r)); bottom: calc(10px + var(--safe-b)); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.45; pointer-events: none; }
 @media (orientation: portrait) { .app-version { top: calc(22px + var(--safe-t)); bottom: auto; right: auto; left: calc(16px + var(--safe-l)); } }
+
+/* Difficulté en étoiles */
+.st { font-style: normal; color: rgba(255, 255, 255, 0.22); letter-spacing: 1px; }
+.st.on { color: #ffd34d; text-shadow: 0 0 8px rgba(255, 200, 60, 0.55); }
+.ps-stars .st { font-size: 20px; }
+.chip-text small .st { font-size: 12px; letter-spacing: 0; }
+@media (orientation: portrait) { #stage-banner { top: 46%; } }
+
+.settings-page button.danger { background: #c8332a; color: #fff; border: 0; }
+.progress-reset { margin: 18px 0; }
+/* Voyage : options en grille (label au-dessus), aucun débordement */
+.mh-opts .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-radius: 16px; padding: 4px; }
+.mh-opts .seg-label { grid-column: 1 / -1; text-align: left; padding: 2px 6px 0; }
+.mh-opts .seg button { padding: 6px 0; }
+.mh-defis { display: flex; flex-direction: column; gap: 5px; }
+.mh-defis .ps-defis-label { text-align: left; padding-left: 6px; }
+.mh-defis .ps-defis { justify-content: flex-start; }
+.mode-hero { min-width: 0; }
+.modes-panel { width: min(520px, 94vw); box-sizing: border-box; }
+
+/* Tutoriel : illustrations rendues par le moteur du jeu (public/tuto) */
+.tuto-art { aspect-ratio: 2 / 1; height: auto !important; background: #0b1530 center / cover no-repeat; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.tuto-art::before, .tuto-art::after, .tuto-art > .reticle, .tuto-art > .ring, .tuto-art > .qbox, .tuto-art > .shoe, .tuto-art > .pad, .tuto-art > .trophy, .tuto-art > .flame { display: none; }
+.art-controls .half small { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.art-controls .half.l { background: linear-gradient(90deg, rgba(255, 211, 77, 0.35), rgba(255, 211, 77, 0.05)); border-right: 2px dashed rgba(255, 255, 255, 0.6); }
+.art-controls .half.r { background: linear-gradient(270deg, rgba(120, 200, 255, 0.3), rgba(120, 200, 255, 0.05)); }
+.art-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.art-grid span { align-self: end; justify-self: start; margin: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(10, 8, 30, 0.65); border: 1px solid rgba(255, 255, 255, 0.25); }
+.tuto-chips { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 5px; }
+.tuto-chips .defi { font-style: normal; height: 26px; font-size: 11.5px; pointer-events: none; }
+.tuto-chips .defi .mode-ico { width: 20px; height: 20px; }
+.tuto-slides { min-height: 0 !important; }
+.art-controls .half { position: absolute; top: 0; bottom: 0; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 30px; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.art-controls .half.l { left: 0; }
+.art-controls .half.r { right: 0; }
+.tuto-actions > * { white-space: nowrap; }

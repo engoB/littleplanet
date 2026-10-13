@@ -27,7 +27,8 @@ function stars(el: HTMLElement, n: number): void {
   el.setAttribute('aria-label', `Difficulté ${n} sur 5`);
   for (let i = 0; i < 5; i++) {
     const d = document.createElement('i');
-    d.className = i < n ? 'pip on' : 'pip';
+    d.className = i < n ? 'st on' : 'st';
+    d.textContent = '★';
     el.appendChild(d);
   }
 }
@@ -335,18 +336,21 @@ async function main(): Promise<void> {
   const defaultDefis = MODE_ORDER.filter((k) => settings[k] === true);
   const defisOf = (id: string) => worldChallenges(id) ?? defaultDefis;
   /** Applique les défis du monde (ou aucun pour le voyage) avant une partie. */
+  // Voyage : ses propres défis (sans Chrono ni Rétrécit, il a son compte à rebours)
+  const VOYAGE_DEFIS = ['modeStorm', 'modeMirror', 'modeSnitch', 'modeBullet'];
   const applyDefis = (def: PlanetDef) => {
     if (urlOverride) return; // tests : réglages imposés par l'URL
-    const on = def.style === 'galaxy' ? [] : defisOf(def.id);
+    const on = def.style === 'galaxy' ? (worldChallenges('galaxie') ?? []).filter((k) => VOYAGE_DEFIS.includes(k)) : defisOf(def.id);
     for (const k of MODE_ORDER) settings[k] = on.includes(k);
     world.applySettings(settings);
   };
-  const renderDefis = (def: PlanetDef, locked: boolean) => {
-    const box = $('ps-defis');
+  const renderDefis = (def: PlanetDef, locked: boolean, boxId = 'ps-defis') => {
+    const box = $(boxId);
     box.innerHTML = '';
     box.hidden = locked || preset === 'original';
-    const on = new Set(defisOf(def.id));
-    for (const d of modeDefs) {
+    const voyage = def.style === 'galaxy';
+    const on = new Set(voyage ? worldChallenges('galaxie') ?? [] : defisOf(def.id));
+    for (const d of modeDefs.filter((x) => !voyage || VOYAGE_DEFIS.includes(x.key))) {
       const b = document.createElement('button');
       b.className = 'defi';
       b.classList.toggle('on', on.has(d.key));
@@ -360,8 +364,8 @@ async function main(): Promise<void> {
         else on.add(d.key);
         setWorldChallenges(def.id, MODE_ORDER.filter((k) => on.has(k)));
         if (settings.extraSounds === true) world.audio.playOneShot(on.has(d.key) ? 'ui_toggle_on' : 'ui_toggle_off', 0.5);
-        renderDefis(def, locked);
-        $('ps-defi-help').textContent = on.has(d.key) ? `${d.label} : ${d.help ?? ''}` : '';
+        renderDefis(def, locked, boxId);
+        if (!voyage) $('ps-defi-help').textContent = on.has(d.key) ? `${d.label} : ${d.help ?? ''}` : '';
       });
       box.appendChild(b);
     }
@@ -444,6 +448,7 @@ async function main(): Promise<void> {
   on('btn-over-planets', showPlanets);
   on('btn-modes', () => {
     syncSegs();
+    renderDefis(planetById('galaxie'), false, 'voy-defis');
     screens.show('menu-modes');
   });
   on('btn-modes-back', () => screens.show('menu-main'));

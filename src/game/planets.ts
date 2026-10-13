@@ -125,3 +125,14 @@ export function isUnlocked(p: PlanetDef, all: boolean): boolean {
   if (all || !p.unlock) return true;
   return (bestDistances()[p.unlock.planet] ?? 0) >= p.unlock.distance;
 }
+
+/** Efface la progression : records par planète, défis, planète choisie, meilleures distances. */
+export function resetProgress(): void {
+  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1']) {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      /* stockage indisponible */
+    }
+  }
+}

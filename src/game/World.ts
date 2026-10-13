@@ -582,7 +582,7 @@ export class World implements GameContext {
         return;
       }
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_stage', 0.7);
-      if (this.events.stage) this.events.stage(n + 1, this.stages.label);
+      if (this.events.stage) this.events.stage(n + 1, `Objectif : ${this.stages.label}`);
       else this.events.message(`Étape ${n} réussie !`, 'good');
       this.health.heal(10);
       this.revealKart(n + 1, true);
