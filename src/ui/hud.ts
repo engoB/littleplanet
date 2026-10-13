@@ -106,20 +106,6 @@ export class Hud {
     if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
   }
 
-  private boomTimer = 0;
-  /** Onomatopée de bande dessinée (« BOUM ! ») qui éclate puis s'efface. */
-  boom(text: string): void {
-    const b = $('boom');
-    $('boom-text').textContent = text;
-    b.hidden = false;
-    b.style.setProperty('--rot', `${Math.round(Math.random() * 16 - 8)}deg`);
-    b.classList.remove('on');
-    void b.offsetWidth;
-    b.classList.add('on');
-    clearTimeout(this.boomTimer);
-    this.boomTimer = window.setTimeout(() => (b.hidden = true), 1100);
-  }
-
   stageBanner(stage: number, sub: string, title = `Étape ${stage}`): void {
     const b = this.banner;
     $('sb-title').textContent = title;

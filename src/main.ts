@@ -146,7 +146,6 @@ async function main(): Promise<void> {
       vibrate([30, 40, 30], settings.haptics === true);
     },
     countdown: (n) => hud.countdown(n),
-    boom: (t) => hud.boom(t),
   });
 
   const audioP = world.audio.loadAll('./', assets.manifest.audio);
@@ -196,7 +195,15 @@ async function main(): Promise<void> {
     if (quality === 'auto' && coarse) pixelRatio = Math.min(pixelRatio, 1.5);
   };
   basePixelRatio();
+  // Redimensionner vide le canvas : on le fait juste avant un rendu (début de
+  // l'image suivante), sinon l'écran clignote en noir une image
+  let needResize = false;
   const resize = () => {
+    needResize = true;
+    if (TEST) applyResize();
+  };
+  const applyResize = () => {
+    needResize = false;
     // Taille réelle du canvas (100lvh) : pas de bande vide en bas de l'écran
     const w = Math.max(1, canvas.clientWidth || window.innerWidth);
     const h = Math.max(1, canvas.clientHeight || window.innerHeight);
@@ -209,7 +216,7 @@ async function main(): Promise<void> {
   window.visualViewport?.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 250));
   document.addEventListener('fullscreenchange', () => setTimeout(resize, 100));
-  resize();
+  applyResize();
 
   $('loading-text').textContent = 'Préparation des shaders…';
   await world.precompile();
@@ -736,6 +743,7 @@ async function main(): Promise<void> {
     last = now;
     avgDt += (raw - avgDt) * 0.12;
     const dt = Math.abs(raw - avgDt) < avgDt * 0.35 ? avgDt : raw;
+    if (needResize) applyResize();
     frame(dt);
     // FPS et qualité adaptative (densité de pixels, quantité de particules)
     fpsAcc += dt;
