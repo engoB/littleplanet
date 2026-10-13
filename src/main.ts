@@ -278,7 +278,8 @@ async function main(): Promise<void> {
     const best = bestDistances()[p.id];
     const goals = Math.min(GOALS, goalsOf(p.id));
     $('ps-count').textContent = `${i + 1} / ${choosable.length}`;
-    $('ps-kicker').textContent = `Monde ${i + 1} · ${diffLabel[p.difficulty] ?? ''}`;
+    const sky = { rain: ' · 🌧️', snow: ' · ❄️', leaves: ' · 🍂', wind: ' · 💨', storm: ' · ⛈️' }[world.weatherFor(p) as string] ?? '';
+    $('ps-kicker').textContent = `Monde ${i + 1} · ${diffLabel[p.difficulty] ?? ''}${sky}`;
     $('ps-name').textContent = p.name;
     stars($('ps-stars'), p.difficulty);
     $('ps-info').textContent = p.tagline;
@@ -714,6 +715,7 @@ async function main(): Promise<void> {
     }
     if (!paused && !portrait) world.step(dt, input);
     world.render();
+    $('sky-flash').style.opacity = String(Math.min(1, world.weather.flash) * 0.55);
     if (world.mode === 'play' || world.mode === 'dying') {
       const ta = world.countdown;
       hud.setChrono(ta ? world.timeLeft : world.chrono, ta);

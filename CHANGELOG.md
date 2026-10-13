@@ -6,6 +6,22 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.16.0 — lot 16
+
+- **Climat** : pluie, neige, feuilles qui volent, vent (rafales qui poussent
+  la voiture), orage (pluie battante, éclairs et coups de foudre au sol) ou
+  beau temps. Chaque monde a le sien ; on peut en imposer un dans les Options.
+- Décor : à part les gros monuments, plus rien ne bloque. On passe à travers
+  les éléments, qui volent en éclats (quelques dégâts).
+- Niveau Facile retiré, remplacé par le **défi Zen** (ni météores ni dégâts),
+  ouvert d'emblée.
+- Grand Océan : moins d'écume, le sens de la houle tourne doucement, et un
+  **sillage d'écume** suit la voiture sur l'eau.
+- Barre de vie au sol : petites barres aux coins arrondis, dégradé du vert au
+  rouge (il reste le rouge quand la santé est basse).
+- Compte à rebours : les chiffres ne clignotent plus.
+- DeLorean : persiennes arrière retirées (scintillement).
+
 ## 0.15.0 — lot 15
 
 - Le véhicule devient une **DeLorean volante** (inox, persiennes, roues

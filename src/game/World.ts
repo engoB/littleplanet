@@ -43,6 +43,7 @@ import { PlanetSelect } from './PlanetSelect';
 import { classicPathPoint, classicPlanetMaterial } from './classicPlanet';
 import { MushroomCannon } from './MushroomCannon';
 import { WakeTrail } from './WakeTrail';
+import { Weather, WEATHERS, type WeatherKind } from './Weather';
 
 export type Mode = 'menu' | 'play' | 'dying' | 'over';
 
@@ -256,6 +257,9 @@ export class World implements GameContext {
   private cannon!: MushroomCannon;
   /** Sillage d'écume sur l'eau. */
   private wakeTrail!: WakeTrail;
+  /** Climat (pluie, neige, feuilles, vent, orage) et lumières de base qu'il module. */
+  weather!: Weather;
+  private lightBase = { amb: 1, sun: 1 };
   private cannonT = 0;
   /** Hauteur du saut en cours (1 : ressort ; plus haut : éjection du canon). */
   private hopScale = 1;
@@ -423,6 +427,16 @@ export class World implements GameContext {
     this.buildGalaxyObjects();
     this.cannon = new MushroomCannon(this.scene);
     this.wakeTrail = new WakeTrail(this.scene);
+    this.weather = new Weather(this.scene);
+    this.weather.onStrike = (at) => {
+      // Coup de foudre : impact au sol (cratère, explosion, fumée) et tonnerre
+      const n = at.clone().sub(this.planet.position).normalize();
+      const world = this.planet.position.clone().addScaledVector(n, this.planetRadius());
+      const local = this.planet.worldToLocal(world.clone());
+      this.meteors.onImpact(world, local, local.clone().normalize());
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_explosion', 1, 0.45);
+      this.shaker.start({ enabled: true, delay: 0, duration: 0.4, space: 0, strength: [0.08, 0.08, 0.16], curve: [[0, 1, 0, -1], [1, 0, -1, 0]], shakesDelay: 0 });
+    };
     this.dizzy = this.buildDizzy();
     this.cannon.onGone = (at) => this.burstAt(at, [0.95, 0.9, 0.85, 1]);
     const geo = this.planetMesh.geometry;
@@ -788,6 +802,17 @@ export class World implements GameContext {
     this.particles.intensity = bool(this.settings, 'bloom') ? 0.62 : 1;
     this.clocks.spawnRadius = def.id === 'origine' ? null : () => this.planetCollider + 0.2 / this.planet.scale.x;
     this.applySettings(this.settings);
+    // Climat du monde (ou imposé par le réglage) ; pas de climat au menu
+    this.lightBase = { amb: this.ambient.intensity, sun: this.sun?.intensity ?? 1 };
+    this.weather.set(this.mode === 'menu' ? 'none' : this.weatherFor(def));
+  }
+
+  /** Climat d'un monde : réglage « Climat » (auto = celui du monde). */
+  weatherFor(def: PlanetDef): WeatherKind {
+    if (!bool(this.settings, 'premiumFx')) return 'none';
+    const v = String(this.settings.weather ?? 'auto');
+    if (v !== 'auto' && (WEATHERS as string[]).includes(v)) return v as WeatherKind;
+    return (def.weather as WeatherKind | undefined) ?? 'none';
   }
 
   private setupSceneLights(): void {
@@ -1401,7 +1426,9 @@ export class World implements GameContext {
     // Update() de la voiture : rayon du collider (non mis à l'échelle dans l'original)
     const radius = this.shrinking || this.def.id !== 'origine' ? this.planetRadius() : this.planetCollider;
     if (alive && this.cannonT <= 0) {
-      this.vehicle.update(dt, input.horizontal, this.planet.position, radius);
+      // Rafales (vent, orage) : le véhicule est poussé sur le côté
+      const gust = this.weather.steerBias(_o5.set(1, 0, 0).applyQuaternion(this.car.quaternion));
+      this.vehicle.update(dt, Math.max(-1, Math.min(1, input.horizontal + gust)), this.planet.position, radius);
       this.tracker.update();
     }
     this.car.updateMatrixWorld(true);
@@ -1460,6 +1487,11 @@ export class World implements GameContext {
     }
     this.surfaceEffects(dt, alive);
     this.updateDizzy(dt);
+    // Climat autour du véhicule ; ciel assombri et éclairs
+    const wu = _o6.copy(this.car.position).sub(this.planet.position).normalize();
+    this.weather.update(dt, this.car.position, wu, this.rig.camera);
+    this.ambient.intensity = this.lightBase.amb * (0.75 + 0.25 * this.weather.dim) + this.weather.flash * 1.8;
+    if (this.sun) this.sun.intensity = this.lightBase.sun * this.weather.dim + this.weather.flash * 2;
     this.healthRing.mesh.visible = String(s.healthDisplay) === 'ring' && this.mode !== 'menu' && !this.launch;
     this.healthRing.set(this.health.currentHealth / Math.max(1, this.health.maxHealth));
     this.healthRing.update(dt, Time.time);
@@ -1685,6 +1717,7 @@ export class World implements GameContext {
     const g = this.galaxy;
     if (!g || !this.satDef || !g.star || this.launch) return;
     this.meteors.clear();
+    this.weather.set('none');
     const up0 = g.star.clone();
     const at = this.planet.localToWorld(g.star.clone().multiplyScalar(this.planetCollider)).addScaledVector(up0, 0.45);
     // Cap de départ (avant actuel) et cap de vol (vers la planète suivante), dans le plan tangent

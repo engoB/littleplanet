@@ -41,6 +41,8 @@ export interface PlanetDef {
   roadBoost?: boolean;
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
+  /** Climat du monde : rain, snow, leaves, wind, storm (rien par défaut). */
+  weather?: string;
   /** Rendu en gros pixels (filtrage « nearest »). */
   pixel?: boolean;
 }
