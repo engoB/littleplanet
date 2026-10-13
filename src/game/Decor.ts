@@ -263,6 +263,143 @@ const angryTexture = () =>
     for (let i = 0; i < 4; i++) g.fillRect(18 + i * 8, 42, 4, 8);
   });
 
+/** Panneau flottant « HILL VALLEY » (lettres rouges, cadre crème). */
+const hillValleyTexture = () =>
+  canvasTex(256, (g, n) => {
+    g.fillStyle = '#f4ead2';
+    g.fillRect(0, 0, n, n);
+    g.strokeStyle = '#3a2a1a';
+    g.lineWidth = 10;
+    g.strokeRect(8, 70, n - 16, n - 140);
+    g.font = 'bold 30px serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = '#3a2a1a';
+    g.fillText('WELCOME TO', n / 2, 98);
+    g.font = 'bold 58px serif';
+    g.fillStyle = '#c8261e';
+    g.fillText('HILL VALLEY', n / 2, 142);
+    g.font = 'bold 20px serif';
+    g.fillStyle = '#3a2a1a';
+    g.fillText('A NICE PLACE TO LIVE', n / 2, 172);
+  });
+
+/** Visage de citrouille (yeux et bouche lumineux sur fond transparent). */
+const pumpkinFace = () =>
+  canvasTex(64, (g) => {
+    g.clearRect(0, 0, 64, 64);
+    g.fillStyle = '#ffe28a';
+    g.beginPath(); g.moveTo(14, 26); g.lineTo(24, 14); g.lineTo(28, 28); g.fill();
+    g.beginPath(); g.moveTo(50, 26); g.lineTo(40, 14); g.lineTo(36, 28); g.fill();
+    g.beginPath();
+    g.moveTo(12, 38); g.lineTo(20, 46); g.lineTo(26, 40); g.lineTo(32, 48); g.lineTo(38, 40); g.lineTo(44, 46); g.lineTo(52, 38); g.lineTo(46, 54); g.lineTo(18, 54);
+    g.fill();
+  });
+
+/** Taches de vache (noir sur blanc). */
+const cowTexture = () =>
+  canvasTex(64, (g) => {
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#1a1a1a';
+    for (const [x, y, r] of [[12, 14, 9], [40, 10, 7], [28, 38, 11], [54, 44, 8], [8, 52, 6], [50, 26, 5]]) {
+      g.beginPath();
+      g.ellipse(x, y, r, r * 0.7, x * 0.1, 0, Math.PI * 2);
+      g.fill();
+    }
+  });
+
+/** Rayures de sucre d'orge (rouge et blanc, en biais). */
+const caneTexture = () =>
+  canvasTex(64, (g) => {
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#e8233a';
+    for (let i = -64; i < 128; i += 16) {
+      g.beginPath();
+      g.moveTo(i, 0); g.lineTo(i + 8, 0); g.lineTo(i + 8 - 32, 64); g.lineTo(i - 32, 64);
+      g.fill();
+    }
+  });
+
+/** Bottes de foin (anneaux concentriques). */
+const hayTexture = () =>
+  canvasTex(64, (g) => {
+    g.fillStyle = '#f0c85a';
+    g.fillRect(0, 0, 64, 64);
+    g.strokeStyle = 'rgba(160, 110, 30, 0.6)';
+    g.lineWidth = 2;
+    for (let i = 0; i < 64; i += 6) {
+      g.beginPath(); g.moveTo(0, i + (i % 12)); g.lineTo(64, i + 3); g.stroke();
+    }
+  });
+
+function spiralHill(): THREE.BufferGeometry {
+  const pts: THREE.Vector3[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const t = i / 40;
+    const a = t * Math.PI * 1.6;
+    const r = 0.35 * (1 - t * 0.55);
+    pts.push(new THREE.Vector3(Math.cos(a) * r, 0.05 + Math.sin(t * Math.PI * 0.95) * 0.7 + t * 0.25, Math.sin(a) * r));
+  }
+  // Boucle finale : la fameuse spirale
+  for (let i = 1; i <= 24; i++) {
+    const t = i / 24;
+    const a = Math.PI * 1.6 + t * Math.PI * 2;
+    const r = 0.16 * (1 - t * 0.85);
+    pts.push(new THREE.Vector3(Math.cos(a) * (0.16 + r), 0.92 + Math.sin(t * Math.PI * 2) * r, Math.sin(a) * 0.1));
+  }
+  const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.06, 8, false);
+  return merge([tube, new THREE.SphereGeometry(0.42, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.3, 1)]);
+}
+
+function caneGeo(): THREE.BufferGeometry {
+  const pts: THREE.Vector3[] = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.45, 0)];
+  for (let i = 1; i <= 12; i++) {
+    const a = (i / 12) * Math.PI;
+    pts.push(new THREE.Vector3(0.09 - Math.cos(a) * 0.09, 0.45 + Math.sin(a) * 0.1, 0));
+  }
+  pts.push(new THREE.Vector3(0.18, 0.36, 0));
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.03, 8, false);
+}
+
+function xmasLights(): THREE.BufferGeometry {
+  const cols = [[1, 0.2, 0.2], [1, 0.85, 0.2], [0.3, 0.6, 1], [0.4, 1, 0.4], [1, 0.4, 1]];
+  const gs: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 22; i++) {
+    const t = i / 22;
+    const h = 0.12 + t * 0.55;
+    const r = 0.21 * (1 - t * 0.8);
+    const a = i * 2.4;
+    const g = new THREE.SphereGeometry(0.018, 6, 4).translate(Math.cos(a) * r, h, Math.sin(a) * r).toNonIndexed();
+    const c = cols[i % cols.length];
+    const arr = new Float32Array(g.attributes.position.count * 3);
+    for (let k = 0; k < arr.length; k += 3) arr.set(c, k);
+    g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    gs.push(g);
+  }
+  return mergeGeometries(gs)!;
+}
+
+function barnRoof(): THREE.BufferGeometry {
+  const sh = new THREE.Shape();
+  sh.moveTo(-0.36, 0); sh.lineTo(0, 0.24); sh.lineTo(0.36, 0); sh.lineTo(-0.36, 0);
+  return new THREE.ExtrudeGeometry(sh, { depth: 0.56, bevelEnabled: false }).translate(0, 0.36, -0.28);
+}
+
+function hogwarts(): [THREE.BufferGeometry, THREE.BufferGeometry, THREE.BufferGeometry] {
+  const walls: THREE.BufferGeometry[] = [new THREE.BoxGeometry(0.7, 0.32, 0.36).translate(0, 0.16, 0), new THREE.BoxGeometry(0.3, 0.5, 0.3).translate(-0.12, 0.25, -0.05)];
+  const roofs: THREE.BufferGeometry[] = [];
+  const wins: THREE.BufferGeometry[] = [];
+  for (const [x, z, h, r] of [[-0.38, 0.12, 0.62, 0.07], [0.36, 0.14, 0.5, 0.065], [0.05, -0.2, 0.86, 0.08], [-0.22, -0.22, 0.7, 0.06], [0.3, -0.18, 0.66, 0.06]]) {
+    walls.push(new THREE.CylinderGeometry(r, r * 1.08, h, 12).translate(x, h / 2, z));
+    roofs.push(new THREE.ConeGeometry(r * 1.35, r * 3.2, 12).translate(x, h + r * 1.6, z));
+    for (const y of [h * 0.55, h * 0.8]) wins.push(new THREE.BoxGeometry(0.025, 0.045, 0.02).translate(x, y, z + r));
+  }
+  for (let i = 0; i < 7; i++) wins.push(new THREE.BoxGeometry(0.03, 0.05, 0.02).translate(-0.3 + i * 0.1, 0.2, 0.181));
+  return [merge(walls), merge(roofs), merge(wins)];
+}
+
 function ghostBody(): THREE.BufferGeometry {
   const head = new THREE.SphereGeometry(0.13, 18, 12);
   const tail = new THREE.ConeGeometry(0.1, 0.16, 12).rotateX(Math.PI).rotateZ(0.5).translate(0.09, -0.07, 0);
@@ -432,10 +569,81 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.ExtrudeGeometry((() => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2 + Math.PI / 2; const rr = i % 2 ? 0.05 : 0.12; if (i === 0) sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); else sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } return sh; })(), { depth: 0.04, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 1 }).translate(0, 0, -0.02),
       color: fixed('#ffe14d'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x8a6a10) }) },
   ] },
+  // --- Arc-en-ciel : anneaux dorés à traverser
+  goldrings: { space: 0.6, hit: 0, scale: [1, 1.3], max: 6, parts: [
+    { geo: () => new THREE.TorusGeometry(0.55, 0.055, 10, 48).translate(0, 0.6, 0), color: fixed('#ffc93a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0xb07a10) }) },
+  ] },
+  // --- Hill Valley : panneau flottant
+  signs: { space: 0.6, hit: 0, scale: [1.3, 1.3], max: 3, lift: 0.9, parts: [
+    { geo: () => new THREE.BoxGeometry(1.0, 0.56, 0.04), color: fixed('#5a3a22') },
+    { geo: () => merge([new THREE.PlaneGeometry(0.96, 0.52).translate(0, 0, 0.022), new THREE.PlaneGeometry(0.96, 0.52).rotateY(Math.PI).translate(0, 0, -0.022)]), color: fixed('#ffffff'), map: hillValleyTexture },
+  ] },
+  // --- Poudlard
+  hogcastle: { space: 0.8, hit: 0.45, scale: [1.2, 1.2], max: 1, parts: [
+    { geo: () => hogwarts()[0], color: (c) => c.house, flat: true },
+    { geo: () => hogwarts()[1], color: (c) => c.roof },
+    { geo: () => hogwarts()[2], color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.8) }) },
+  ] },
+  hoops: { space: 0.5, hit: 0.05, scale: [0.9, 1.4], max: 6, parts: [
+    { geo: () => merge([new THREE.CylinderGeometry(0.018, 0.024, 1.0, 8).translate(0, 0.5, 0), new THREE.TorusGeometry(0.16, 0.022, 8, 28).translate(0, 1.16, 0)]), color: (c) => String(c.gold ?? '#ffc93a'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x6a4a08) }) },
+  ] },
+  candles: { space: 0.25, hit: 0, scale: [0.9, 1.2], max: 16, lift: 1.0, parts: [
+    { geo: () => new THREE.CylinderGeometry(0.024, 0.026, 0.13, 10), color: fixed('#fff6e0') },
+    { geo: () => new THREE.ConeGeometry(0.018, 0.05, 8).translate(0, 0.09, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 2.2, 0.8) }) },
+  ] },
+  // --- Ville d'Halloween
+  spiralhill: { space: 0.8, hit: 0.35, scale: [1.3, 1.3], max: 1, parts: [
+    { geo: spiralHill, color: fixed('#5a5468') },
+  ] },
+  pumpkins: { space: 0.22, hit: 0.1, scale: [0.8, 1.4], max: 14, parts: [
+    { geo: () => new THREE.SphereGeometry(0.11, 16, 10).scale(1.15, 0.85, 1.15).translate(0, 0.09, 0), color: (c) => String(c.pumpkin ?? '#ff8a1a') },
+    { geo: () => new THREE.CylinderGeometry(0.012, 0.018, 0.06, 6).translate(0, 0.2, 0), color: fixed('#3a5a2a') },
+    { geo: () => new THREE.PlaneGeometry(0.14, 0.14).translate(0, 0.09, 0.128), color: fixed('#ffffff'), map: pumpkinFace,
+      mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.6, 0.6), transparent: true, depthWrite: false }) },
+  ] },
+  gravestones: { space: 0.22, hit: 0.08, scale: [0.8, 1.2], max: 12, parts: [
+    { geo: () => merge([new THREE.BoxGeometry(0.16, 0.16, 0.05).translate(0, 0.08, 0), new THREE.CylinderGeometry(0.08, 0.08, 0.05, 14, 1, false, 0, Math.PI).rotateX(Math.PI / 2).rotateZ(Math.PI / 2).translate(0, 0.16, 0)]), color: (c) => c.rock },
+  ] },
+  // --- Village de Noël
+  xmastrees: { space: 0.35, hit: 0.14, scale: [0.9, 1.4], max: 10, parts: [
+    { geo: () => new THREE.CylinderGeometry(0.03, 0.04, 0.12, 7).translate(0, 0.06, 0), color: (c) => c.trunk },
+    { geo: () => merge([0, 1, 2].map((i) => new THREE.ConeGeometry(0.24 - i * 0.06, 0.26, 12).translate(0, 0.2 + i * 0.16, 0))), color: (c, r) => pick(c.canopy, r, '#2f8a4a') },
+    { geo: xmasLights, color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.4, 2.4), vertexColors: true }) },
+    { geo: () => star(0.06).translate(0, 0.66, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.1, 0.5), side: THREE.DoubleSide }) },
+  ] },
+  gifts: { space: 0.2, hit: 0.1, scale: [0.8, 1.4], max: 14, parts: [
+    { geo: () => new THREE.BoxGeometry(0.18, 0.15, 0.18).translate(0, 0.075, 0), color: (c, r) => pick(c.gift, r, '#e8333a') },
+    { geo: () => merge([new THREE.BoxGeometry(0.19, 0.155, 0.035).translate(0, 0.075, 0), new THREE.BoxGeometry(0.035, 0.155, 0.19).translate(0, 0.075, 0), new THREE.TorusGeometry(0.035, 0.012, 6, 12).translate(-0.03, 0.17, 0), new THREE.TorusGeometry(0.035, 0.012, 6, 12).translate(0.03, 0.17, 0)]), color: fixed('#ffe28a') },
+  ] },
+  candycanes: { space: 0.25, hit: 0.05, scale: [1, 1.6], max: 10, parts: [
+    { geo: caneGeo, color: fixed('#ffffff'), map: caneTexture },
+  ] },
+  snowmen: { space: 0.3, hit: 0.12, scale: [0.9, 1.2], max: 6, parts: [
+    { geo: () => merge([new THREE.SphereGeometry(0.13, 16, 10).translate(0, 0.12, 0), new THREE.SphereGeometry(0.095, 16, 10).translate(0, 0.3, 0), new THREE.SphereGeometry(0.07, 14, 10).translate(0, 0.43, 0)]), color: fixed('#ffffff') },
+    { geo: () => merge([new THREE.CylinderGeometry(0.05, 0.05, 0.08, 12).translate(0, 0.53, 0), new THREE.CylinderGeometry(0.075, 0.075, 0.012, 14).translate(0, 0.49, 0)]), color: fixed('#1a1a1a') },
+    { geo: () => new THREE.ConeGeometry(0.014, 0.08, 8).rotateX(Math.PI / 2).translate(0, 0.43, 0.1), color: fixed('#ff8a1a') },
+  ] },
+  // --- Prairie Meuh Meuh
+  cows: { space: 0.35, hit: 0.14, scale: [0.9, 1.15], max: 10, parts: [
+    { geo: () => merge([new THREE.CapsuleGeometry(0.09, 0.2, 4, 12).rotateX(Math.PI / 2).translate(0, 0.2, 0), new THREE.BoxGeometry(0.11, 0.11, 0.12).translate(0, 0.27, 0.19)]), color: fixed('#ffffff'), map: cowTexture },
+    { geo: () => merge([[-0.05, -0.1], [0.05, -0.1], [-0.05, 0.1], [0.05, 0.1]].map(([x, z]) => new THREE.CylinderGeometry(0.018, 0.02, 0.13, 6).translate(x, 0.065, z))), color: fixed('#3a3a3a') },
+    { geo: () => merge([new THREE.BoxGeometry(0.09, 0.05, 0.03).translate(0, 0.24, 0.26), new THREE.ConeGeometry(0.012, 0.05, 6).rotateZ(0.7).translate(-0.055, 0.34, 0.18), new THREE.ConeGeometry(0.012, 0.05, 6).rotateZ(-0.7).translate(0.055, 0.34, 0.18)]), color: fixed('#f2b8b0') },
+  ] },
+  fences: { space: 0.3, hit: 0.08, scale: [1, 1], max: 12, parts: [
+    { geo: () => merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.035, 0.2, 0.035).translate(x, 0.1, 0)).concat([new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.14, 0), new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.07, 0)])), color: (c) => String(c.wood ?? '#a8784a') },
+  ] },
+  barn: { space: 0.8, hit: 0.4, scale: [1, 1], max: 1, parts: [
+    { geo: () => new THREE.BoxGeometry(0.72, 0.36, 0.56).translate(0, 0.18, 0), color: (c) => c.house },
+    { geo: barnRoof, color: fixed('#6a2a24') },
+    { geo: () => merge([new THREE.BoxGeometry(0.24, 0.26, 0.02).translate(0, 0.13, 0.285), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(0.8).translate(0, 0.13, 0.297), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(-0.8).translate(0, 0.13, 0.297)]), color: (c) => c.roof },
+  ] },
+  haybales: { space: 0.22, hit: 0.12, scale: [0.9, 1.2], max: 10, parts: [
+    { geo: () => new THREE.CylinderGeometry(0.11, 0.11, 0.2, 16).rotateZ(Math.PI / 2).translate(0, 0.11, 0), color: (c) => String(c.hay ?? '#f0c85a'), map: hayTexture },
+  ] },
 };
 
 /** Ordre de placement : les gros objets d'abord (ils trouvent toujours leur place). */
-const ORDER = ['thwomps', 'floodlights', 'castles', 'clocktowers', 'hills', 'houses', 'cabins', 'lamps', 'volcanoes', 'roses', 'baobabs', 'pipes', 'luxoballs', 'lollipops', 'mushrooms', 'palms', 'trees', 'cubetrees', 'toyblocks', 'gumdrops', 'balls', 'rocks', 'blocks', 'tallgrass', 'tirestacks', 'torches', 'deadtrees', 'ghosts', 'lanterns', 'stars'];
+const ORDER = ['hogcastle', 'barn', 'spiralhill', 'signs', 'goldrings', 'thwomps', 'floodlights', 'castles', 'clocktowers', 'hills', 'houses', 'cabins', 'lamps', 'volcanoes', 'roses', 'baobabs', 'pipes', 'luxoballs', 'lollipops', 'mushrooms', 'palms', 'trees', 'cubetrees', 'toyblocks', 'gumdrops', 'balls', 'rocks', 'blocks', 'tallgrass', 'tirestacks', 'torches', 'deadtrees', 'ghosts', 'lanterns', 'stars', 'hoops', 'candles', 'pumpkins', 'gravestones', 'xmastrees', 'gifts', 'candycanes', 'snowmen', 'cows', 'fences', 'haybales'];
 
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();

@@ -25,6 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import dae2glb  # noqa: E402
 import procedural_audio  # noqa: E402
+import premium_sfx  # noqa: E402
 import procedural_planets  # noqa: E402
 import procedural_textures  # noqa: E402
 
@@ -282,6 +283,8 @@ def main() -> None:
     with open(os.path.join(out, 'data', 'assets.json'), 'w', encoding='utf-8') as fh:
         json.dump(manifest, fh, ensure_ascii=False, indent=1)
     print('assets.json écrit')
+    # Sons premium : effets CC0 (uisfx) et explosion/choc/souffle resynthétisés
+    premium_sfx.main(os.path.join(HERE, '..', '.cache', 'uisfx', 'package', 'sounds'), os.path.join(out, 'audio'), os.path.join(out, 'data', 'assets.json'))
 
 
 if __name__ == '__main__':

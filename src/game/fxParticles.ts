@@ -34,6 +34,7 @@ function base(over: Partial<Omit<ParticleData, 'main' | 'shape'>> & { main: Part
     force: { ...off, x: k(0), y: k(0), z: k(0), worldSpace: false },
     noise: { ...off, strength: k(0), frequency: 1, scrollSpeed: k(0) },
     ...(over.duration !== undefined ? { duration: over.duration } : {}),
+    ...(over.looping !== undefined ? { looping: over.looping } : {}),
   } as ParticleData;
 }
 
@@ -115,4 +116,19 @@ export function sparkle(obj: THREE.Object3D, atlas: Record<string, [number, numb
   });
   const look: SpriteLook = { rect: atlas.fx_dot, additive: true, tint: [2.2, 2.0, 1.6], hidden: false };
   return new ParticleSystem(obj, d, renderer(0, 0.15), look);
+}
+
+/** Gerbe de ramassage (non bouclée) : étoiles et confettis colorés. */
+export function burst(obj: THREE.Object3D, atlas: Record<string, [number, number, number, number]>, c: [number, number, number, number] = [1, 0.9, 0.5, 1]): ParticleSystem {
+  const d = base({
+    looping: false,
+    duration: 0.6,
+    main: { lifetime: rnd(0.45, 0.9), speed: rnd(1.6, 3.4), size: rnd(0.06, 0.13), gravity: k(0.35), color: col(c), maxParticles: 80, rotation: rnd(0, 6.28) },
+    shape: { type: 0, radius: 0.08 },
+    emission: { enabled: true, rate: k(0), rateOverDistance: k(0), bursts: [{ time: 0, count: k(36), cycles: 1, interval: 0.01, probability: 1 }] },
+    sizeOverLifetime: { enabled: true, curve: curve([[0, 1], [1, 0.2]]) },
+    colorOverLifetime: { enabled: true, gradient: fade([[0, 1, 1, 1], [1, 1, 1, 1]], [[0, 1], [0.7, 0.8], [1, 0]]) },
+  });
+  const look: SpriteLook = { rect: atlas.fx_dot, additive: true, tint: [2, 2, 2], hidden: false };
+  return new ParticleSystem(obj, d, renderer(0, 0.2), look);
 }

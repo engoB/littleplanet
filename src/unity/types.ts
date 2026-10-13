@@ -146,6 +146,7 @@ export interface AssetsManifest {
   space?: Record<string, string>;
   skyDb?: Record<string, string>;
   skyRed?: Record<string, string>;
+  skies?: Record<string, Record<string, string>>;
   galaxyPreview?: string;
 }
 

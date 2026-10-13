@@ -60,22 +60,33 @@
           <span class="chip-change">Changer</span>
         </button>
         <button id="btn-play" class="btn-primary"><span class="play-ico"></span>Jouer</button>
-        <button id="btn-modes" class="modes-chip arcade-only" aria-label="Modes de jeu"><span class="modes-ico"></span><span id="modes-summary">Modes de jeu : classique</span></button>
-        <div class="home-row">
-          <button id="btn-help" class="btn-glass">Comment jouer</button>
-          <a id="btn-settings" class="btn-glass" href="./settings.html">Réglages</a>
-        </div>
+        <button id="btn-modes" class="btn-modes arcade-only" aria-label="Modes de jeu">
+          <span class="bm-ico"></span>
+          <span class="bm-text"><b>Modes de jeu</b><small id="modes-summary">Voyage galactique, défis…</small></span>
+        </button>
+        <button id="btn-help" class="btn-glass">Comment jouer</button>
         <div id="records" class="records"></div>
       </div>
+      <a id="btn-settings" class="settings-gear" href="./settings.html" aria-label="Réglages"></a>
       <div id="preset-badge" class="badge"></div>
       <div id="install-hint" class="hint" hidden></div>
     </section>
 
     <section id="menu-planets" class="screen" hidden>
-      <h2 class="planets-title">Choisis ta planète</h2>
-      <div id="planet-list" class="planet-list" role="listbox" aria-label="Planètes"></div>
-      <div class="planet-actions">
-        <button id="btn-planets-back" class="btn-glass">Retour</button>
+      <div id="ps-swipe" class="ps-swipe" aria-hidden="true"></div>
+      <div class="ps-top">
+        <button id="btn-planets-back" class="round-btn ps-back" aria-label="Retour"><span class="back-ico"></span></button>
+        <h2 class="planets-title">Choisis ta planète</h2>
+        <span id="ps-count" class="ps-count"></span>
+      </div>
+      <button id="ps-prev" class="ps-arrow left" aria-label="Planète précédente"></button>
+      <button id="ps-next" class="ps-arrow right" aria-label="Planète suivante"></button>
+      <div class="ps-card glass">
+        <div id="ps-kicker" class="ps-kicker"></div>
+        <div id="ps-name" class="ps-name"></div>
+        <div id="ps-stars" class="ps-stars"></div>
+        <div id="ps-info" class="ps-info"></div>
+        <div id="ps-best" class="ps-best"></div>
         <button id="btn-planet-go" class="btn-primary"><span class="play-ico"></span>Jouer</button>
       </div>
     </section>
@@ -83,26 +94,34 @@
     <section id="menu-modes" class="screen panel-screen" hidden>
       <div class="panel glass modes-panel">
         <h2>Modes de jeu</h2>
-        <p class="modes-hint">Cumulables. Zen, Turbo infini et Contre-la-montre n'enregistrent pas de record.</p>
+        <div class="mode-hero">
+          <div class="mh-art"><span class="mh-star"></span></div>
+          <div class="mh-text">
+            <b>Voyage galactique</b>
+            <small>Réussis l'objectif de chaque planète, puis fonce sur l'étoile de lancement pour t'envoler vers la suivante.</small>
+          </div>
+          <button id="btn-galaxy" class="btn-primary">Partir</button>
+        </div>
+        <h3 class="modes-sub">Défis <small>(cumulables, pour toutes les planètes)</small></h3>
         <div id="modes-list" class="modes-list"></div>
-        <button id="btn-modes-back" class="btn-primary">C'est parti !</button>
+        <button id="btn-modes-back" class="btn-glass">Retour</button>
       </div>
     </section>
 
     <section id="menu-help" class="screen panel-screen" hidden>
-      <div class="panel glass">
-        <h2>Comment jouer</h2>
-        <ul class="help">
-          <li><b>Ta voiture avance toute seule</b> sur la petite planète : appuie sur la <b>moitié gauche</b> ou <b>droite</b> de l'écran pour tourner (ou ← → / A D, ou la manette).</li>
-          <li>Des <b>météores</b> tombent sans cesse : chaque impact laisse un <b>cratère</b>. Rouler dedans fait perdre de la santé.</li>
-          <li>Ramasse les <b>horloges</b> pour regagner de la santé.</li>
-          <li class="arcade-only">Ta <b>santé</b> est l'anneau lumineux au sol autour du véhicule.</li>
-          <li class="arcade-only">Les <b>anneaux rouges</b> annoncent les impacts ; la <b>mini-carte</b> montre horloges et météores.</li>
-          <li class="arcade-only">Maintiens <b>TURBO</b> (ou Espace) pour accélérer quelques secondes.</li>
-          <li class="arcade-only">Remplis les <b>objectifs d'étape</b> : la difficulté augmente à chaque étape.</li>
-          <li>Va le plus loin possible !</li>
-        </ul>
-        <button id="btn-help-back" class="btn-primary">Compris !</button>
+      <div class="panel glass tuto-panel">
+        <div id="tuto-slides" class="tuto-slides">
+          <div class="tuto-slide"><div class="tuto-art art-story"></div><h2>L'histoire</h2><p>Une pluie de météores s'abat sur ta petite planète&nbsp;! Saute dans ton aéro-voiture&nbsp;: elle ne s'arrête jamais. À toi de lui faire faire le tour du monde le plus longtemps possible.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-controls"><span class="half l">◀</span><span class="half r">▶</span><span class="flame"></span></div><h2>Tourner</h2><p>Pose le doigt n'importe où sur la <b>moitié gauche</b> de l'écran pour tourner à gauche, sur la <b>moitié droite</b> pour tourner à droite. Garde le pouce sur l'<b>anneau de flammes</b> pour le turbo.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-danger"><span class="reticle"></span><span class="ring"></span></div><h2>Éviter</h2><p>Les <b>cibles rouges</b> annoncent les impacts&nbsp;; ne roule pas dans les <b>cratères</b>. Ta vie, c'est l'<b>anneau lumineux</b> sous le véhicule.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-bonus"><span class="qbox">?</span><span class="shoe"></span><span class="pad"></span></div><h2>Ramasser</h2><p>Les <b>cases «&nbsp;?&nbsp;»</b> rendent de la vie, les <b>baskets du futur</b> rechargent le turbo. <b>Accélérateurs</b>, <b>tremplins</b> et <b>pylônes</b> tournoyants pimentent la balade.</p></div>
+          <div class="tuto-slide"><div class="tuto-art art-goal"><span class="trophy"></span></div><h2>Progresser</h2><p>Remplis les <b>objectifs d'étape</b>, débloque des planètes et essaie les <b>modes de jeu</b>&nbsp;: Voyage galactique, Vif d'or, Bullet Bill…</p></div>
+        </div>
+        <div id="tuto-dots" class="tuto-dots"></div>
+        <div class="tuto-actions">
+          <button id="btn-tuto-prev" class="btn-glass">Précédent</button>
+          <button id="btn-help-back" class="btn-primary">Suivant</button>
+        </div>
       </div>
     </section>
 

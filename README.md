@@ -16,88 +16,103 @@ Chaque ajout est un réglage (page **Réglages**) avec une valeur Arcade et une 
 
 ### Planètes (préréglage Arcade)
 
-Vingt et une planètes (et un voyage galactique) décrites dans un fichier unique, `src/game/planets.json`, lu par
-le générateur de textures et par le jeu. En Arcade, **la planète rétrécit**
-au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra s'adapte** : proche
-de la voiture tant que la planète est grosse, elle recule pour la montrer en
-entier quand elle devient petite.
+Vingt-cinq planètes décrites dans un fichier unique, `src/game/planets.json`,
+lu par le générateur de textures et par le jeu. En Arcade, **la planète
+rétrécit** au fil de la partie (jusqu'à 40 % en 150 s) et la **caméra
+s'adapte** : proche du véhicule tant que la planète est grosse, elle recule
+pour la montrer en entier quand elle devient petite. On roule toujours
+librement tout autour de la planète : les routes dessinées (Sage) ne sont
+qu'un décor.
 
-Beaucoup s'inspirent d'univers de dessins animés, de films et de jeux très
+Elles s'inspirent d'univers de dessins animés, de films et de jeux très
 connus, avec un style évident mais sans reprendre de personnage ni de logo :
 
-| Planète | Difficulté | Inspiration | Particularité |
+| Planète | Diff. | Inspiration | Particularité |
 |---|---|---|---|
 | Planète d'origine | ★★ | — | la planète Unity, telle quelle (voiture Unity) |
-| **Voyage galactique** | ★★★ | Mario Galaxy | une suite de petites planètes : une **étoile de lancement** fait sauter de l'une à l'autre |
-| **Stade Champignon** | ★★ | Circuit Mario (Mario Kart) | grosse planète (×1,6) : pelouse de stade en damier, tuyaux, arbres |
-| **Stade de Terre** | ★★★ | Stade Wario | boue, bosses, flaques, murs de pneus, projecteurs, **tremplins** |
-| **Lac Fantôme** | ★★★ | Vallée Fantôme | eau violette et radeaux de planches, lanternes flottantes, petits fantômes |
-| **Forteresse de Lave** | ★★★★ | Château de Bowser | pavés de pierre, fissures de lave, blocs écraseurs, torches, ciel rouge |
-| **Arc-en-ciel Céleste** | ★★★★★ | Route Arc-en-ciel | dalles arc-en-ciel lumineuses au milieu des étoiles |
-| Planète du Sage | ★★ | Dragon Ball | minuscule, prés dorés, maison-dôme, ciel doré « au-delà » |
+| Stade Champignon | ★★ | Circuit Mario | grosse planète : pelouse de stade en damier, tuyaux, arbres |
+| Prairie Meuh Meuh | ★ | Prairie Meuh Meuh | prés éclatants, vaches tachetées, clôtures, grange rouge, bottes de foin |
+| Stade de Terre | ★★★ | Stade Wario | boue, bosses, flaques, tremplins (sans décor) |
+| Lac Fantôme | ★★★ | Vallée Fantôme | eau violette et radeaux de planches (sans décor) |
+| Forteresse de Lave | ★★★★ | Château de Bowser | pavés clairs, fissures de lave, torches ; **blocs écraseurs qui tombent du ciel** |
+| Arc-en-ciel Céleste | ★★★★★ | Route Arc-en-ciel | damier arc-en-ciel lumineux et translucide, anneaux dorés |
+| Planète du Sage | ★★ | Dragon Ball | route jaune (décor), prés dorés, maison-dôme, ciel doré « au-delà » |
 | Prairie | ★ | — | clairières de terre, maison-dôme ; météores lents et rares |
-| La Comté | ★ | les hobbits | **collines-terriers à porte ronde**, champs en patchwork, haies, mares |
-| Prairie des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), coins de terre, bâtiments au toit rouge, balles rouge et blanc |
+| La Comté | ★ | les hobbits | collines-terriers à porte ronde, champs en patchwork, haies, mares |
+| Prairie des Herbes Hautes | ★★ | Pokémon | hautes herbes (brins qui volent en les traversant), mares (sans décor) |
 | Royaume Champignon | ★★ | Mario | tuyaux verts, champignons à pois, blocs « ? » |
-| Planète Bonbons | ★★ | Candy Crush | glaçage rose, flaques de chocolat, gros bonbons, sucettes, boules de gomme |
-| Chambre de Jouets | ★★★ | Pixar | papier peint ciel et nuages, cubes à lettres, balle jaune à étoile, lampe de bureau |
-| Royaume Enchanté | ★★ | Disney | château aux flèches bleues, prés en fleurs, lacs, ciel étoilé |
-| Grand Océan | ★★★ | One Piece | océan semé d'îles à palmiers, sillage d'écume, impacts en **tourbillons** ; adhérence 0,7 |
-| Émeraude | ★★★ | — | étangs : **éclaboussures** en les traversant ; météores plus rapides |
+| Planète Bonbons | ★★ | Candy Crush | glaçage rose ondulé, flaques de chocolat, sucettes, boules de gomme |
+| Chambre de Jouets | ★★★ | Pixar | **moquette** et tapis ronds, ciel de gros nuages, **jouets bousculables** (ballons, cubes) |
+| Royaume Enchanté | ★★ | Disney | prés en fleurs, lacs, ciel étoilé (sans décor) |
+| Poudlard | ★★★ | Harry Potter | hautes terres, lac noir, château aux tours pointues, anneaux de Quidditch, chandelles flottantes |
+| Ville d'Halloween | ★★★ | L'Étrange Noël de M. Jack | colline en spirale, citrouilles illuminées, tombes, lune géante |
+| Village de Noël | ★★ | Noël | neige, plaques de glace, sapins illuminés, cadeaux, sucres d'orge, bonshommes de neige, aurore |
+| Grand Océan | ★★★ | One Piece | **rien que de l'eau** : tremplins, accélérateurs, tourbillons ; adhérence 0,7 |
+| Émeraude | ★★★ | — | étangs (éclaboussures) ; météores plus rapides (sans décor) |
 | Monde de Cubes | ★★★ | Minecraft | tout en blocs |
-| Hill Valley | ★★★ | Retour vers le futur | pelouses, places pavées, tour de l'horloge (10 h 04) ; en turbo, **« 88 mph ! »** et deux traînées de feu |
-| Astéroïde B 612 | ★★★★ | Le Petit Prince | minuscule (rayon 0,62), sable doré, petits cratères, rose sous sa cloche, volcans, baobabs |
-| Banquise | ★★★ | — | sol gelé : la voiture glisse (adhérence 0,35) |
+| Hill Valley | ★★★ | Retour vers le futur | pelouses, places pavées, tour de l'horloge, **panneau « Welcome to Hill Valley » qui flotte** ; « 88 mph ! » et traînées de feu en turbo |
+| Astéroïde B 612 | ★★★★ | Le Petit Prince | plus grosse au départ (×1,2) : sable doré, rose sous sa cloche, volcans, baobabs |
+| Banquise | ★★★ | — | **monde de cases gelées** : la voiture glisse (adhérence 0,35) |
 | Naine | ★★★★★ | — | rayon 0,7 : tout arrive très vite |
 
-Néon et Volcan ont été retirées (peu lisibles en jeu). Émeraude, Banquise et
-Naine se débloquent en parcourant 100 m sur la planète précédente (réglage
-« Toutes les planètes débloquées » pour tout ouvrir). Records par planète.
+Émeraude, Banquise et Naine se débloquent en parcourant 100 m sur la planète
+précédente (réglage « Toutes les planètes débloquées » pour tout ouvrir).
+Records par planète.
 
 Chaque planète a une **carte de surface** générée avec ses textures (sol, eau,
-lave, glace, chemin, hautes herbes) : le jeu sait sur quoi roule la voiture et
+lave, glace, hautes herbes) : le jeu sait sur quoi roule la voiture et
 déclenche éclaboussures, sillage, braises ou brins d'herbe.
 
-### Planètes « kart » (inspirées de Mario Kart)
+### Objets sur toutes les planètes
 
-Pas de piste : comme partout, on roule où l'on veut tout autour de la
-planète. Ces cinq planètes sont plus grosses (×1,3 à ×1,7) et semées
-d'objets de course, placés au hasard (graine fixe par planète) :
+Placés au hasard (graine fixe par planète, nombre selon la taille) :
 
-- **cubes bonus** arc-en-ciel, par trois : turbo plein, ils réapparaissent
-  après 4 s ;
-- **accélérateurs** (dalles à chevrons lumineux) : ×1,55 pendant 1,1 s ;
-- **tremplins** (Stade de Terre, Forteresse, Stade Champignon) : saut, et
-  aucun cratère ne fait mal pendant le saut.
+- **cases « ? »** arc-en-ciel : elles remplacent les horloges (même apparition
+  et même soin que l'original) et éclatent en gerbe de particules ;
+- **baskets du futur** (montantes, lacets lumineux) : turbo plein ;
+- **accélérateurs** (dalles à chevrons) : ×1,55 pendant 1,1 s ;
+- **tremplins** : saut, aucun cratère ne fait mal pendant le saut ;
+- **pylônes tournoyants** : le véhicule fait une toupie et accélère.
 
-Aucune route ni bande n'est peinte sur les planètes : seulement des motifs
-répartis partout (taches, mares, dalles, pavés sur une grille 3D), qui ne
-s'étirent pas aux pôles.
+### Voyage galactique (mode de jeu)
 
-### Voyage galactique
+Un mode à part (bouton « Modes de jeu » → « Partir ») : une suite de petites
+planètes. La planète suivante flotte dans le ciel. L'**étoile de lancement**
+n'apparaît qu'une fois l'**objectif de la planète réussi** et au moins 30 m
+parcourus dessus (étoile dorée sur la mini-carte, elle attire le véhicule à
+l'approche). Le lancement s'inspire de la « Launch Star » de Mario Galaxy :
+le véhicule est **aspiré** au centre de l'étoile en tournoyant, l'étoile se
+**tasse** pour prendre son élan, puis il est **éjecté** sur une courbe de
+Bézier (départ très rapide, arrivée qui ralentit, tonneau, champ de vision
+élargi, caméra de poursuite qui glisse du véhicule vers la destination). À
+l'arrivée : écrasement et rebond élastique du véhicule, gerbe de poussière,
+et la caméra **fond** doucement de la pose de vol vers le suivi normal.
 
-Une suite de petites planètes (Sage, Bonbons, B 612, Comté, Jouets, Naine,
-Herbes Hautes, Royaume Enchanté). La planète suivante flotte dans le ciel.
-Après 35 m sur une planète, une **étoile de lancement** apparaît sur la face
-tournée vers la suivante (étoile dorée sur la mini-carte) : en roulant
-dessus, le véhicule décolle et vole en arc (tonneau, traînée d'étincelles,
-caméra de poursuite) jusqu'à la planète suivante, qui devient la planète
-courante (+15 de santé, annonce « Planète N »). Les planètes ne rétrécissent
-pas dans ce monde ; le record compte la distance totale.
+### Modes de jeu (bouton « Modes de jeu » de l'accueil)
 
-### Modes de jeu (bouton « Modes » du menu, ou page Réglages)
-
-Cumulables :
+Défis cumulables, pour toutes les planètes :
 
 | Mode | Effet |
 |---|---|
+| Contre-la-montre | 60 s au départ, chaque case ajoute 5 s, fin à 0 (pas de record) |
+| Tempête de météores | deux fois plus de météores, 30 % plus rapides |
+| Commandes inversées | gauche et droite échangées |
+| **Attrape le Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
+| **Fuis le Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
 | Mort subite | le moindre choc est fatal |
 | Zen | aucun dégât, météores plus rares (pas de record) |
-| Contre-la-montre | 60 s au départ, chaque horloge ajoute 5 s, fin à 0 (pas de record) |
-| Tempête de météores | deux fois plus de météores, 30 % plus rapides |
 | Turbo infini | la jauge ne se vide jamais (pas de record) |
-| Commandes inversées | gauche et droite échangées |
 | Planète qui rétrécit | activé par défaut en Arcade |
+
+### Menus
+
+- **Choix de la planète** façon « sélection de royaume » (Mario Odyssey) :
+  les planètes flottent en arc dans l'espace, celle du centre est grande avec
+  son aura ; glisser, flèches ou clavier pour défiler ; carte de nom (monde,
+  difficulté, description, record).
+- **Comment jouer** : tutoriel illustré en 5 diapositives (histoire, tourner,
+  éviter, ramasser, progresser).
+- **Réglages** : petite roue discrète en haut à droite.
 
 ### Véhicule (préréglage Arcade)
 
@@ -432,6 +447,12 @@ PWA installée en `display: fullscreen` (repli `standalone`), canvas en
 l'écran (barre d'accueil iOS, barres Android escamotées).
 
 ## Son
+
+Sons premium (Arcade) : interface, ramassages, accélérateurs, sauts,
+pylônes, étoile, décollage et atterrissage tirés du paquet npm **uisfx**
+(audio **CC0-1.0**, styles glass, arcade, sci-fi, rubber, dreamy, cinematic) ;
+explosion, choc et souffle resynthétisés en couches avec réverbération à
+convolution (`tools/premium_sfx.py`).
 
 Web Audio, déverrouillé au premier toucher. Sur iOS 17+, la session audio
 passe en « lecture » (`navigator.audioSession`) pour que le son sorte même
