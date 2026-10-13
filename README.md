@@ -490,6 +490,16 @@ passe en « lecture » (`navigator.audioSession`) pour que le son sorte même
 avec le bouton silencieux ; pour les iOS plus anciens, un `<audio>` muet est
 joué pendant le geste.
 
+## Versions et mise à jour
+
+Le numéro de version (`package.json`, format `0.<lot>.<correctif>`) est
+affiché sur l'accueil et dans les Réglages ; voir [CHANGELOG.md](CHANGELOG.md).
+L'application installée (PWA) se met à jour seule : le service worker est en
+mode « prompt » et le jeu cherche une nouvelle version au retour au premier
+plan, au retour du réseau, au focus et toutes les 30 min. Une version prête
+est appliquée (rechargement) dès qu'on est dans un menu ou sur l'écran de fin,
+jamais pendant une partie, même en pause.
+
 ## Fluidité (objectif 60 Hz)
 
 - simulation : ~0,2 ms par image ; écriture des particules ~0,1 ms (tri par

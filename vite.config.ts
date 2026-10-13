@@ -1,9 +1,17 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json' with { type: 'json' };
+
+// Version affichée dans le jeu (package.json) + date de construction
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
 // base './' : chemins relatifs, le jeu fonctionne dans un sous-dossier GitHub Pages
 export default defineConfig({
   base: './',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_BUILD__: JSON.stringify(BUILD),
+  },
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 900,
@@ -16,7 +24,8 @@ export default defineConfig({
   },
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      // « prompt » : le jeu décide quand appliquer la mise à jour (jamais en pleine partie)
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['icons/*.png'],
       manifest: {

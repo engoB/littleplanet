@@ -630,3 +630,7 @@ body.original .brand-title { color: #fff; background: none; -webkit-text-fill-co
   .ps-card .btn-primary { padding-top: 8px; padding-bottom: 8px; }
   .tuto-art { display: none; }
 }
+
+/* Numéro de version (accueil, discret) */
+.app-version { position: absolute; right: calc(14px + var(--safe-r)); bottom: calc(10px + var(--safe-b)); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.45; pointer-events: none; }
+@media (orientation: portrait) { .app-version { top: calc(22px + var(--safe-t)); bottom: auto; right: auto; left: calc(16px + var(--safe-l)); } }

@@ -3,6 +3,7 @@
  */
 import './styles.css';
 import { registerSW } from 'virtual:pwa-register';
+import { APP_VERSION } from './version';
 import { Input, vibrate } from './input/input';
 import { TouchButton, VirtualStick } from './input/stick';
 import { TouchZones } from './input/zones';
@@ -51,8 +52,49 @@ async function loadFont(): Promise<void> {
   );
 }
 
+/**
+ * Mise à jour de l'application installée : une PWA reste souvent en mémoire
+ * sur mobile et ne recharge jamais la page. On vérifie donc la présence d'une
+ * nouvelle version au retour au premier plan, au retour du réseau et toutes
+ * les 30 min ; une version prête est appliquée dès qu'on n'est pas en pleine
+ * partie (menus, fin de partie).
+ */
+let updatePending = false;
+let applyUpdate: ((reload?: boolean) => Promise<void>) | null = null;
+let canUpdateNow = () => true;
+function maybeUpdate(): void {
+  if (!updatePending || !applyUpdate || !canUpdateNow()) return;
+  updatePending = false;
+  const hint = document.getElementById('install-hint');
+  if (hint) {
+    hint.hidden = false;
+    hint.textContent = 'Nouvelle version : mise à jour…';
+  }
+  void applyUpdate(true);
+}
+function setupUpdates(): void {
+  applyUpdate = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      updatePending = true;
+      maybeUpdate();
+    },
+    onRegisteredSW(_url, reg) {
+      if (!reg) return;
+      const check = () => {
+        if (navigator.onLine !== false) reg.update().catch(() => undefined);
+      };
+      setInterval(check, 30 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check());
+      window.addEventListener('online', check);
+      window.addEventListener('focus', check);
+    },
+  });
+}
+
 async function main(): Promise<void> {
-  if (!TEST && 'serviceWorker' in navigator) registerSW({ immediate: true });
+  if (!TEST && 'serviceWorker' in navigator) setupUpdates();
+  for (const el of document.querySelectorAll('.app-version')) el.textContent = `v${APP_VERSION}`;
   const fontP = loadFont();
   const progress = $('progress-fill');
   const assets = new Assets('./');
@@ -162,6 +204,8 @@ async function main(): Promise<void> {
 
   // --- états
   let paused = false;
+  // Mise à jour : jamais pendant une partie, même en pause (seulement menus et fin de partie)
+  canUpdateNow = () => world.mode === 'menu' || world.mode === 'over';
   let portrait = false;
   const records = () => screens.records(loadRecords(), settings.saveRecords === true);
   $('preset-badge').textContent = preset === 'original' ? 'Préréglage : Original (Unity)' : '';
@@ -193,6 +237,7 @@ async function main(): Promise<void> {
     world.enterMenu();
     records();
     screens.show('menu-main');
+    maybeUpdate();
   };
   // --- Choix de la planète : carrousel 3D (façon sélection de royaume)
   const choosable = PLANETS.filter((p) => p.style !== 'galaxy');
@@ -383,6 +428,7 @@ async function main(): Promise<void> {
     hud.show(preset !== 'original');
     screens.show('menu-over');
     vibrate([80, 60, 160], settings.haptics === true);
+    maybeUpdate();
   }
 
   const on = (id: string, fn: () => void) =>

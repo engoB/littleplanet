@@ -2,6 +2,7 @@
  * Page Réglages générée depuis le schéma unique (schema.ts).
  * Valeurs dans localStorage, image perso dans IndexedDB.
  */
+import { APP_BUILD, APP_VERSION } from '../version';
 import '../styles.css';
 import type { UnityProject } from '../unity/types';
 import { bindSchemaToProject } from './bindings';
@@ -130,7 +131,7 @@ async function init(): Promise<void> {
   try {
     const p = (await fetch('./data/scene.json').then((r) => r.json())) as UnityProject;
     bindSchemaToProject(p);
-    document.getElementById('about')!.textContent = `Valeurs « Original » lues dans le projet Unity ${p.meta.unityVersion} (commit ${p.meta.sourceCommit?.slice(0, 7) ?? '?'}).`;
+    document.getElementById('about')!.textContent = `Ma Petite Planète v${APP_VERSION} (${APP_BUILD}). Valeurs « Original » lues dans le projet Unity ${p.meta.unityVersion} (commit ${p.meta.sourceCommit?.slice(0, 7) ?? '?'}).`;
   } catch {
     /* hors ligne sans cache : valeurs de repli du schéma */
   }
