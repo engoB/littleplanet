@@ -43,9 +43,10 @@ export class Stages {
     o.progress =
       o.kind === 'distance' ? distance - this.startDistance : o.kind === 'clocks' ? clocks - this.startClocks : time - this.startTime;
     if (o.progress >= o.target) {
+      // Nouvel objectif prêt avant l'annonce : la bannière montre le suivant
       this.stage++;
-      this.onComplete(this.stage - 1);
       this.setup(distance, time, clocks);
+      this.onComplete(this.stage - 1);
     }
   }
 

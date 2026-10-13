@@ -3,6 +3,7 @@
  * Valeurs dans localStorage, image perso dans IndexedDB.
  */
 import { APP_BUILD, APP_VERSION } from '../version';
+import { resetProgress } from '../game/planets';
 import '../styles.css';
 import type { UnityProject } from '../unity/types';
 import { bindSchemaToProject } from './bindings';
@@ -135,6 +136,11 @@ async function init(): Promise<void> {
   } catch {
     /* hors ligne sans cache : valeurs de repli du schéma */
   }
+  document.getElementById('reset-progress')!.onclick = () => {
+    if (!confirm('Effacer toute la progression (records, planètes débloquées, défis) ?')) return;
+    resetProgress();
+    document.getElementById('reset-status')!.textContent = 'Progression réinitialisée.';
+  };
   for (const b of document.querySelectorAll<HTMLButtonElement>('.preset-buttons button')) {
     b.onclick = async () => {
       applyPreset(b.dataset.preset as Preset);

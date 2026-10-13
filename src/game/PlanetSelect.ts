@@ -113,9 +113,9 @@ export class PlanetSelect {
         this.decorFor?.(it.def, it.mesh);
       }
       // Arc : la planète du centre avance et grossit, les autres reculent
-      const s = (1.45 - Math.min(1, a) * 0.7 - Math.max(0, a - 1) * 0.08) / this.geoScale;
+      const s = ((this.portrait ? 1.28 : 1.45) - Math.min(1, a) * 0.7 - Math.max(0, a - 1) * 0.08) / this.geoScale;
       it.mesh.scale.setScalar(s);
-      it.mesh.position.set(o * spacing - Math.sign(o) * Math.min(1, a) * 0.6, Math.sin(this.t * 0.8 + i) * 0.06 + (this.portrait ? 0.6 : 0.85), -Math.pow(a, 1.3) * 1.3);
+      it.mesh.position.set(o * spacing - Math.sign(o) * Math.min(1, a) * 0.6, Math.sin(this.t * 0.8 + i) * 0.06 + (this.portrait ? 2.15 : 0.85), -Math.pow(a, 1.3) * 1.3);
       it.mesh.rotation.y = this.t * 0.25 + i;
       it.mesh.rotation.x = 0.35;
     }

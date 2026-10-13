@@ -136,12 +136,20 @@ bouton pause (icône et nom, qui se replient en icônes) :
   son aura et ses monuments ; glisser, flèches ou clavier pour défiler ; carte
   du monde (numéro, difficulté, description, record, **défis**).
 - **Voyage galactique** : bouton de l'accueil (nombre de planètes, temps par
-  planète, « Partir »).
-- **Comment jouer** : tutoriel illustré en 5 diapositives (l'histoire de la
-  galaxie menacée, piloter, éviter, ramasser et bousculer, progresser avec
-  les défis et le voyage).
-- Tous les menus tiennent dans l'écran du téléphone, sans défilement
-  (portrait comme paysage).
+  planète, défis du voyage — Tempête, Miroir, Vif d'or, Bullet Bill —,
+  « Partir »).
+- **Comment jouer** : tutoriel en 5 diapositives illustrées par des **images
+  rendues par le moteur du jeu** (`npm run build && node tools/render_tuto.mjs
+  && python3 tools/tuto_compose.py` → `public/tuto/`) : l'histoire (étoile de
+  lancement), piloter (vraie partie en portrait, demi-écrans, turbo), éviter
+  (cible de météore), ramasser (caisse, basket, accélérateur, ressort),
+  progresser (défis, voyage).
+- **Difficulté** en étoiles (★ à ★★★★★).
+- **Réglages → Progression** : « Réinitialiser la progression » efface les
+  records, les planètes débloquées et les défis choisis (pas les réglages).
+- Le jeu se joue **en portrait uniquement** (manifeste de l'application et
+  réglage « Orientation » ; écart assumé avec l'APK Unity, qui était en
+  paysage). Tous les menus tiennent dans l'écran, sans défilement.
 - **Réglages** : roue crantée discrète en haut à droite.
 
 ### Véhicule (préréglage Arcade)
@@ -255,7 +263,7 @@ Pour les tests, tout réglage peut être forcé par l'URL :
 | Fumée puis feu selon les dégâts | oui | non |
 | Moteur | boucle procédurale, volume 0,45, hauteur selon la vitesse | `AccelerationLow`, volume 0,052, hauteur 0,65 |
 | Sons ajoutés (explosions, chocs, sifflement, turbo, carillon) | oui | non |
-| Orientation | libre (portrait ou paysage) | paysage |
+| Orientation | portrait | portrait (l'APK Unity était en paysage : écart demandé) |
 | Planète qui rétrécit | oui (150 s, jusqu'à 40 %) | non (ShrinkPlanet non attaché) |
 | Caméra | adaptative, 6,2 u au-dessus, 30° | fixe, 12 u, vue de dessus |
 | Commande tactile | deux demi-écrans (gauche / droite) | stick fixe, en bas à droite |
