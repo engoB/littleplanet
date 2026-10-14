@@ -39,7 +39,7 @@
       "tagline": "Herbe tendre, clairières et petite maison ronde. Idéale pour débuter.",
       "difficulty": 1,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "atmosphere": "#9be7ff",
       "palette": {
         "light": "#8fe05a",
@@ -77,7 +77,15 @@
         "houses": 1
       },
       "sky": "space",
-      "vehicle": "hover"
+      "vehicle": "hover",
+      "toys": {
+        "chicken": 8,
+        "ball": 3
+      },
+      "mission": {
+        "kind": "kick:chicken",
+        "target": 6
+      }
     },
     {
       "id": "meuh",
@@ -85,7 +93,7 @@
       "tagline": "Chemin de terre, vaches, grange géante et ballons ; les clôtures volent en éclats.",
       "difficulty": 1,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "wind",
       "atmosphere": "#bff0a0",
       "sky": "day",
@@ -129,15 +137,21 @@
         "trees": 3,
         "rocks": 0,
         "houses": 0,
-        "cows": 6,
+        "cows": 0,
         "fences": 0,
         "barn": 1,
         "haybales": 0,
         "balloons": 4
       },
       "toys": {
+        "cow": 6,
+        "chicken": 6,
         "fence": 6,
         "hay": 5
+      },
+      "mission": {
+        "kind": "kick:cow",
+        "target": 6
       }
     },
     {
@@ -146,7 +160,7 @@
       "tagline": "Un chemin creux, des collines-terriers à porte ronde et des lanternes qui flottent.",
       "difficulty": 1,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "leaves",
       "atmosphere": "#bff0a0",
       "sky": "day",
@@ -192,6 +206,14 @@
         "houses": 0,
         "hills": 4,
         "lanterns": 7
+      },
+      "toys": {
+        "sheep": 8,
+        "chicken": 4
+      },
+      "mission": {
+        "kind": "kick:sheep",
+        "target": 8
       }
     },
     {
@@ -200,7 +222,7 @@
       "tagline": "Tuyaux verts, champignons à pois, blocs « ? » et pièces qui flottent.",
       "difficulty": 2,
       "style": "toon",
-      "radius": 1.25,
+      "radius": 1.75,
       "weather": "leaves",
       "atmosphere": "#9fe4ff",
       "sky": "day",
@@ -243,6 +265,13 @@
         "blocks": 2,
         "qblocks": 4,
         "coins": 6
+      },
+      "toys": {
+        "shroom": 8
+      },
+      "mission": {
+        "kind": "decor",
+        "target": 12
       }
     },
     {
@@ -251,7 +280,7 @@
       "tagline": "Une grosse planète-stade en damier, des pièces qui flottent et des cônes à renverser.",
       "difficulty": 2,
       "style": "toon",
-      "radius": 1.6,
+      "radius": 2.24,
       "atmosphere": "#bfe8ff",
       "sky": "day",
       "vehicle": "hover",
@@ -298,7 +327,12 @@
         "spinners": 2
       },
       "toys": {
-        "cone": 6
+        "cone": 8,
+        "rccar": 4
+      },
+      "mission": {
+        "kind": "distance",
+        "target": 600
       }
     },
     {
@@ -307,7 +341,7 @@
       "tagline": "Une route jaune autour du monde, la maison-dôme et les sept boules de cristal qui flottent.",
       "difficulty": 2,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "atmosphere": "#ffe08a",
       "sky": "db",
       "vehicle": "hover",
@@ -345,6 +379,14 @@
         "rocks": 0,
         "houses": 1,
         "dragonballs": 7
+      },
+      "toys": {
+        "chicken": 5,
+        "rccar": 2
+      },
+      "mission": {
+        "kind": "crates",
+        "target": 5
       }
     },
     {
@@ -353,7 +395,7 @@
       "tagline": "Glaçage rose, flaques de chocolat, sucettes et bonbons qui flottent.",
       "difficulty": 2,
       "style": "toon",
-      "radius": 1.25,
+      "radius": 1.75,
       "atmosphere": "#ffb8e6",
       "sky": "db",
       "vehicle": "hover",
@@ -398,6 +440,13 @@
         "lollipops": 5,
         "gumdrops": 6,
         "candies": 6
+      },
+      "toys": {
+        "candy": 10
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 5
       }
     },
     {
@@ -406,7 +455,7 @@
       "tagline": "Un sapin géant, des flocons qui flottent, sucres d'orge et cadeaux à envoyer valser.",
       "difficulty": 2,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "snow",
       "atmosphere": "#bfe0ff",
       "sky": "xmas",
@@ -460,12 +509,18 @@
         "snowflakes": 7
       },
       "toys": {
-        "gift": 8
+        "gift": 8,
+        "penguin": 4
       },
-      "dark": true
+      "dark": true,
+      "mission": {
+        "kind": "kick:gift",
+        "target": 8
+      }
     },
     {
       "id": "origine",
+      "hidden": true,
       "name": "Planète d'origine",
       "tagline": "La planète du jeu Unity, telle quelle.",
       "difficulty": 2,
@@ -490,6 +545,7 @@
     },
     {
       "id": "classique",
+      "hidden": true,
       "name": "Planète classique",
       "tagline": "De l'herbe, un chemin de terre qui fait le tour du monde et ta DeLorean volante : l'esprit du jeu d'origine.",
       "difficulty": 2,
@@ -519,7 +575,7 @@
       "tagline": "Une moquette, un grand tapis qui fait le tour, une lampe géante et des jouets à bousculer.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.25,
+      "radius": 1.75,
       "atmosphere": "#bfe6ff",
       "sky": "clouds",
       "vehicle": "hover",
@@ -573,7 +629,12 @@
         "ball": 5,
         "blockA": 3,
         "blockB": 3,
-        "blockC": 3
+        "blockC": 3,
+        "rccar": 4
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 8
       }
     },
     {
@@ -582,7 +643,7 @@
       "tagline": "Un château géant, de grands anneaux de Quidditch et des chandelles qui flottent.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.35,
+      "radius": 1.89,
       "weather": "rain",
       "atmosphere": "#9ab8ff",
       "sky": "space",
@@ -625,7 +686,14 @@
         "hoops": 3,
         "candles": 10
       },
-      "dark": true
+      "dark": true,
+      "toys": {
+        "broom": 6
+      },
+      "mission": {
+        "kind": "kick:broom",
+        "target": 6
+      }
     },
     {
       "id": "halloween",
@@ -633,7 +701,7 @@
       "tagline": "Chemin pavé, colline en spirale géante, grandes croix de cimetière, chauves-souris et citrouilles à bousculer.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "storm",
       "atmosphere": "#9a7aff",
       "sky": "halloween",
@@ -680,9 +748,14 @@
         "bats": 6
       },
       "toys": {
-        "pumpkin": 7
+        "pumpkin": 7,
+        "broom": 3
       },
-      "dark": true
+      "dark": true,
+      "mission": {
+        "kind": "kick:pumpkin",
+        "target": 8
+      }
     },
     {
       "id": "ocean",
@@ -690,7 +763,7 @@
       "tagline": "Rien que de l'eau : ressorts, accélérateurs et bouées à envoyer valser jusqu'en orbite.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.25,
+      "radius": 1.75,
       "weather": "rain",
       "atmosphere": "#8fd8ff",
       "sky": "day",
@@ -737,7 +810,12 @@
         "spinners": 1
       },
       "toys": {
-        "buoy": 6
+        "buoy": 6,
+        "duck": 6
+      },
+      "mission": {
+        "kind": "time",
+        "target": 120
       }
     },
     {
@@ -746,7 +824,7 @@
       "tagline": "Tout en blocs, avec des îlots de blocs qui flottent au-dessus du monde.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "rain",
       "atmosphere": "#a8d8ff",
       "sky": "day",
@@ -788,6 +866,13 @@
         "houses": 0,
         "cubetrees": 4,
         "skyblocks": 5
+      },
+      "toys": {
+        "blockpig": 6
+      },
+      "mission": {
+        "kind": "kick:blockpig",
+        "target": 6
       }
     },
     {
@@ -796,7 +881,7 @@
       "tagline": "Une rue qui fait le tour, la tour de l'horloge et une statue géante de l'hoverboard rose. À fond de turbo : deux traînées de feu !",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.25,
+      "radius": 1.75,
       "weather": "rain",
       "atmosphere": "#ffd08a",
       "sky": "day",
@@ -842,7 +927,13 @@
         "hoverboard": 1
       },
       "toys": {
-        "cone": 5
+        "cone": 5,
+        "robot": 4,
+        "rccar": 3
+      },
+      "mission": {
+        "kind": "kick:robot",
+        "target": 5
       }
     },
     {
@@ -851,7 +942,7 @@
       "tagline": "Un monde de cases gelées où la voiture glisse.",
       "difficulty": 3,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "weather": "snow",
       "atmosphere": "#c8f0ff",
       "palette": {
@@ -891,7 +982,14 @@
         "snowflakes": 6
       },
       "sky": "space",
-      "vehicle": "hover"
+      "vehicle": "hover",
+      "toys": {
+        "penguin": 8
+      },
+      "mission": {
+        "kind": "kick:penguin",
+        "target": 8
+      }
     },
     {
       "id": "bowser",
@@ -899,7 +997,7 @@
       "tagline": "Pavés clairs, une rivière de lave qui fait le tour et des blocs de pierre qui te fixent.",
       "difficulty": 4,
       "style": "toon",
-      "radius": 1.4,
+      "radius": 1.96,
       "atmosphere": "#ff8a5a",
       "sky": "red",
       "vehicle": "hover",
@@ -946,7 +1044,14 @@
         "ramps": 2,
         "spinners": 1
       },
-      "dark": true
+      "dark": true,
+      "toys": {
+        "barrel": 6
+      },
+      "mission": {
+        "kind": "time",
+        "target": 150
+      }
     },
     {
       "id": "petitprince",
@@ -954,7 +1059,7 @@
       "tagline": "L'astéroïde du petit prince : sable doré, une rose sous sa cloche, des volcans et des baobabs.",
       "difficulty": 4,
       "style": "toon",
-      "radius": 1.2,
+      "radius": 1.68,
       "weather": "wind",
       "atmosphere": "#ffe7a8",
       "sky": "space",
@@ -997,6 +1102,14 @@
         "baobabs": 2,
         "volcanoes": 2,
         "stars": 6
+      },
+      "toys": {
+        "fox": 3,
+        "sheep": 2
+      },
+      "mission": {
+        "kind": "distance",
+        "target": 900
       }
     },
     {
@@ -1005,7 +1118,7 @@
       "tagline": "Une planète de verre dans les étoiles : deux tronçons de route arc-en-ciel qui accélèrent.",
       "difficulty": 5,
       "style": "toon",
-      "radius": 1.7,
+      "radius": 2.38,
       "atmosphere": "#c8a0ff",
       "sky": "space",
       "vehicle": "hover",
@@ -1054,7 +1167,14 @@
       },
       "glass": true,
       "roadBoost": true,
-      "dark": true
+      "dark": true,
+      "toys": {
+        "candy": 5
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 10
+      }
     },
     {
       "id": "naine",
@@ -1062,7 +1182,7 @@
       "tagline": "Planète bonbon où tout arrive très vite : les météores tombent en rafale.",
       "difficulty": 5,
       "style": "toon",
-      "radius": 1.3,
+      "radius": 1.82,
       "atmosphere": "#ffb0f0",
       "palette": {
         "light": "#f7b4e2",
@@ -1102,7 +1222,14 @@
       },
       "sky": "space",
       "vehicle": "hover",
-      "dark": true
+      "dark": true,
+      "toys": {
+        "candy": 6
+      },
+      "mission": {
+        "kind": "stage",
+        "target": 5
+      }
     }
   ]
 }

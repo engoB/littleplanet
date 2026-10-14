@@ -260,6 +260,16 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         paint(choc > 0.71, pal['path'], 11, smooth(0.705, 0.72, choc))
         gloss = (choc > 0.735) & (choc < 0.745)
         paint(gloss, '#a0644a', 12, gloss * 0.8)
+        # Route centrale en sucre d'orge (rayures roses et blanches), bordée de chocolat
+        band = road_band(d, nz, 0.1, 0.05, 1.7)
+        lon = np.arctan2(d[..., 2], d[..., 0])
+        paint(band < 0.095, '#6a3222', 15, smooth(0.097, 0.09, band))
+        stripe = (np.floor(lon * 26 + band * 70) % 2) == 0
+        rc = np.where(stripe[..., None], hexc('#ff4f8a'), hexc('#fff2f6'))
+        a = smooth(0.08, 0.073, band)[..., None]
+        col = col * (1 - a) + rc * a
+        cls = np.where(band < 0.077, 16, cls)
+        surf[band < 0.08] = SURF_PATH
     elif kind == 'futur':
         # Banlieue : pelouses, massifs de fleurs, haies et places pavées (taches, aucune rue)
         bed = nz.fbm(d * 6 + 20, 2)
@@ -471,6 +481,13 @@ def pattern_full(d: np.ndarray, pl: dict, nz: Noise3) -> tuple[np.ndarray, np.nd
         ice = nz.fbm(d * 3.0 + 50, 3)
         paint(ice > 0.71, pal['path'], 10, smooth(0.71, 0.72, ice))
         surf[ice > 0.71] = SURF_ICE
+        # Route centrale de neige tassée, bas-côtés bleutés et traces de luge
+        band = road_band(d, nz, 0.11, 0.05, 2.6)
+        paint(band < 0.093, '#9fb2d2', 15, smooth(0.095, 0.088, band))
+        paint(band < 0.079, '#eef3fb', 16, smooth(0.081, 0.075, band))
+        ruts = (np.abs(band - 0.03) < 0.006) & (band < 0.079)
+        paint(ruts, '#a8bcda', 17, ruts * 0.9)
+        surf[band < 0.079] = SURF_PATH
     elif kind == 'meuh':
         # Prairie Meuh Meuh : herbe éclatante, bosquets de fleurs, coins de terre battue
         mead = nz.fbm(d * 2.4 + 3, 3)

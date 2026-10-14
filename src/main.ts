@@ -17,8 +17,9 @@ import { Screens } from './ui/screens';
 import { Assets } from './unity/assets';
 import { World } from './game/World';
 import { FIRST, PLANETS, type PlanetDef, setWorldChallenges, worldChallenges, planetById, recordDistance, resetProgress, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
-import { GOALS, completion, defiHint, defiUnlocked, goalsOf, isUnlocked, migrateProgress, recordRun, setUnlockAll, trophies, unlockHint, voyageUnlocked, type RunStats } from './game/progress';
+import { completion, defiHint, defiUnlocked, isUnlocked, migrateProgress, missionBest, missionLabel, missionOf, missionShort, missionValue, recordRun, setUnlockAll, trophies, unlockHint, voyageUnlocked, type RunStats } from './game/progress';
 import * as THREE from 'three';
+import { ENDING, STORY, markStorySeen, storySeen, type Line } from './game/story';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -227,6 +228,7 @@ async function main(): Promise<void> {
 
   // --- états
   let paused = false;
+  let missionToast = false;
   // Mise à jour : jamais pendant une partie, même en pause (seulement menus et fin de partie)
   canUpdateNow = () => world.mode === 'menu' || world.mode === 'over';
   let portrait = false;
@@ -264,7 +266,7 @@ async function main(): Promise<void> {
     maybeUpdate();
   };
   // --- Choix de la planète : carrousel 3D (façon sélection de royaume)
-  const choosable = PLANETS.filter((p) => p.style !== 'galaxy');
+  const choosable = PLANETS.filter((p) => p.style !== 'galaxy' && !p.hidden);
   const diffLabel = ['', 'Facile', 'Tranquille', 'Corsé', 'Difficile', 'Extrême'];
   const renderPlanets = () => {
     world.select.setPlanets(choosable.map((def) => ({ def, locked: !isUnlocked(def) })));
@@ -277,7 +279,6 @@ async function main(): Promise<void> {
     if (!p) return;
     const unlocked = isUnlocked(p);
     const best = bestDistances()[p.id];
-    const goals = Math.min(GOALS, goalsOf(p.id));
     $('ps-count').textContent = `${i + 1} / ${choosable.length}`;
     const sky = { rain: ' · 🌧️', snow: ' · ❄️', leaves: ' · 🍂', wind: ' · 💨', storm: ' · ⛈️' }[world.weatherFor(p) as string] ?? '';
     $('ps-kicker').textContent = `Monde ${i + 1} · ${diffLabel[p.difficulty] ?? ''}${sky}`;
@@ -288,10 +289,14 @@ async function main(): Promise<void> {
     $('ps-lockinfo').hidden = unlocked;
     if (!unlocked) {
       const prev = choosable[i - 1];
-      const g = prev ? Math.min(GOALS, goalsOf(prev.id)) : 0;
-      $('ps-lockhint').textContent = `${(unlockHint(p) ?? '').replace('🔒 ', '')} (${g}/${GOALS})`;
+      const pm = prev ? missionOf(prev) : null;
+      const pb = prev && pm ? Math.min(pm.target, Math.floor(missionBest(prev.id))) : 0;
+      $('ps-lockhint').textContent = `${(unlockHint(p) ?? '').replace('🔒 ', '')}${pm ? ` (${pm.kind === 'time' ? `${pb} s` : pb}/${pm.kind === 'time' ? `${pm.target} s` : pm.target})` : ''}`;
     }
-    $('ps-best').textContent = !unlocked ? '' : preset === 'original' ? (best ? `Record : ${Math.floor(best)} m` : '') : `Objectifs ${'●'.repeat(goals)}${'○'.repeat(GOALS - goals)}${best ? ` · record ${Math.floor(best)} m` : ''}`;
+    // Mission du monde (débloque le suivant) : énoncé et meilleur score en une partie
+    const mis = missionOf(p);
+    const mb = mis ? Math.min(mis.target, Math.floor(missionBest(p.id))) : 0;
+    $('ps-best').textContent = !unlocked ? '' : preset === 'original' || !mis ? (best ? `Record : ${Math.floor(best)} m` : '') : mb >= mis.target ? `✓ Mission réussie : ${missionLabel(mis).toLowerCase()}` : `🎯 ${missionLabel(mis)} · ${mis.kind === 'time' ? `${mb}/${mis.target} s` : `${mb}/${mis.target}`}`;
     $('ps-best').classList.toggle('locked', !unlocked);
     $('ps-defi-help').textContent = '';
     renderDefis(p, !unlocked);
@@ -340,7 +345,79 @@ async function main(): Promise<void> {
     world.select.show(true);
     screens.show('menu-planets');
   };
+  /** Dialogue d'histoire : une réplique à la fois (le texte s'écrit), toucher pour continuer. */
+  let dialogDone: (() => void) | null = null;
+  let dialogLines: Line[] = [];
+  let dialogI = 0;
+  let typing = 0;
+  const typeLine = () => {
+    const l = dialogLines[dialogI];
+    $('dlg-face').textContent = l.face;
+    $('dlg-who').textContent = l.who;
+    const p = $('dlg-text');
+    p.textContent = '';
+    let n = 0;
+    clearInterval(typing);
+    typing = window.setInterval(() => {
+      n += 2;
+      p.textContent = l.text.slice(0, n);
+      if (n >= l.text.length) {
+        clearInterval(typing);
+        typing = 0;
+      }
+    }, 22);
+    const box = $('dlg-box');
+    box.classList.remove('pop');
+    void box.offsetWidth;
+    box.classList.add('pop');
+  };
+  const closeDialog = () => {
+    clearInterval(typing);
+    typing = 0;
+    $('dialog').hidden = true;
+    const f = dialogDone;
+    dialogDone = null;
+    f?.();
+  };
+  const showDialog = (lines: Line[], done: () => void) => {
+    if (!lines.length) return done();
+    dialogLines = lines;
+    dialogI = 0;
+    dialogDone = done;
+    $('dialog').hidden = false;
+    typeLine();
+  };
+  $('dlg-box').addEventListener('click', () => {
+    if (typing) {
+      clearInterval(typing);
+      typing = 0;
+      $('dlg-text').textContent = dialogLines[dialogI].text;
+      return;
+    }
+    click();
+    dialogI++;
+    if (dialogI >= dialogLines.length) closeDialog();
+    else typeLine();
+  });
+  $('dlg-skip').addEventListener('click', () => {
+    click();
+    closeDialog();
+  });
+  /** Histoire activée (Arcade ; en test seulement avec ?story). */
+  const storyOn = () => preset !== 'original' && settings.story !== false && (!TEST || params.has('story'));
+
   const play = () => {
+    // Première visite d'un monde : quelques répliques avant le départ
+    const def = world.planetDef;
+    const intro = STORY[def.id]?.intro ?? [];
+    if (storyOn() && def.style !== 'galaxy' && intro.length && !storySeen(def.id)) {
+      markStorySeen(def.id);
+      showDialog(intro, startPlay);
+      return;
+    }
+    startPlay();
+  };
+  const startPlay = () => {
     paused = false;
     world.select.show(false);
     compose('game');
@@ -350,6 +427,7 @@ async function main(): Promise<void> {
     if (!zonesMode) stick.layout();
     screens.show(null);
     applyDefis(world.planetDef);
+    missionToast = false;
     world.startGame();
     hud.setObjective(settings.stages === true ? world.stages.label : '', world.stages.stage, world.stages.objective.kind, 0);
     showHudModes();
@@ -542,6 +620,14 @@ async function main(): Promise<void> {
     if (zen) lines.push('Défi Zen : partie libre, rien n’est compté.');
     if (!isOriginal && !zen) {
       const got = recordRun(world.planetDef, stats);
+      if (got.mission) {
+        const m = missionOf(world.planetDef)!;
+        lines.push(`Mission réussie : ${missionLabel(m).toLowerCase()} !`);
+        // Histoire : réplique de fin de mission (et la fin du jeu après le dernier monde)
+        const last = world.planetDef.id === choosable[choosable.length - 1].id;
+        const said = [...(STORY[world.planetDef.id]?.done ?? []), ...(last ? ENDING : [])];
+        if (storyOn() && said.length) window.setTimeout(() => showDialog(said, () => undefined), 900);
+      }
       for (const w of got.worlds) {
         lines.push(`Nouveau monde débloqué : ${w.name} !`);
         toast('Nouveau monde', w.name, '🪐');
@@ -732,6 +818,17 @@ async function main(): Promise<void> {
     $('sky-flash').style.opacity = String(Math.min(1, world.weather.flash) * 0.55);
     if (world.mode === 'play' || world.mode === 'dying') {
       hud.popsAt(world.carScreen());
+      // Mission du monde : compteur en jeu, annonce quand elle est réussie
+      const mis = preset !== 'original' && !world.galaxy && settings.modeZen !== true ? missionOf(world.planetDef) : null;
+      if (mis) {
+        const v = missionValue(mis, world.liveStats());
+        const done = v >= mis.target;
+        hud.mission(missionShort(mis, Math.min(v, mis.target)), done);
+        if (done && !missionToast) {
+          missionToast = true;
+          if (missionBest(world.planetDef.id) < mis.target) toast('Mission réussie !', missionLabel(mis), '🎯');
+        }
+      } else hud.mission(null, false);
       const ta = world.countdown;
       hud.setChrono(ta ? world.timeLeft : world.chrono, ta);
       hud.setDistance(world.tracker.totalDistance, preset === 'original');

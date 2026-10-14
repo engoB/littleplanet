@@ -839,3 +839,31 @@ body.settings-page.locked { overflow: hidden; }
 .pk-keys button:active { background: rgba(255, 211, 77, 0.35); }
 .pk-keys .pk-back { font-size: 22px; opacity: 0.8; }
 .seg-icons button[data-v="auto"] { flex: 1.7; }
+/* Compteur de mission (sous le chrono, au-dessus de l'objectif) */
+.hud-mission { order: 3; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 800; white-space: nowrap; color: #fff; background: rgba(10, 8, 30, 0.55); border: 1px solid rgba(255, 255, 255, 0.25); }
+.hud-mission[hidden] { display: none; }
+.hud-mission.done { color: #3a2400; background: linear-gradient(180deg, #ffe066, #ffb820); border-color: #fff3b0; }
+/* Dialogues d'histoire */
+.dialog { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; padding: 16px 16px calc(28px + var(--safe-b)); background: linear-gradient(0deg, rgba(4, 6, 20, 0.7), rgba(4, 6, 20, 0) 55%); }
+.dialog[hidden] { display: none; }
+.dlg-box { position: relative; width: min(520px, 100%); display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px 18px; border-radius: 22px; cursor: pointer; text-align: left;
+  background: linear-gradient(180deg, rgba(255, 252, 240, 0.97), rgba(255, 238, 200, 0.97)); color: #2a1a08; border: 3px solid #ffd34d; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45); }
+.dlg-box.pop { animation: dlgPop 0.3s cubic-bezier(0.2, 1.5, 0.4, 1); }
+@keyframes dlgPop { from { transform: translateY(14px) scale(0.96); opacity: 0.6; } }
+.dlg-face { flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; background: radial-gradient(circle at 40% 35%, #fff, #ffd98a); border: 2px solid #e8a820; }
+.dlg-body { flex: 1; min-width: 0; }
+.dlg-body b { font-family: 'Lilita', var(--font); font-weight: 400; font-size: 18px; color: #b8500a; }
+.dlg-body p { margin: 2px 0 0; font-size: 16px; line-height: 1.35; font-weight: 600; min-height: 2.7em; }
+.dlg-next { position: absolute; right: 14px; bottom: 6px; font-size: 13px; color: #b8500a; animation: dlgNext 0.9s ease-in-out infinite; }
+@keyframes dlgNext { 50% { transform: translateY(3px); opacity: 0.5; } }
+.dlg-skip { min-width: 0; min-height: 0; padding: 6px 14px; font-size: 13px; border-radius: 999px; color: #fff; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: none; }
+/* Compte à rebours façon Mario Kart : chiffres épais, penchés, dégradés et cernés */
+#countdown { font-family: 'Lilita', var(--font); font-size: clamp(110px, 34vmin, 190px); font-style: normal; letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff6a0 0%, #ffd21a 40%, #ff8a00 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 7px #1a0a00; paint-order: stroke fill; text-shadow: none;
+  filter: drop-shadow(0 8px 0 #1a0a00) drop-shadow(0 0 18px rgba(255, 200, 40, 0.55)); }
+#countdown[data-n="3"] { background-image: linear-gradient(180deg, #ffb0a0 0%, #ff3a2a 45%, #a80014 100%); filter: drop-shadow(0 8px 0 #1a0a00) drop-shadow(0 0 18px rgba(255, 60, 40, 0.6)); }
+#countdown[data-n="2"] { background-image: linear-gradient(180deg, #fff2a0 0%, #ffc21a 45%, #ff7a00 100%); }
+#countdown[data-n="1"] { background-image: linear-gradient(180deg, #d8ffb0 0%, #5ae03a 45%, #12900e 100%); filter: drop-shadow(0 8px 0 #1a0a00) drop-shadow(0 0 18px rgba(80, 230, 60, 0.6)); }
+#countdown.go { font-size: clamp(64px, 19vmin, 120px); background-image: linear-gradient(180deg, #ffffff 0%, #6be4ff 30%, #2f7dff 60%, #8a2cff 100%); filter: drop-shadow(0 8px 0 #1a0a00) drop-shadow(0 0 22px rgba(80, 160, 255, 0.7)); }
+@keyframes cdtick { 0% { transform: translate(-50%, -50%) skewX(-10deg) scale(1.6) rotate(-6deg); } 25% { transform: translate(-50%, -50%) skewX(-10deg) scale(0.9) rotate(2deg); } 45% { transform: translate(-50%, -50%) skewX(-10deg) scale(1.05); } 100% { transform: translate(-50%, -50%) skewX(-10deg) scale(1); } }

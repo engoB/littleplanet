@@ -14,7 +14,8 @@ uniform float flash;
 uniform float time;
 uniform float attn;
 varying vec2 vUv;
-const float N = 16.0;
+// 15 cases (une case = 10 de santé avec la santé maximale Arcade de 150)
+const float N = 15.0;
 const float RC = 0.9;
 // Dégradé le long de la jauge : vert au début, jaune, rouge à la fin
 vec3 barColor(float t) {

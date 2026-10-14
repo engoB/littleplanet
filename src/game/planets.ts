@@ -41,8 +41,12 @@ export interface PlanetDef {
   roadBoost?: boolean;
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
+  /** Mission qui débloque le monde suivant (en une partie). */
+  mission?: { kind: string; target: number };
   /** Climat du monde : rain, snow, leaves, wind, storm (rien par défaut). */
   weather?: string;
+  /** Monde retiré du carrousel (planète d'origine du préréglage Original, planète classique de l'écran titre). */
+  hidden?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */
   pixel?: boolean;
 }
@@ -50,7 +54,7 @@ export interface PlanetDef {
 export const PLANETS: PlanetDef[] = (data as { planets: PlanetDef[] }).planets;
 
 /** Monde 1 : premier monde du carrousel (sélection par défaut). */
-export const FIRST: PlanetDef = PLANETS.find((p) => p.style !== 'galaxy') ?? PLANETS[0];
+export const FIRST: PlanetDef = PLANETS.find((p) => p.style !== 'galaxy' && !p.hidden) ?? PLANETS[0];
 
 export function planetById(id: string | null | undefined): PlanetDef {
   return PLANETS.find((p) => p.id === id) ?? FIRST;
@@ -124,7 +128,7 @@ export function recordDistance(planet: string, distance: number): void {
 
 /** Efface la progression : mondes et succès, records, défis, planète choisie, meilleures distances. */
 export function resetProgress(): void {
-  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1', 'mpp.progress.v2']) {
+  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1', 'mpp.progress.v2', 'mpp.story.v1']) {
     try {
       localStorage.removeItem(k);
     } catch {

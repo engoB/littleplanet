@@ -97,6 +97,7 @@ export class Hud {
   countdown(n: number): void {
     const c = this.count;
     c.textContent = n > 0 ? String(n) : 'Partez !';
+    c.dataset.n = String(n);
     c.hidden = false;
     c.classList.toggle('go', n <= 0);
     c.classList.remove('tick');
@@ -104,6 +105,18 @@ export class Hud {
     c.classList.add('tick');
     clearTimeout(this.countTimer);
     if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
+  }
+
+  private readonly missionEl = $('hud-mission');
+  private lastMission = '';
+  /** Compteur de la mission du monde (null : masqué). */
+  mission(text: string | null, done: boolean): void {
+    const t = text ? `${done ? '✓' : '🎯'} ${text}` : '';
+    if (t === this.lastMission) return;
+    this.lastMission = t;
+    this.missionEl.hidden = !text;
+    this.missionEl.textContent = t;
+    this.missionEl.classList.toggle('done', done);
   }
 
   private readonly pops = $('car-pops');
