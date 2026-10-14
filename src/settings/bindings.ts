@@ -33,10 +33,10 @@ const BINDINGS: Record<string, { get: (p: UnityProject) => unknown; same: boolea
     same: true,
   },
   steerFatigue: { get: (p) => script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'VehicleController')?.maxDirectionDuration, same: false },
-  maxHealth: { get: (p) => script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'HealthManager')?.maxHealth, same: true },
+  maxHealth: { get: (p) => script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'HealthManager')?.maxHealth, same: false },
   craterDamage: {
     get: (p) => (script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'HealthManager')?.damageItems as { itemName: string; damagePoints: number }[] | undefined)?.find((d) => d.itemName === 'Crater')?.damagePoints,
-    same: true,
+    same: false,
   },
   meteorDamage: {
     get: (p) => (script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'HealthManager')?.damageItems as { itemName: string; damagePoints: number }[] | undefined)?.find((d) => d.itemName.startsWith('meteor'))?.damagePoints,
@@ -48,7 +48,7 @@ const BINDINGS: Record<string, { get: (p: UnityProject) => unknown; same: boolea
   clockLifetime: { get: (p) => script(p, 'SampleScene', 'CollectibleSpawner ', 'CollectibleSpawner')?.collectibleLifetime, same: true },
   clockHeal: {
     get: (p) => (script(p, 'SampleScene', 'Cartoon_SportCar_B01', 'HealthManager')?.healItems as { healPoints: number }[] | undefined)?.[0]?.healPoints,
-    same: true,
+    same: false,
   },
   musicVolume: {
     get: (p) => {
