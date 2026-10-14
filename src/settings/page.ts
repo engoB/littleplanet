@@ -10,6 +10,55 @@ import { bindSchemaToProject } from './bindings';
 import { GROUPS, SCHEMA, type Preset, type SettingDef } from './schema';
 import { applyPreset, currentPreset, loadImage, loadSettings, saveImage, saveSetting } from './store';
 
+/** Code d'accès de l'Espace perso (une fois par session). */
+const PERSO_CODE = '1981';
+function setupLock(): void {
+  const lock = document.getElementById('perso-lock')!;
+  try {
+    if (sessionStorage.getItem('mpp.perso') === '1') {
+      lock.remove();
+      return;
+    }
+  } catch {
+    /* stockage indisponible : on demande le code */
+  }
+  document.body.classList.add('locked');
+  const dots = [...document.querySelectorAll<HTMLElement>('#pk-dots i')];
+  let code = '';
+  const show = () => dots.forEach((d, i) => d.classList.toggle('on', i < code.length));
+  const press = (k: string) => {
+    if (k === 'del') code = code.slice(0, -1);
+    else if (code.length < 4) code += k;
+    show();
+    if (code.length < 4) return;
+    if (code === PERSO_CODE) {
+      try {
+        sessionStorage.setItem('mpp.perso', '1');
+      } catch {
+        /* rien */
+      }
+      lock.classList.add('open');
+      document.body.classList.remove('locked');
+      setTimeout(() => lock.remove(), 350);
+    } else {
+      lock.classList.remove('wrong');
+      void lock.offsetWidth;
+      lock.classList.add('wrong');
+      setTimeout(() => {
+        code = '';
+        show();
+      }, 380);
+    }
+  };
+  for (const b of document.querySelectorAll<HTMLButtonElement>('#pk-keys button')) b.addEventListener('click', () => press(b.dataset.k!));
+  window.addEventListener('keydown', (e) => {
+    if (!lock.isConnected) return;
+    if (/^[0-9]$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace') press('del');
+  });
+}
+setupLock();
+
 const form = document.getElementById('settings-form')!;
 const status = document.getElementById('preset-status')!;
 

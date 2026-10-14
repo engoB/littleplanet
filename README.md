@@ -62,7 +62,7 @@ ouvre les **défis** (Chrono d'abord) et le **Voyage galactique**. Les autres
 défis s'ouvrent en décrochant des **succès** : Survivant (2 min) → Tempête,
 Globe-trotteur (2 000 m au total) → Miroir, Collectionneur (30 bonus de soin)
 → Vif d'or, Grand voyageur (un voyage réussi) → Bullet Bill, Démolisseur
-(10 éléments de décor détruits) → Rétrécit ; plus Premiers tours, Monde
+(10 éléments de décor détruits) ; plus Premiers tours, Monde
 conquis, Lanceur d'orbite et Champion. Écran « Succès » avec le pourcentage
 d'avancement, annonce « Succès débloqué » en fin de partie. La version 0.13
 remet la progression à 0 % une fois (`mpp.progress.version`). Le réglage
@@ -145,7 +145,7 @@ bouton pause (icône et nom, qui se replient en icônes) :
 | Miroir (commandes inversées) | gauche et droite échangées |
 | **Vif d'or** | une balle dorée ailée file au ras de la planète, zigzague et fuit : +10 de santé par prise |
 | **Bullet Bill** | des obus te prennent en chasse (virage limité, un peu plus rapides que toi) : esquive-les jusqu'à ce qu'ils s'éteignent |
-| Rétrécit | la planète rétrécit (activé par défaut en Arcade) |
+| Rétrécit | la planète rétrécit (activé par défaut, interrupteur dans les Options : ce n’est plus un défi) |
 
 ### Écran titre et planète classique
 
@@ -192,15 +192,24 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 - **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
   dans un élément de décor le détruit en éclats ; certains partent en orbite.
   L'explosion du véhicule projette aussi des débris en orbite.
+- **Rétrécissement** (0.17) : la planète rétrécit par défaut ; interrupteur
+  « Rétrécit » dans les Options (ce n'est plus un défi).
+- **Bonus contre la voiture** : « +20 ❤ », « +5 s », « Turbo plein ! »
+  jaillissent à côté du véhicule (près de la jauge) puis s'envolent ; plus de
+  texte de dégâts, et la bannière d'étape ne répète plus l'objectif.
+- **Espace perso** : protégé par un code d'accès à 4 chiffres (pavé
+  numérique, une fois par session).
 - **Climat** (0.16, `src/game/Weather.ts`) : pluie, neige, feuilles qui
-  volent, vent (les rafales poussent la voiture), orage (pluie battante,
+  volent, vent, orage (pluie battante,
   éclairs, coups de foudre qui laissent un cratère) ou beau temps. Chaque monde
   a son climat (`weather` dans `planets.json` : Noël et Banquise sous la neige,
   la Comté dans les feuilles, Halloween sous l'orage…) ; réglage « Climat »
-  dans les Options pour en imposer un partout.
+  dans les Options pour en imposer un partout. Purement visuel : le climat ne
+  change rien à la conduite.
 - **Décor** : seuls les gros monuments bloquent ; le reste vole en éclats au
   contact (5 de dégâts).
-- **Défi Zen** : ni météores ni dégâts (remplace l'ancien niveau Facile) ;
+- **Défi Zen** : ni météores ni dégâts (remplace l'ancien niveau Facile ; se
+  débloque avec le dernier monde, comme le Chrono) ;
   la partie ne compte pas : ni objectifs, ni statistiques, ni succès, ni records.
 - **Sillage d'écume** sur l'eau derrière la voiture (`src/game/WakeTrail.ts`).
 - **Canon champignon** : en fin de vol, la voiture plonge dans un

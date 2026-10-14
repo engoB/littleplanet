@@ -63,7 +63,7 @@ export const TROPHIES: Trophy[] = [
   { id: 'trotter', name: 'Globe-trotteur', desc: 'Parcourir 2 000 m au total', icon: '🛣️', unlocks: 'modeMirror', test: (p) => p.stats.distance >= 2000 },
   { id: 'collector', name: 'Collectionneur', desc: 'Ramasser 30 bonus de soin', icon: '🧰', unlocks: 'modeSnitch', test: (p) => p.stats.clocks >= 30 },
   { id: 'voyager', name: 'Grand voyageur', desc: 'Réussir un voyage galactique', icon: '🚀', unlocks: 'modeBullet', test: (p) => p.stats.voyages >= 1 },
-  { id: 'wrecker', name: 'Démolisseur', desc: 'Détruire 10 éléments de décor', icon: '💥', unlocks: 'planetShrink', test: (p) => p.stats.decor >= 10 },
+  { id: 'wrecker', name: 'Démolisseur', desc: 'Détruire 10 éléments de décor', icon: '💥', test: (p) => p.stats.decor >= 10 },
   { id: 'orbit', name: 'Lanceur d’orbite', desc: 'Envoyer 10 objets en orbite', icon: '🛰️', test: (p) => p.stats.orbit >= 10 },
   { id: 'champion', name: 'Champion', desc: `Réussir ${GOALS} objectifs sur tous les mondes`, icon: '🏆', test: (p) => WORLDS.every((w) => (p.goals[w.id] ?? 0) >= GOALS) },
 ];
@@ -133,8 +133,7 @@ export function hasTrophy(id: string): boolean {
 
 /** Un défi est-il ouvert ? Chrono avec le dernier monde, les autres avec leur succès. */
 export function defiUnlocked(key: string): boolean {
-  // Zen : ouvert d'emblée (il remplace l'ancien niveau Facile)
-  if (all || key === 'modeZen') return true;
+  if (all) return true;
   if (!lastUnlocked()) return false;
   const t = TROPHIES.find((x) => x.unlocks === key);
   return !t || hasTrophy(t.id);
