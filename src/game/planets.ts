@@ -128,7 +128,7 @@ export function recordDistance(planet: string, distance: number): void {
 
 /** Efface la progression : mondes et succès, records, défis, planète choisie, meilleures distances. */
 export function resetProgress(): void {
-  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1', 'mpp.progress.v2']) {
+  for (const k of [SEL, BEST, DEFIS, 'mpp.records.v1', 'mpp.progress.v2', 'mpp.story.v1']) {
     try {
       localStorage.removeItem(k);
     } catch {

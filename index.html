@@ -161,9 +161,9 @@
             <p>Les <b>caisses</b> réparent, les <b>baskets</b> remplissent le turbo, les <b>flèches</b> accélèrent et les <b>ressorts</b> font sauter. Fonce dans les objets posés au sol&nbsp;: lancé à pleine vitesse, tu les envoies en orbite&nbsp;!</p>
           </div>
           <div class="tuto-slide">
-            <div class="tuto-art art-progress" style="background-image: url(tuto/progresser.jpg)"><span class="tp done" style="left: 31%; top: 60%">✓ 3/3</span><span class="tp cur" style="left: 50%; top: 79%">Objectifs ●○○</span><span class="tp lock" style="left: 69%; top: 58%">🔒</span></div>
+            <div class="tuto-art art-progress" style="background-image: url(tuto/progresser.jpg)"><span class="tp done" style="left: 31%; top: 60%">✓ Mission</span><span class="tp cur" style="left: 50%; top: 79%">🎯 Vaches 2/6</span><span class="tp lock" style="left: 69%; top: 58%">🔒</span></div>
             <h2>Progresser</h2>
-            <p>Chaque monde a <b>3 objectifs</b>&nbsp;: réussis-les pour débloquer le suivant (les mondes <b>gris</b> sont verrouillés). Le dernier monde ouvre le <b>Voyage galactique</b> et les <b>défis</b>&nbsp;; tes <b>succès</b> 🏆 débloquent les autres.</p>
+            <p>Chaque monde a sa <b>mission</b>, à réussir en une partie (bousculer des vaches, envoyer des objets en orbite…)&nbsp;: elle débloque le monde suivant (les mondes <b>gris</b> sont verrouillés). Le dernier monde ouvre le <b>Voyage galactique</b> et les <b>défis</b>&nbsp;; tes <b>succès</b> 🏆 débloquent les autres.</p>
           </div>
         </div>
         <div id="tuto-dots" class="tuto-dots"></div>
@@ -251,6 +251,15 @@
     </section>
 
     <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <div id="dialog" class="dialog" hidden>
+      <div class="dlg-box" id="dlg-box">
+        <span id="dlg-face" class="dlg-face"></span>
+        <div class="dlg-body"><b id="dlg-who"></b><p id="dlg-text"></p></div>
+        <span class="dlg-next" aria-hidden="true">▼</span>
+      </div>
+      <button id="dlg-skip" class="dlg-skip">Passer ⏭</button>
+    </div>
 
     <div id="loading">
       <div class="brand loading-brand"><div class="brand-kicker">Ma Petite</div><div class="brand-title">Planète</div></div>

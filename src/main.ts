@@ -19,6 +19,7 @@ import { World } from './game/World';
 import { FIRST, PLANETS, type PlanetDef, setWorldChallenges, worldChallenges, planetById, recordDistance, resetProgress, selectPlanet, selectedPlanet, bestDistances } from './game/planets';
 import { completion, defiHint, defiUnlocked, isUnlocked, migrateProgress, missionBest, missionLabel, missionOf, missionShort, missionValue, recordRun, setUnlockAll, trophies, unlockHint, voyageUnlocked, type RunStats } from './game/progress';
 import * as THREE from 'three';
+import { ENDING, STORY, markStorySeen, storySeen, type Line } from './game/story';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -344,7 +345,79 @@ async function main(): Promise<void> {
     world.select.show(true);
     screens.show('menu-planets');
   };
+  /** Dialogue d'histoire : une réplique à la fois (le texte s'écrit), toucher pour continuer. */
+  let dialogDone: (() => void) | null = null;
+  let dialogLines: Line[] = [];
+  let dialogI = 0;
+  let typing = 0;
+  const typeLine = () => {
+    const l = dialogLines[dialogI];
+    $('dlg-face').textContent = l.face;
+    $('dlg-who').textContent = l.who;
+    const p = $('dlg-text');
+    p.textContent = '';
+    let n = 0;
+    clearInterval(typing);
+    typing = window.setInterval(() => {
+      n += 2;
+      p.textContent = l.text.slice(0, n);
+      if (n >= l.text.length) {
+        clearInterval(typing);
+        typing = 0;
+      }
+    }, 22);
+    const box = $('dlg-box');
+    box.classList.remove('pop');
+    void box.offsetWidth;
+    box.classList.add('pop');
+  };
+  const closeDialog = () => {
+    clearInterval(typing);
+    typing = 0;
+    $('dialog').hidden = true;
+    const f = dialogDone;
+    dialogDone = null;
+    f?.();
+  };
+  const showDialog = (lines: Line[], done: () => void) => {
+    if (!lines.length) return done();
+    dialogLines = lines;
+    dialogI = 0;
+    dialogDone = done;
+    $('dialog').hidden = false;
+    typeLine();
+  };
+  $('dlg-box').addEventListener('click', () => {
+    if (typing) {
+      clearInterval(typing);
+      typing = 0;
+      $('dlg-text').textContent = dialogLines[dialogI].text;
+      return;
+    }
+    click();
+    dialogI++;
+    if (dialogI >= dialogLines.length) closeDialog();
+    else typeLine();
+  });
+  $('dlg-skip').addEventListener('click', () => {
+    click();
+    closeDialog();
+  });
+  /** Histoire activée (Arcade ; en test seulement avec ?story). */
+  const storyOn = () => preset !== 'original' && settings.story !== false && (!TEST || params.has('story'));
+
   const play = () => {
+    // Première visite d'un monde : quelques répliques avant le départ
+    const def = world.planetDef;
+    const intro = STORY[def.id]?.intro ?? [];
+    if (storyOn() && def.style !== 'galaxy' && intro.length && !storySeen(def.id)) {
+      markStorySeen(def.id);
+      showDialog(intro, startPlay);
+      return;
+    }
+    startPlay();
+  };
+  const startPlay = () => {
     paused = false;
     world.select.show(false);
     compose('game');
@@ -550,6 +623,10 @@ async function main(): Promise<void> {
       if (got.mission) {
         const m = missionOf(world.planetDef)!;
         lines.push(`Mission réussie : ${missionLabel(m).toLowerCase()} !`);
+        // Histoire : réplique de fin de mission (et la fin du jeu après le dernier monde)
+        const last = world.planetDef.id === choosable[choosable.length - 1].id;
+        const said = [...(STORY[world.planetDef.id]?.done ?? []), ...(last ? ENDING : [])];
+        if (storyOn() && said.length) window.setTimeout(() => showDialog(said, () => undefined), 900);
       }
       for (const w of got.worlds) {
         lines.push(`Nouveau monde débloqué : ${w.name} !`);

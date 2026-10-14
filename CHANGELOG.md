@@ -6,6 +6,31 @@ L'application installée se met à jour toute seule : elle cherche une nouvelle
 version au retour au premier plan, au retour du réseau et toutes les 30 min,
 puis l'applique dès qu'on est dans un menu (jamais pendant une partie).
 
+## 0.18.0 — lot 18
+
+- **Missions par monde** : chaque monde a sa mission, à réussir en une seule
+  partie (bousculer 6 vaches, envoyer 8 objets en orbite, tenir 2 min…) ;
+  elle débloque le monde suivant. Compteur en jeu, mission sur la carte du
+  monde, annonce « Mission réussie ! ».
+- **Événements aléatoires** pendant la partie : Vif d'or à attraper, Bullet
+  Bill, pluie de caisses, averse de météores.
+- **Histoire** : dialogues avec le Doc et les habitants à l'arrivée sur chaque
+  monde, quand sa mission est réussie, et une fin.
+- **Animaux et jouets qui se promènent**, à bousculer : vaches, poules,
+  moutons, pingouins, renards, champignons, cochons cubes, robots, balais
+  volants, voitures téléguidées, canards, bonbons, tonneaux.
+- Tout le décor se brise au contact (avec des dégâts), sauf les gros monuments.
+- Planètes bien plus grosses et caméra plus proche (sol et voiture vus de près).
+- Santé : 15 cases (150), cratère 15, soin 10.
+- Routes centrales sur la Planète Bonbons (sucre d'orge) et à Noël (neige
+  tassée).
+- Mondes sombres plus lumineux (sol moins terne, ambiance renforcée).
+- Compte à rebours façon Mario Kart (chiffres épais, penchés, rouge, jaune,
+  vert puis « Partez ! »).
+- Planète d'origine et planète classique retirées du choix des mondes (la
+  première reste celle du préréglage Original, la seconde celle de l'écran
+  titre).
+
 ## 0.17.0 — lot 17
 
 - Climat purement visuel : le vent ne pousse plus la voiture, et il garde son

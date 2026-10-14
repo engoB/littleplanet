@@ -192,6 +192,23 @@ sont utilisés dans aucune scène ; le chemin est donc recréé dans le shader
 - **Décor destructible** : foncer plusieurs fois (2 à 5 chocs, au hasard)
   dans un élément de décor le détruit en éclats ; certains partent en orbite.
   L'explosion du véhicule projette aussi des débris en orbite.
+- **Missions par monde** (0.18) : chaque monde se débloque en réussissant la
+  mission du précédent, en une seule partie (`mission` dans `planets.json` :
+  bousculer des poules, des vaches, des moutons…, envoyer des objets en orbite,
+  pulvériser du décor, ramasser des caisses, tenir un temps, parcourir une
+  distance, atteindre une étape). Compteur en jeu (« 🎯 Vaches 2/6 »),
+  meilleur score sur la carte du monde.
+- **Événements aléatoires** : toutes les 35 à 60 s, Vif d'or, Bullet Bill,
+  pluie de caisses ou averse de météores (réglage « Événements aléatoires »).
+- **Histoire** (`src/game/story.ts`) : le Doc et les habitants de chaque monde
+  parlent à la première visite et quand la mission est réussie ; une fin
+  après le dernier monde (réglage « Histoire »).
+- **Animaux et jouets qui se promènent** (`walk` dans `Toys.ts`) : vaches,
+  poules, moutons, pingouins, renards, champignons, cochons cubes, robots,
+  balais volants, voitures téléguidées, canards…, à bousculer ou à envoyer en
+  orbite ; leur nombre suit la taille de la planète.
+- **Décor** : seuls les gros monuments (`solid`) résistent ; tout le reste se
+  brise au contact.
 - **Rétrécissement** (0.17) : la planète rétrécit par défaut ; interrupteur
   « Rétrécit » dans les Options (ce n'est plus un défi).
 - **Bonus contre la voiture** : « +20 ❤ », « +5 s », « Turbo plein ! »

@@ -97,6 +97,7 @@ export class Hud {
   countdown(n: number): void {
     const c = this.count;
     c.textContent = n > 0 ? String(n) : 'Partez !';
+    c.dataset.n = String(n);
     c.hidden = false;
     c.classList.toggle('go', n <= 0);
     c.classList.remove('tick');

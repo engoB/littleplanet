@@ -59,6 +59,7 @@ export const SCHEMA: SettingDef[] = [
     { value: 'auto', label: 'Celui de chaque monde' }, { value: 'none', label: 'Beau temps' }, { value: 'rain', label: 'Pluie' }, { value: 'snow', label: 'Neige' }, { value: 'leaves', label: 'Feuilles qui volent' }, { value: 'wind', label: 'Vent' }, { value: 'storm', label: 'Orage (pluie, rafales, foudre)' },
   ], help: 'Chaque monde a son climat ; on peut aussi en imposer un partout.' },
   { key: 'oceanWaves', label: 'Vagues et écume (océan)', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Houle animée, crêtes d’écume et reflets sur le Grand Océan.' },
+  { key: 'story', label: 'Histoire (dialogues)', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Quelques répliques à l’arrivée sur chaque monde et quand sa mission est réussie.' },
   { key: 'randomEvents', label: 'Événements aléatoires', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'De temps en temps : Vif d’or à attraper, Bullet Bill, pluie de caisses, averse de météores.' },
   { key: 'hitStars', label: 'Étoiles d’étourdissement', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Après un choc, des étoiles tournent au-dessus du véhicule (à la place du flash rouge).' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
