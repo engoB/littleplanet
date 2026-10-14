@@ -82,7 +82,11 @@ export class CollectibleSpawner {
     return this.pool.map((c) => c.inst.root);
   }
 
+  /** Accélère l'apparition (événement « pluie de caisses »). */
+  rateScale = 1;
+
   start(): void {
+    this.rateScale = 1;
     this.timer = 0;
     this.spawnCount = 0;
     for (const c of this.pool) this.release(c);
@@ -90,7 +94,7 @@ export class CollectibleSpawner {
 
   update(dt: number, carOBB: OBB | null, alive: boolean): void {
     if (this.maxSpawns <= 0 || this.spawnCount < this.maxSpawns) {
-      this.timer += dt;
+      this.timer += dt * this.rateScale;
       if (this.timer >= this.spawnRate) {
         this.spawn();
         this.timer = 0;

@@ -393,8 +393,11 @@ export class World implements GameContext {
     this.kart = new KartProps(this.planet);
     this.toys = new Toys(this.planet);
     this.toys.prepare(PLANETS.map((p) => p.toys));
-    this.toys.onKick = (k) => {
-      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.25 + 0.35 * k, 1.5 + Math.random() * 0.4);
+    this.toys.onKick = (k, kind) => {
+      if (bool(this.settings, 'extraSounds')) this.audio.playOneShot(kind === 'cow' ? 'sfx_hurt' : 'sfx_crunch', 0.25 + 0.35 * k, kind === 'cow' ? 0.6 : kind === 'chicken' ? 2.2 : 1.5 + Math.random() * 0.4);
+      // Missions : objets bousculés pendant la partie (par sorte)
+      this.kicked++;
+      this.kicks[kind] = (this.kicks[kind] ?? 0) + 1;
     };
     this.toys.onBreak = () => {
       if (bool(this.settings, 'extraSounds')) this.audio.playOneShot('sfx_crunch', 0.7, 0.9);
@@ -759,7 +762,10 @@ export class World implements GameContext {
     this.clocks.boxLook = this.toon;
     this.stages.item = this.toon ? ['caisse', 'caisses'] : ['horloge', 'horloges'];
     const seed = [...def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 13) >>> 0;
-    this.toys.build(this.toon ? def.toys : undefined, this.planetRadius(), def.radius, seed);
+    // Plus de jouets et d'animaux sur les grosses planètes (proportionnel à la surface)
+    const toyK = Math.max(1, (def.radius * def.radius) / 1.69);
+    const toys = def.toys ? Object.fromEntries(Object.entries(def.toys).map(([k, n]) => [k, Math.round(n * toyK)])) : undefined;
+    this.toys.build(this.toon ? toys : undefined, this.planetRadius(), def.radius, seed);
     // Lumières : en style toon, soleil + ambiance douce (sans la ponctuelle du dessus)
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
@@ -1029,6 +1035,11 @@ export class World implements GameContext {
     this.won = false;
     this.decorBroken = 0;
     this.orbited = 0;
+    this.kicked = 0;
+    this.kicks = {};
+    this.eventIn = 25 + Math.random() * 15;
+    this.eventKind = null;
+    this.eventStorm = false;
     this.startDelay = bool(this.settings, 'countdown') ? 3 : 0;
     if (this.startDelay > 0) this.events.countdown?.(3);
     this.stages.start();
@@ -1090,7 +1101,7 @@ export class World implements GameContext {
     this.shaker.clear();
     Time.timeScale = 0; // Time.timeScale = 0 : le jeu s'arrête
     this.music?.stop(); // mainCameraAudioSource.Stop()
-    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited, decor: this.decorBroken, orbit: this.orbited });
+    this.events.gameOver({ distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, victory: this.won, planets: this.galaxy?.visited, decor: this.decorBroken, orbit: this.orbited, kicked: this.kicked, kicks: { ...this.kicks } });
   }
 
   /** `_label` : origine du choc (plus affichée). */
@@ -1243,6 +1254,72 @@ export class World implements GameContext {
   /** Éléments de décor détruits et objets envoyés en orbite pendant la partie (succès). */
   decorBroken = 0;
   orbited = 0;
+  /** Événement aléatoire en cours (Vif d'or, Bullet Bill, caisses, météores) et délai avant le prochain. */
+  private eventIn = 30;
+  private eventT = 0;
+  eventKind: string | null = null;
+  private eventStorm = false;
+
+  private updateEvents(dt: number): void {
+    const s = this.settings;
+    if (this.eventKind) {
+      this.eventT -= dt;
+      if (this.eventT <= 0) this.endEvent();
+      return;
+    }
+    this.eventIn -= dt;
+    if (this.eventIn > 0) return;
+    this.eventIn = 35 + Math.random() * 25;
+    const pool = ['crates', 'storm'];
+    if (!bool(s, 'modeSnitch')) pool.push('snitch', 'snitch');
+    if (!bool(s, 'modeBullet')) pool.push('bullet');
+    const k = pool[Math.floor(Math.random() * pool.length)];
+    this.eventKind = k;
+    const sx = bool(s, 'extraSounds');
+    if (k === 'snitch') {
+      this.eventT = 25;
+      this.snitch.start(this.carDir);
+      this.events.stage?.(this.stages.stage, 'Attrape-le : +10 ❤', 'Vif d’or !');
+      if (sx) this.audio.playOneShot('sfx_snitch', 0.7);
+    } else if (k === 'bullet') {
+      this.eventT = 18;
+      this.bills.start();
+      this.events.stage?.(this.stages.stage, 'Esquive-les !', 'Bullet Bill !');
+      if (sx) this.audio.playOneShot('sfx_warning', 0.7);
+    } else if (k === 'crates') {
+      this.eventT = 15;
+      this.clocks.rateScale = 5;
+      this.events.stage?.(this.stages.stage, 'Ramasse-les vite !', 'Pluie de caisses !');
+      if (sx) this.audio.playOneShot('sfx_chime', 0.6);
+    } else {
+      this.eventT = 12;
+      this.eventStorm = true;
+      this.updateDifficulty();
+      this.events.stage?.(this.stages.stage, 'Ça tombe dru !', 'Averse de météores !');
+      if (sx) this.audio.playOneShot('sfx_warning', 0.6, 0.8);
+    }
+  }
+
+  private endEvent(): void {
+    const k = this.eventKind;
+    this.eventKind = null;
+    if (k === 'snitch' && !bool(this.settings, 'modeSnitch')) this.snitch.stop();
+    if (k === 'bullet' && !bool(this.settings, 'modeBullet')) this.bills.stop();
+    this.clocks.rateScale = 1;
+    if (this.eventStorm) {
+      this.eventStorm = false;
+      this.updateDifficulty();
+    }
+  }
+
+  /** Bilan de la partie en cours (missions). */
+  liveStats(): RunStats {
+    return { distance: this.tracker.totalDistance, time: this.chrono, stage: this.stages.stage, clocks: this.clocksCollected, decor: this.decorBroken, orbit: this.orbited, kicked: this.kicked, kicks: this.kicks };
+  }
+
+  /** Objets bousculés pendant la partie (total et par sorte : cow, chicken…). */
+  kicked = 0;
+  kicks: Record<string, number> = {};
 
   private bumpFx(): void {
     if (this.bumpCooldown <= 0) {
@@ -1288,6 +1365,7 @@ export class World implements GameContext {
       aim = 0.3;
     }
     if (bool(s, 'modeStorm')) interval *= 0.5;
+    if (this.eventStorm) interval *= 0.4;
     this.meteors.interval = interval;
     this.meteors.aim = this.aimOverride ?? (bool(s, 'meteorRamp') || bool(s, 'stages') ? aim : 0);
   }
@@ -1440,6 +1518,7 @@ export class World implements GameContext {
     this.car.updateMatrixWorld(true);
     obbFromBox(this.car, this.carBox.size, this.carBox.center, this.carOBB);
     this.health.update(dt);
+    if (alive && !this.galaxy && !this.zen && bool(s, 'randomEvents') && bool(s, 'premiumFx') && this.startDelay <= 0) this.updateEvents(dt);
     if (alive) {
       if (bool(s, 'stages')) this.stages.update(this.tracker.totalDistance, this.chrono, this.clocksCollected);
       this.updateDifficulty();

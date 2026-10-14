@@ -59,6 +59,7 @@ export const SCHEMA: SettingDef[] = [
     { value: 'auto', label: 'Celui de chaque monde' }, { value: 'none', label: 'Beau temps' }, { value: 'rain', label: 'Pluie' }, { value: 'snow', label: 'Neige' }, { value: 'leaves', label: 'Feuilles qui volent' }, { value: 'wind', label: 'Vent' }, { value: 'storm', label: 'Orage (pluie, rafales, foudre)' },
   ], help: 'Chaque monde a son climat ; on peut aussi en imposer un partout.' },
   { key: 'oceanWaves', label: 'Vagues et écume (océan)', group: 'Graphismes', type: 'bool', arcade: true, original: false, help: 'Houle animée, crêtes d’écume et reflets sur le Grand Océan.' },
+  { key: 'randomEvents', label: 'Événements aléatoires', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'De temps en temps : Vif d’or à attraper, Bullet Bill, pluie de caisses, averse de météores.' },
   { key: 'hitStars', label: 'Étoiles d’étourdissement', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Après un choc, des étoiles tournent au-dessus du véhicule (à la place du flash rouge).' },
   { key: 'damageSmoke', label: 'Fumée selon les dégâts', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'unlockAll', label: 'Toutes les planètes débloquées', group: 'Jeu', type: 'bool', arcade: false, original: false, help: 'Sinon, chaque planète se débloque en réussissant 3 objectifs sur la précédente ; la dernière débloque les défis et le voyage galactique.' },

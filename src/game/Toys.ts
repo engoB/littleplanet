@@ -33,6 +33,13 @@ interface Toy {
   life: number;
   /** Apparition en grossissant (0 → 1). */
   pop: number;
+  /** Animaux et jouets qui se promènent : cap (rad), temps avant de changer d'idée, sonné après un choc (s). */
+  yaw: number;
+  wt: number;
+  stun: number;
+  /** Phase d'animation (pas, sautillement) ; en marche ou à l'arrêt. */
+  ph: number;
+  go: boolean;
 }
 
 function canvasTex(draw: (g: CanvasRenderingContext2D) => void, size = 64): THREE.Texture {
@@ -128,7 +135,27 @@ interface ToyKind {
   debris?: boolean;
   /** Probabilité de partir en orbite à pleine vitesse. */
   orbit?: number;
+  /** Se promène (vitesse, monde/s) ; `hop` : sautille ; `fly` : vole à cette hauteur. */
+  walk?: number;
+  hop?: boolean;
+  fly?: number;
+  /** Change souvent de direction (voiture radiocommandée). */
+  zigzag?: boolean;
 }
+
+/** Robe de vache (taches noires). */
+const cowTexture = () =>
+  canvasTex((g) => {
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#1e1e1e';
+    for (const [x, y, r] of [[14, 18, 9], [44, 12, 7], [36, 40, 11], [10, 50, 6], [56, 50, 7]]) {
+      g.beginPath();
+      g.ellipse(x, y, r, r * 0.75, 0.6, 0, Math.PI * 2);
+      g.fill();
+    }
+  });
+const legs = (r: number, h: number, dx: number, dz: number, y = 0) => merge([[-dx, -dz], [dx, -dz], [-dx, dz], [dx, dz]].map(([x, z]) => new THREE.CylinderGeometry(r, r, h, 6).translate(x, y - h / 2, z)));
 
 const KINDS: Record<string, ToyKind> = {
   ball: { size: 0.16, rolls: true, orbit: 0.5, parts: () => [
@@ -165,6 +192,63 @@ const KINDS: Record<string, ToyKind> = {
   fence: { size: 0.14, breaks: 'plank', parts: () => [
     { geo: merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.04, 0.22, 0.04).translate(x, -0.03, 0)).concat([new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, 0.02, 0), new THREE.BoxGeometry(0.8, 0.035, 0.025).translate(0, -0.06, 0)])), mat: toon({ color: 0xffffff }), tinted: true },
   ], colors: ['#a8784a'] },
+  // --- Animaux et jouets qui se promènent
+  cow: { size: 0.13, walk: 0.35, orbit: 0.3, parts: () => [
+    { geo: merge([new THREE.CapsuleGeometry(0.085, 0.17, 4, 12).rotateX(Math.PI / 2), new THREE.BoxGeometry(0.1, 0.1, 0.11).translate(0, 0.07, 0.17)]), mat: toon({ color: 0xffffff, map: cowTexture() }) },
+    { geo: merge([legs(0.017, 0.1, 0.05, 0.08, -0.06)]), mat: toon({ color: 0x2a2a2a }) },
+    { geo: merge([new THREE.BoxGeometry(0.085, 0.045, 0.03).translate(0, 0.045, 0.235), new THREE.ConeGeometry(0.011, 0.045, 6).rotateZ(0.7).translate(-0.05, 0.14, 0.16), new THREE.ConeGeometry(0.011, 0.045, 6).rotateZ(-0.7).translate(0.05, 0.14, 0.16)]), mat: toon({ color: 0xf2b8b0 }) },
+  ] },
+  chicken: { size: 0.06, walk: 0.55, hop: true, orbit: 0.6, parts: () => [
+    { geo: merge([new THREE.SphereGeometry(0.055, 12, 10).scale(1, 0.9, 1.2), new THREE.SphereGeometry(0.035, 10, 8).translate(0, 0.055, 0.04), new THREE.ConeGeometry(0.03, 0.06, 8).rotateX(-1.1).translate(0, 0.02, -0.06)]), mat: toon({ color: 0xffffff }) },
+    { geo: merge([new THREE.BoxGeometry(0.012, 0.03, 0.03).translate(0, 0.095, 0.04), new THREE.BoxGeometry(0.014, 0.02, 0.012).translate(0, 0.04, 0.075)]), mat: toon({ color: 0xff3a2a }) },
+    { geo: merge([new THREE.ConeGeometry(0.012, 0.03, 6).rotateX(Math.PI / 2).translate(0, 0.055, 0.08), new THREE.CylinderGeometry(0.006, 0.006, 0.04, 5).translate(-0.02, -0.065, 0), new THREE.CylinderGeometry(0.006, 0.006, 0.04, 5).translate(0.02, -0.065, 0)]), mat: toon({ color: 0xffb020 }) },
+  ] },
+  sheep: { size: 0.1, walk: 0.3, orbit: 0.4, parts: () => [
+    { geo: merge([[0, 0, 0, 0.08], [0.05, 0.02, 0.04, 0.05], [-0.05, 0.02, 0.04, 0.05], [0.05, 0.02, -0.05, 0.05], [-0.05, 0.02, -0.05, 0.05], [0, 0.05, 0, 0.06]].map(([x, y, z, r]) => new THREE.SphereGeometry(r, 10, 8).translate(x, y, z))), mat: toon({ color: 0xf6f2e8 }) },
+    { geo: merge([new THREE.SphereGeometry(0.04, 10, 8).scale(0.9, 1, 1.2).translate(0, 0.03, 0.1), legs(0.012, 0.07, 0.04, 0.05, -0.05)]), mat: toon({ color: 0x2a2a2a }) },
+  ] },
+  penguin: { size: 0.08, walk: 0.25, orbit: 0.5, parts: () => [
+    { geo: new THREE.CapsuleGeometry(0.055, 0.07, 4, 12), mat: toon({ color: 0x1e2430 }) },
+    { geo: new THREE.SphereGeometry(0.05, 12, 10).scale(0.85, 1.15, 0.5).translate(0, -0.005, 0.03), mat: toon({ color: 0xffffff }) },
+    { geo: merge([new THREE.ConeGeometry(0.014, 0.04, 6).rotateX(Math.PI / 2).translate(0, 0.05, 0.06), new THREE.BoxGeometry(0.03, 0.01, 0.04).translate(-0.025, -0.085, 0.01), new THREE.BoxGeometry(0.03, 0.01, 0.04).translate(0.025, -0.085, 0.01)]), mat: toon({ color: 0xffa020 }) },
+  ] },
+  fox: { size: 0.08, walk: 0.5, orbit: 0.4, parts: () => [
+    { geo: merge([new THREE.CapsuleGeometry(0.045, 0.1, 4, 10).rotateX(Math.PI / 2), new THREE.SphereGeometry(0.045, 10, 8).translate(0, 0.04, 0.09), new THREE.ConeGeometry(0.018, 0.04, 6).translate(-0.025, 0.09, 0.09), new THREE.ConeGeometry(0.018, 0.04, 6).translate(0.025, 0.09, 0.09), new THREE.ConeGeometry(0.03, 0.12, 8).rotateX(-1.9).translate(0, 0.03, -0.12)]), mat: toon({ color: 0xff8a2a }) },
+    { geo: merge([new THREE.SphereGeometry(0.02, 8, 6).translate(0, 0.07, -0.17), new THREE.SphereGeometry(0.02, 8, 6).scale(1, 0.7, 1.2).translate(0, 0.025, 0.125)]), mat: toon({ color: 0xffffff }) },
+    { geo: legs(0.01, 0.06, 0.025, 0.05, -0.035), mat: toon({ color: 0x3a2418 }) },
+  ] },
+  shroom: { size: 0.08, walk: 0.3, hop: true, orbit: 0.4, parts: () => [
+    { geo: new THREE.SphereGeometry(0.08, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.01, 0), mat: toon({ color: 0xa0522d }) },
+    { geo: merge([new THREE.CylinderGeometry(0.04, 0.05, 0.06, 10).translate(0, -0.03, 0), new THREE.SphereGeometry(0.012, 6, 6).translate(-0.02, -0.02, 0.045), new THREE.SphereGeometry(0.012, 6, 6).translate(0.02, -0.02, 0.045)]), mat: toon({ color: 0xf2dcb4 }) },
+    { geo: merge([new THREE.BoxGeometry(0.035, 0.02, 0.05).translate(-0.03, -0.07, 0.01), new THREE.BoxGeometry(0.035, 0.02, 0.05).translate(0.03, -0.07, 0.01)]), mat: toon({ color: 0x3a2418 }) },
+  ] },
+  blockpig: { size: 0.08, walk: 0.3, orbit: 0.4, parts: () => [
+    { geo: merge([new THREE.BoxGeometry(0.1, 0.08, 0.15), new THREE.BoxGeometry(0.08, 0.08, 0.08).translate(0, 0.02, 0.1), legs(0.012, 0.05, 0.035, 0.05, -0.04)]), mat: toon({ color: 0xf2a0b0 }) },
+    { geo: new THREE.BoxGeometry(0.04, 0.03, 0.02).translate(0, 0.01, 0.145), mat: toon({ color: 0xd0607a }) },
+  ] },
+  robot: { size: 0.08, walk: 0.35, orbit: 0.5, parts: () => [
+    { geo: merge([new THREE.BoxGeometry(0.08, 0.09, 0.07), new THREE.BoxGeometry(0.06, 0.05, 0.05).translate(0, 0.075, 0), legs(0.012, 0.04, 0.025, 0, -0.045)]), mat: toon({ color: 0xc8d0dc }) },
+    { geo: merge([new THREE.BoxGeometry(0.045, 0.012, 0.01).translate(0, 0.08, 0.027), new THREE.SphereGeometry(0.01, 6, 6).translate(0, 0.115, 0)]), mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.4, 2.2, 2.6) }) },
+  ] },
+  broom: { size: 0.06, walk: 0.7, fly: 0.3, orbit: 0.6, parts: () => [
+    { geo: new THREE.CylinderGeometry(0.008, 0.008, 0.28, 6).rotateX(Math.PI / 2).translate(0, 0, 0.04), mat: toon({ color: 0x8a5a2a }) },
+    { geo: new THREE.ConeGeometry(0.035, 0.12, 10).rotateX(-Math.PI / 2).translate(0, 0, -0.14), mat: toon({ color: 0xd8b060 }) },
+  ] },
+  rccar: { size: 0.06, walk: 1.4, zigzag: true, orbit: 0.6, colors: ['#e8333a', '#2f7dff', '#ffd23a'], parts: () => [
+    { geo: merge([new THREE.BoxGeometry(0.09, 0.035, 0.15), new THREE.BoxGeometry(0.07, 0.03, 0.07).translate(0, 0.03, -0.01)]), mat: toon({ color: 0xffffff }), tinted: true },
+    { geo: merge([[-0.05, -0.05], [0.05, -0.05], [-0.05, 0.05], [0.05, 0.05]].map(([x, z]) => new THREE.CylinderGeometry(0.02, 0.02, 0.018, 10).rotateZ(Math.PI / 2).translate(x, -0.02, z))), mat: toon({ color: 0x1e1e1e }) },
+  ] },
+  duck: { size: 0.07, walk: 0.2, orbit: 0.5, parts: () => [
+    { geo: merge([new THREE.SphereGeometry(0.065, 14, 10).scale(1, 0.8, 1.25), new THREE.SphereGeometry(0.04, 12, 10).translate(0, 0.06, 0.05)]), mat: toon({ color: 0xffd21a, emissive: new THREE.Color(0x302000) }) },
+    { geo: new THREE.BoxGeometry(0.04, 0.012, 0.04).translate(0, 0.055, 0.1), mat: toon({ color: 0xff7a1a }) },
+  ] },
+  candy: { size: 0.07, rolls: true, orbit: 0.5, colors: ['#ff4f9a', '#7a5cff', '#2fd0b0', '#ffb020'], parts: () => [
+    { geo: merge([new THREE.SphereGeometry(0.06, 14, 10).scale(1.3, 1, 1), new THREE.ConeGeometry(0.04, 0.05, 8).rotateZ(Math.PI / 2).translate(0.1, 0, 0), new THREE.ConeGeometry(0.04, 0.05, 8).rotateZ(-Math.PI / 2).translate(-0.1, 0, 0)]), mat: toon({ color: 0xffffff }), tinted: true },
+  ] },
+  barrel: { size: 0.1, rolls: true, orbit: 0.3, parts: () => [
+    { geo: new THREE.CylinderGeometry(0.08, 0.08, 0.2, 14).rotateZ(Math.PI / 2), mat: toon({ color: 0xa0602a }) },
+    { geo: merge([-0.07, 0.07].map((x) => new THREE.TorusGeometry(0.083, 0.008, 6, 18).rotateY(Math.PI / 2).translate(x, 0, 0))), mat: toon({ color: 0x3a3a3a }) },
+  ] },
   chunk: { size: 0.04, debris: true, colors: ['#ffffff'], parts: () => [
     { geo: new THREE.BoxGeometry(0.13, 0.09, 0.11), mat: toon({ color: 0xffffff }), tinted: true },
   ] },
@@ -190,8 +274,8 @@ export class Toys {
   private readonly meshes = new Map<string, THREE.InstancedMesh[]>();
   private radius = 5;
   private scale = 1;
-  /** Appelé quand un objet est percuté (son). */
-  onKick: (strength: number) => void = () => undefined;
+  /** Appelé quand un objet est percuté (force, sorte d'objet). */
+  onKick: (strength: number, kind: string) => void = () => undefined;
   /** Objet brisé (clôture). */
   onBreak: () => void = () => undefined;
   /** Objet parti en orbite. */
@@ -281,7 +365,7 @@ export class Toys {
 
   private make(kind: string, d: THREE.Vector3, yaw: number, color: THREE.Color): Toy {
     const rot = new THREE.Quaternion().setFromAxisAngle(UP, yaw);
-    return { kind, home: d.clone(), dir: d.clone(), h: 0, vUp: 0, vel: new THREE.Vector3(), rot, spin: new THREE.Vector3(), size: KINDS[kind].size, color, escape: false, hidden: 0, life: 0, pop: 1 };
+    return { kind, home: d.clone(), dir: d.clone(), h: 0, vUp: 0, vel: new THREE.Vector3(), rot, spin: new THREE.Vector3(), size: KINDS[kind].size, color, escape: false, hidden: 0, life: 0, pop: 1, yaw, wt: Math.random() * 3, stun: 0, ph: Math.random() * 6.28, go: true };
   }
 
   /**
@@ -348,7 +432,8 @@ export class Toys {
             t.spin.multiplyScalar(1.6);
             this.onOrbit();
           }
-          this.onKick(Math.min(1, push.length() / 8));
+          t.stun = 1.5;
+          this.onKick(Math.min(1, push.length() / 8), t.kind);
         }
       }
       if (t.escape) {
@@ -366,7 +451,25 @@ export class Toys {
         }
       }
       const grounded = t.h <= 0 && t.vUp === 0;
-      t.vel.multiplyScalar(Math.exp(-dt * (grounded ? (spec.rolls ? 1.2 : 4.5) : 0.2)));
+      let strolling = false;
+      if (spec.walk && !t.escape && !spec.debris) {
+        // Promenade : la bête (ou le jouet) reprend sa route une fois remise du choc
+        t.stun = Math.max(0, t.stun - dt);
+        t.ph += dt;
+        if (grounded && t.stun <= 0) {
+          t.wt -= dt;
+          if (t.wt <= 0) {
+            t.yaw += (Math.random() - 0.5) * (spec.zigzag ? 3.5 : 2.2);
+            t.wt = spec.zigzag ? 0.4 + Math.random() * 0.8 : 1.5 + Math.random() * 3;
+            t.go = spec.zigzag || Math.random() < 0.75;
+          }
+          t.rot.setFromAxisAngle(UP, t.yaw);
+          const fwd = _a.set(Math.sin(t.yaw), 0, Math.cos(t.yaw)).applyQuaternion(_q.setFromUnitVectors(UP, t.dir));
+          t.vel.copy(fwd).multiplyScalar(t.go ? spec.walk : 0);
+          strolling = true;
+        }
+      }
+      if (!strolling) t.vel.multiplyScalar(Math.exp(-dt * (grounded ? (spec.rolls ? 1.2 : 4.5) : 0.2)));
       const sp = t.vel.length();
       if (sp > 1e-4) {
         // Déplacement le long de la surface : rotation de la direction
@@ -399,7 +502,12 @@ export class Toys {
       counts.set(t.kind, n + 1);
       // Orientation : le « haut » de l'objet suit la normale, plus sa rotation propre
       _q.setFromUnitVectors(UP, t.dir).multiply(t.rot);
-      _p.copy(t.dir).multiplyScalar((this.radius + t.size + t.h) / this.scale);
+      // Vol bas (balai), sautillement (poule), dandinement
+      const ks = KINDS[t.kind];
+      let lift = 0;
+      if (ks.fly) lift += ks.fly + Math.sin(t.ph * 3) * 0.04;
+      if (ks.hop && t.go && t.stun <= 0) lift += Math.abs(Math.sin(t.ph * 11)) * 0.035;
+      _p.copy(t.dir).multiplyScalar((this.radius + t.size + t.h + lift) / this.scale);
       const pop = t.pop < 1 ? 1 - Math.pow(1 - t.pop, 3) * 1 + Math.sin(t.pop * Math.PI) * 0.15 : 1;
       _s.setScalar(pop / this.scale);
       _m.compose(_p, _q, _s);

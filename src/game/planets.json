@@ -77,7 +77,15 @@
         "houses": 1
       },
       "sky": "space",
-      "vehicle": "hover"
+      "vehicle": "hover",
+      "toys": {
+        "chicken": 8,
+        "ball": 3
+      },
+      "mission": {
+        "kind": "kick:chicken",
+        "target": 6
+      }
     },
     {
       "id": "meuh",
@@ -129,15 +137,21 @@
         "trees": 3,
         "rocks": 0,
         "houses": 0,
-        "cows": 6,
+        "cows": 0,
         "fences": 0,
         "barn": 1,
         "haybales": 0,
         "balloons": 4
       },
       "toys": {
+        "cow": 6,
+        "chicken": 6,
         "fence": 6,
         "hay": 5
+      },
+      "mission": {
+        "kind": "kick:cow",
+        "target": 6
       }
     },
     {
@@ -192,6 +206,14 @@
         "houses": 0,
         "hills": 4,
         "lanterns": 7
+      },
+      "toys": {
+        "sheep": 8,
+        "chicken": 4
+      },
+      "mission": {
+        "kind": "kick:sheep",
+        "target": 8
       }
     },
     {
@@ -243,6 +265,13 @@
         "blocks": 2,
         "qblocks": 4,
         "coins": 6
+      },
+      "toys": {
+        "shroom": 8
+      },
+      "mission": {
+        "kind": "decor",
+        "target": 12
       }
     },
     {
@@ -298,7 +327,12 @@
         "spinners": 2
       },
       "toys": {
-        "cone": 6
+        "cone": 8,
+        "rccar": 4
+      },
+      "mission": {
+        "kind": "distance",
+        "target": 600
       }
     },
     {
@@ -345,6 +379,14 @@
         "rocks": 0,
         "houses": 1,
         "dragonballs": 7
+      },
+      "toys": {
+        "chicken": 5,
+        "rccar": 2
+      },
+      "mission": {
+        "kind": "crates",
+        "target": 5
       }
     },
     {
@@ -398,6 +440,13 @@
         "lollipops": 5,
         "gumdrops": 6,
         "candies": 6
+      },
+      "toys": {
+        "candy": 10
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 5
       }
     },
     {
@@ -460,9 +509,14 @@
         "snowflakes": 7
       },
       "toys": {
-        "gift": 8
+        "gift": 8,
+        "penguin": 4
       },
-      "dark": true
+      "dark": true,
+      "mission": {
+        "kind": "kick:gift",
+        "target": 8
+      }
     },
     {
       "id": "origine",
@@ -575,7 +629,12 @@
         "ball": 5,
         "blockA": 3,
         "blockB": 3,
-        "blockC": 3
+        "blockC": 3,
+        "rccar": 4
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 8
       }
     },
     {
@@ -627,7 +686,14 @@
         "hoops": 3,
         "candles": 10
       },
-      "dark": true
+      "dark": true,
+      "toys": {
+        "broom": 6
+      },
+      "mission": {
+        "kind": "kick:broom",
+        "target": 6
+      }
     },
     {
       "id": "halloween",
@@ -682,9 +748,14 @@
         "bats": 6
       },
       "toys": {
-        "pumpkin": 7
+        "pumpkin": 7,
+        "broom": 3
       },
-      "dark": true
+      "dark": true,
+      "mission": {
+        "kind": "kick:pumpkin",
+        "target": 8
+      }
     },
     {
       "id": "ocean",
@@ -739,7 +810,12 @@
         "spinners": 1
       },
       "toys": {
-        "buoy": 6
+        "buoy": 6,
+        "duck": 6
+      },
+      "mission": {
+        "kind": "time",
+        "target": 120
       }
     },
     {
@@ -790,6 +866,13 @@
         "houses": 0,
         "cubetrees": 4,
         "skyblocks": 5
+      },
+      "toys": {
+        "blockpig": 6
+      },
+      "mission": {
+        "kind": "kick:blockpig",
+        "target": 6
       }
     },
     {
@@ -844,7 +927,13 @@
         "hoverboard": 1
       },
       "toys": {
-        "cone": 5
+        "cone": 5,
+        "robot": 4,
+        "rccar": 3
+      },
+      "mission": {
+        "kind": "kick:robot",
+        "target": 5
       }
     },
     {
@@ -893,7 +982,14 @@
         "snowflakes": 6
       },
       "sky": "space",
-      "vehicle": "hover"
+      "vehicle": "hover",
+      "toys": {
+        "penguin": 8
+      },
+      "mission": {
+        "kind": "kick:penguin",
+        "target": 8
+      }
     },
     {
       "id": "bowser",
@@ -948,7 +1044,14 @@
         "ramps": 2,
         "spinners": 1
       },
-      "dark": true
+      "dark": true,
+      "toys": {
+        "barrel": 6
+      },
+      "mission": {
+        "kind": "time",
+        "target": 150
+      }
     },
     {
       "id": "petitprince",
@@ -999,6 +1102,14 @@
         "baobabs": 2,
         "volcanoes": 2,
         "stars": 6
+      },
+      "toys": {
+        "fox": 3,
+        "sheep": 2
+      },
+      "mission": {
+        "kind": "distance",
+        "target": 900
       }
     },
     {
@@ -1056,7 +1167,14 @@
       },
       "glass": true,
       "roadBoost": true,
-      "dark": true
+      "dark": true,
+      "toys": {
+        "candy": 5
+      },
+      "mission": {
+        "kind": "orbit",
+        "target": 10
+      }
     },
     {
       "id": "naine",
@@ -1104,7 +1222,14 @@
       },
       "sky": "space",
       "vehicle": "hover",
-      "dark": true
+      "dark": true,
+      "toys": {
+        "candy": 6
+      },
+      "mission": {
+        "kind": "stage",
+        "target": 5
+      }
     }
   ]
 }

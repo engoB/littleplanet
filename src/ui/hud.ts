@@ -106,6 +106,18 @@ export class Hud {
     if (n <= 0) this.countTimer = window.setTimeout(() => (c.hidden = true), 800);
   }
 
+  private readonly missionEl = $('hud-mission');
+  private lastMission = '';
+  /** Compteur de la mission du monde (null : masqué). */
+  mission(text: string | null, done: boolean): void {
+    const t = text ? `${done ? '✓' : '🎯'} ${text}` : '';
+    if (t === this.lastMission) return;
+    this.lastMission = t;
+    this.missionEl.hidden = !text;
+    this.missionEl.textContent = t;
+    this.missionEl.classList.toggle('done', done);
+  }
+
   private readonly pops = $('car-pops');
   /** Bonus qui jaillit contre le véhicule puis s'envole (« +20 ❤ »). */
   popup(text: string, kind: 'good' | 'bad' | 'info' = 'good'): void {

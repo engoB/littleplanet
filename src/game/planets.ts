@@ -41,6 +41,8 @@ export interface PlanetDef {
   roadBoost?: boolean;
   /** Hill Valley : traînées de feu au sol en turbo. */
   fireTrail?: boolean;
+  /** Mission qui débloque le monde suivant (en une partie). */
+  mission?: { kind: string; target: number };
   /** Climat du monde : rain, snow, leaves, wind, storm (rien par défaut). */
   weather?: string;
   /** Monde retiré du carrousel (planète d'origine du préréglage Original, planète classique de l'écran titre). */

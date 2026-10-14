@@ -256,6 +256,8 @@ interface KindSpec {
   face?: boolean;
   /** Monument emblématique du monde (affiché aussi sur la planète du menu). */
   monument?: boolean;
+  /** Gros monument indestructible (infranchissable) ; tout le reste vole en éclats. */
+  solid?: boolean;
 }
 
 /** Visage fâché du bloc écraseur (pierre teintée par instance). */
@@ -519,12 +521,12 @@ const KINDS: Record<string, KindSpec> = {
   crosses: { space: 0.4, hit: 0.08, scale: [1.4, 1.9], max: 6, monument: true, parts: [
     { geo: crossGeo, color: (c) => String(c.cross ?? '#8a8496') },
   ] },
-  hoverboard: { space: 0.7, hit: 0.24, scale: [2.4, 2.4], max: 1, monument: true, parts: [
+  hoverboard: { space: 0.7, hit: 0.24, scale: [2.4, 2.4], max: 1, monument: true, solid: true, parts: [
     { geo: () => hoverboard()[0], color: fixed('#ff5aa8'), mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), emissive: new THREE.Color(0x40102a) }) },
     { geo: () => hoverboard()[1], color: fixed('#ffe14d') },
     { geo: () => hoverboard()[2], color: fixed('#b8b2a8') },
   ] },
-  bigtree: { space: 0.9, hit: 0.4, scale: [3.2, 3.2], max: 1, monument: true, parts: [
+  bigtree: { space: 0.9, hit: 0.4, scale: [3.2, 3.2], max: 1, monument: true, solid: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.03, 0.04, 0.12, 7).translate(0, 0.06, 0), color: (c) => c.trunk },
     { geo: () => merge([0, 1, 2].map((i) => new THREE.ConeGeometry(0.24 - i * 0.06, 0.26, 12).translate(0, 0.2 + i * 0.16, 0))), color: fixed('#2f8a4a') },
     { geo: xmasLights, color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.4, 2.4), vertexColors: true }) },
@@ -559,7 +561,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.BoxGeometry(0.28, 0.2, 0.28).translate(0, -0.04, 0), color: (c) => c.trunk, flat: true },
     { geo: () => new THREE.BoxGeometry(0.29, 0.08, 0.29).translate(0, 0.1, 0), color: (c, r) => pick(c.canopy, r, '#4fbf45'), flat: true },
   ] },
-  houses: { space: 0.5, hit: 0.34, scale: [1, 1], max: 4, monument: true, parts: [
+  houses: { space: 0.5, hit: 0.34, scale: [1, 1], max: 4, monument: true, solid: true, parts: [
     { geo: () => new THREE.CylinderGeometry(0.3, 0.32, 0.26, 18).translate(0, 0.13, 0), color: (c) => c.house },
     { geo: () => new THREE.SphereGeometry(0.33, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.24, 0), color: (c) => c.roof },
     { geo: () => new THREE.BoxGeometry(0.11, 0.17, 0.04).translate(0, 0.085, 0.31), color: (c) => c.trunk },
@@ -585,7 +587,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.CylinderGeometry(0.17, 0.17, 0.1, 16).translate(0, 0.33, 0), color: (c) => c.house },
   ] },
   // Blocs « ? » flottants : décor seul, la voiture passe dessous
-  blocks: { space: 0.25, hit: 0, scale: [1, 1], max: 12, parts: [
+  blocks: { space: 0.25, hit: 0.1, scale: [1, 1], max: 12, parts: [
     { geo: () => new THREE.BoxGeometry(0.2, 0.2, 0.2).translate(0, 0.36, 0), color: (c) => c.roof, map: questionTexture },
   ] },
   cubetrees: { space: 0.28, hit: 0.1, scale: [0.85, 1.25], max: 12, monument: true, parts: [
@@ -618,14 +620,14 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.SphereGeometry(0.12, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.25, 1), color: (c, r) => pick(c.canopy, r, '#3fd65a') },
   ] },
   // --- Hill Valley
-  clocktowers: { space: 0.6, hit: 0.34, scale: [1.9, 1.9], max: 1, monument: true, parts: [
+  clocktowers: { space: 0.6, hit: 0.34, scale: [1.9, 1.9], max: 1, monument: true, solid: true, parts: [
     { geo: () => merge([new THREE.BoxGeometry(0.62, 0.42, 0.42).translate(0, 0.21, 0), new THREE.BoxGeometry(0.24, 0.36, 0.24).translate(0, 0.6, 0)]), color: (c) => String(c.tower ?? '#e8dcc0') },
     { geo: () => merge([new THREE.ConeGeometry(0.2, 0.22, 4).rotateY(Math.PI / 4).translate(0, 0.89, 0), new THREE.BoxGeometry(0.66, 0.05, 0.46).translate(0, 0.43, 0)]), color: (c) => c.roof },
     { geo: () => new THREE.CircleGeometry(0.09, 24).translate(0, 0.64, 0.122), color: fixed('#ffffff'), map: clockTexture },
     { geo: () => merge([-0.2, -0.07, 0.07, 0.2].map((x) => new THREE.BoxGeometry(0.06, 0.16, 0.02).translate(x, 0.2, 0.212))), color: fixed('#3a4a6a') },
   ] },
   // --- La Comté : collines-terriers à porte ronde
-  hills: { space: 0.5, hit: 0.42, scale: [1.1, 1.5], max: 5, monument: true, parts: [
+  hills: { space: 0.5, hit: 0.42, scale: [1.1, 1.5], max: 5, monument: true, solid: true, parts: [
     { geo: () => new THREE.SphereGeometry(0.5, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.5, 1), color: (c) => c.house },
     { geo: () => new THREE.CircleGeometry(0.1, 24).rotateX(-0.5).translate(0, 0.12, 0.445), color: (c, r) => pick(c.door, r, '#2f8a3a') },
     { geo: () => new THREE.RingGeometry(0.1, 0.125, 24).rotateX(-0.5).translate(0, 0.12, 0.443), color: fixed('#7a5230') },
@@ -648,7 +650,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => merge([new THREE.CylinderGeometry(0.022, 0.022, 0.012, 14).rotateX(Math.PI / 2).translate(0, 0.075, 0.076)]), color: fixed('#ffffff') },
   ] },
   // --- Royaume Enchanté
-  castles: { space: 0.7, hit: 0.42, scale: [1.8, 1.8], max: 1, monument: true, parts: [
+  castles: { space: 0.7, hit: 0.42, scale: [1.8, 1.8], max: 1, monument: true, solid: true, parts: [
     { geo: castleWalls, color: (c) => c.house },
     { geo: castleSpires, color: (c) => c.roof },
     { geo: () => new THREE.BoxGeometry(0.12, 0.16, 0.02).translate(0, 0.08, 0.312), color: fixed('#7a5a8a') },
@@ -668,7 +670,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.TorusGeometry(0.14, 0.03, 8, 32).translate(0, 0.14, 0), color: fixed('#2f6bff') },
     { geo: () => merge([star(0.06).translate(0, 0, 0.141), star(0.06).rotateY(Math.PI).translate(0, 0, -0.141)]).translate(0, 0.14, 0), color: fixed('#ff3a3a') },
   ] },
-  lamps: { space: 0.4, hit: 0.15, scale: [2.8, 2.8], max: 2, monument: true, parts: [
+  lamps: { space: 0.4, hit: 0.15, scale: [2.8, 2.8], max: 2, monument: true, solid: true, parts: [
     { geo: lampArms, color: (c) => c.trunk },
     { geo: lampHead, color: (c) => c.trunk, mat: () => new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGradient(), side: THREE.DoubleSide }) },
     { geo: () => new THREE.SphereGeometry(0.035, 10, 8).translate(-0.17, 0.52, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.4, 1.8) }) },
@@ -681,7 +683,7 @@ const KINDS: Record<string, KindSpec> = {
   tirestacks: { space: 0.25, hit: 0.11, scale: [0.9, 1.1], max: 16, parts: [
     { geo: tireStack, color: fixed('#1e1e22') },
   ] },
-  thwomps: { space: 0.4, hit: 0.22, scale: [1, 1.25], max: 6, lift: 0.3, face: true, float: { bob: 0.08 }, monument: true, parts: [
+  thwomps: { space: 0.4, hit: 0.22, scale: [1, 1.25], max: 6, lift: 0.3, face: true, float: { bob: 0.08 }, monument: true, solid: true, parts: [
     { geo: () => new THREE.BoxGeometry(0.4, 0.44, 0.4).translate(0, 0.22, 0), color: fixed('#a8a4b0'), map: angryTexture, flat: true },
   ] },
   torches: { space: 0.3, hit: 0.06, scale: [1, 1.2], max: 10, parts: [
@@ -712,7 +714,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => merge([new THREE.PlaneGeometry(0.96, 0.52).translate(0, 0, 0.022), new THREE.PlaneGeometry(0.96, 0.52).rotateY(Math.PI).translate(0, 0, -0.022)]), color: fixed('#ffffff'), map: hillValleyTexture },
   ] },
   // --- Poudlard
-  hogcastle: { space: 0.8, hit: 0.45, scale: [2.4, 2.4], max: 1, monument: true, parts: [
+  hogcastle: { space: 0.8, hit: 0.45, scale: [2.4, 2.4], max: 1, monument: true, solid: true, parts: [
     { geo: () => hogwarts()[0], color: (c) => c.house, flat: true },
     { geo: () => hogwarts()[1], color: (c) => c.roof },
     { geo: () => hogwarts()[2], color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.0, 0.8) }) },
@@ -725,7 +727,7 @@ const KINDS: Record<string, KindSpec> = {
     { geo: () => new THREE.ConeGeometry(0.018, 0.05, 8).translate(0, 0.09, 0), color: fixed('#ffffff'), mat: () => new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 2.2, 0.8) }) },
   ] },
   // --- Ville d'Halloween
-  spiralhill: { space: 0.8, hit: 0.35, scale: [2.4, 2.4], max: 1, monument: true, parts: [
+  spiralhill: { space: 0.8, hit: 0.35, scale: [2.4, 2.4], max: 1, monument: true, solid: true, parts: [
     { geo: spiralHill, color: fixed('#5a5468') },
   ] },
   pumpkins: { space: 0.22, hit: 0.1, scale: [0.8, 1.4], max: 14, parts: [
@@ -765,7 +767,7 @@ const KINDS: Record<string, KindSpec> = {
   fences: { space: 0.3, hit: 0.08, scale: [1, 1], max: 12, parts: [
     { geo: () => merge([-0.36, 0, 0.36].map((x) => new THREE.BoxGeometry(0.035, 0.2, 0.035).translate(x, 0.1, 0)).concat([new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.14, 0), new THREE.BoxGeometry(0.78, 0.03, 0.02).translate(0, 0.07, 0)])), color: (c) => String(c.wood ?? '#a8784a') },
   ] },
-  barn: { space: 0.8, hit: 0.4, scale: [1.8, 1.8], max: 1, monument: true, parts: [
+  barn: { space: 0.8, hit: 0.4, scale: [1.8, 1.8], max: 1, monument: true, solid: true, parts: [
     { geo: () => new THREE.BoxGeometry(0.72, 0.36, 0.56).translate(0, 0.18, 0), color: (c) => c.house },
     { geo: barnRoof, color: fixed('#6a2a24') },
     { geo: () => merge([new THREE.BoxGeometry(0.24, 0.26, 0.02).translate(0, 0.13, 0.285), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(0.8).translate(0, 0.13, 0.297), new THREE.BoxGeometry(0.3, 0.025, 0.025).rotateZ(-0.8).translate(0, 0.13, 0.297)]), color: (c) => c.roof },
@@ -895,8 +897,8 @@ export class Decor {
         this.setInstance(ps, k, d, yaw, sc * sizeMul, (spec.lift ?? 0) * sizeMul);
         if (spec.float || spec.face) this.anims.push({ ps, k, dir: d, yaw, sc: sc * sizeMul, lift: (spec.lift ?? 0) * sizeMul, phase: rng.range(0, Math.PI * 2), spec, look: yaw });
         if (spec.hit > 0) {
-          // Monuments infranchissables ; le reste vole en éclats au premier choc
-          const maxHits = spec.monument ? Infinity : 1;
+          // Gros monuments infranchissables ; le reste vole en éclats au premier choc
+          const maxHits = spec.solid ? Infinity : 1;
           this.obstacles.push({ dir: d, radius: spec.hit * sc, hits: 0, maxHits, ps, k });
         }
       }
