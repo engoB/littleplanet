@@ -120,7 +120,7 @@ export class Weather {
     this.strikeIn = 3 + Math.random() * 4;
     this.rainN = kind === 'rain' ? 650 : kind === 'storm' ? 1100 : kind === 'wind' ? 70 : 0;
     this.leafN = kind === 'leaves' ? 70 : kind === 'wind' ? 24 : kind === 'storm' ? 10 : 0;
-    this.dim = kind === 'storm' ? 0.55 : kind === 'rain' ? 0.78 : kind === 'snow' ? 0.92 : 1;
+    this.dim = kind === 'storm' ? 0.78 : kind === 'rain' ? 0.9 : 1;
     this.rain.visible = this.rainN > 0;
     this.snow.visible = kind === 'snow';
     this.leaves.visible = this.leafN > 0;

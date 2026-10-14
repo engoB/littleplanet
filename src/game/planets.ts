@@ -43,6 +43,8 @@ export interface PlanetDef {
   fireTrail?: boolean;
   /** Climat du monde : rain, snow, leaves, wind, storm (rien par défaut). */
   weather?: string;
+  /** Monde retiré du carrousel (planète d'origine du préréglage Original, planète classique de l'écran titre). */
+  hidden?: boolean;
   /** Rendu en gros pixels (filtrage « nearest »). */
   pixel?: boolean;
 }
@@ -50,7 +52,7 @@ export interface PlanetDef {
 export const PLANETS: PlanetDef[] = (data as { planets: PlanetDef[] }).planets;
 
 /** Monde 1 : premier monde du carrousel (sélection par défaut). */
-export const FIRST: PlanetDef = PLANETS.find((p) => p.style !== 'galaxy') ?? PLANETS[0];
+export const FIRST: PlanetDef = PLANETS.find((p) => p.style !== 'galaxy' && !p.hidden) ?? PLANETS[0];
 
 export function planetById(id: string | null | undefined): PlanetDef {
   return PLANETS.find((p) => p.id === id) ?? FIRST;

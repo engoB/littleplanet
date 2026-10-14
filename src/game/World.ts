@@ -153,7 +153,7 @@ export class World implements GameContext {
   private route: string[] = [];
   /** Tire un nouvel itinéraire : toutes les planètes toon, mélangées (sans répétition consécutive). */
   private newRoute(): void {
-    const pool = PLANETS.filter((p) => p.style === 'toon').map((p) => p.id);
+    const pool = PLANETS.filter((p) => p.style === 'toon' && !p.hidden).map((p) => p.id);
     const out: string[] = [];
     while (out.length < 40) {
       const bag = [...pool];
@@ -186,7 +186,7 @@ export class World implements GameContext {
     if (d.style !== 'galaxy') return d;
     if (!this.route.length) this.newRoute();
     const sub = planetById(this.route[i % this.route.length]);
-    return { ...sub, radius: Math.min(sub.radius, 1.3) };
+    return { ...sub, radius: Math.min(sub.radius, 1.8) };
   }
   private planetMesh!: THREE.Mesh;
   private planetStdMat!: THREE.Material;
@@ -711,6 +711,8 @@ export class World implements GameContext {
       if (def.neon) u.emisColor.value.setRGB(0.8, 0.8, 0.8);
       else if (def.emis) u.emisColor.value.setRGB(def.emis, def.emis, def.emis);
       else u.emisColor.value.set(cubes.emis ? 0xff7a2a : 0x000000).multiplyScalar(cubes.emis ? 0.55 : 0);
+      // Mondes sombres : le sol rayonne un peu de sa propre couleur (moins terne)
+      if (def.dark && !def.neon && !def.emis && !cubes.emis) u.emisColor.value.setScalar(0.32);
       u.rimColor.value.set(def.atmosphere);
       // Planète de verre (Arc-en-ciel) : seule la route est opaque, on voit l'espace au travers
       const glass = !!def.glass && !!cubes.mask;
@@ -762,7 +764,8 @@ export class World implements GameContext {
     // Éclairage lisible : ambiance forte, soleil modéré (ombres légères) ;
     // Néon : planète sombre, ce sont la voiture, la grille et les impacts qui brillent
     const neon = this.toon && !!def.neon;
-    this.ambient.intensity = this.toon ? (neon ? 0.95 : 1.15) : 0;
+    // Mondes sombres : ambiance plus forte pour garder un sol lumineux
+    this.ambient.intensity = this.toon ? (neon ? 0.95 : def.dark ? 1.5 : 1.15) : 0;
     this.ambient.color.set(neon ? 0x8a6aff : 0xc4dcff);
     this.ambient.groundColor.set(neon ? 0x2a1040 : 0x6a5a6a);
     // En cel-shading, un flash ponctuel devient un aplat : il est atténué (sauf Néon)
@@ -800,7 +803,8 @@ export class World implements GameContext {
     for (const f of this.surfaceFx) f.stop(true);
     for (const c of this.carMats) c.mesh.material = this.toon ? c.toon : c.std;
     this.stars.points.visible = premium;
-    this.rig.heightScale = premium ? Math.max(0.75, def.radius) : 1;
+    // Grosses planètes, caméra proche : on voit le sol et la voiture de plus près
+    this.rig.heightScale = premium ? 1 + 0.25 * Math.max(0, def.radius - 1) : 1;
     this.post.setPremium(bool(this.settings, 'bloom'), { bloom: bool(this.settings, 'bloom') });
     // Avec le bloom, les particules HDR (×2 des shaders CFXR) sont tempérées
     this.particles.intensity = bool(this.settings, 'bloom') ? 0.62 : 1;

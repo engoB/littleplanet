@@ -264,7 +264,7 @@ async function main(): Promise<void> {
     maybeUpdate();
   };
   // --- Choix de la planète : carrousel 3D (façon sélection de royaume)
-  const choosable = PLANETS.filter((p) => p.style !== 'galaxy');
+  const choosable = PLANETS.filter((p) => p.style !== 'galaxy' && !p.hidden);
   const diffLabel = ['', 'Facile', 'Tranquille', 'Corsé', 'Difficile', 'Extrême'];
   const renderPlanets = () => {
     world.select.setPlanets(choosable.map((def) => ({ def, locked: !isUnlocked(def) })));

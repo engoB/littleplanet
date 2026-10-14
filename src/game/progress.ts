@@ -53,7 +53,7 @@ const VERSION_KEY = 'mpp.progress.version';
 const VERSION = '13';
 
 /** Mondes de la progression, dans l'ordre du carrousel. */
-export const WORLDS: PlanetDef[] = PLANETS.filter((p) => p.style !== 'galaxy');
+export const WORLDS: PlanetDef[] = PLANETS.filter((p) => p.style !== 'galaxy' && !p.hidden);
 
 export const TROPHIES: Trophy[] = [
   { id: 'first', name: 'Premiers tours', desc: 'Réussir un premier objectif', icon: '🏁', test: (p) => Object.values(p.goals).some((g) => g >= 1) },

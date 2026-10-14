@@ -45,8 +45,8 @@ export const SCHEMA: SettingDef[] = [
   { key: 'steerSpeed', label: 'Vitesse de braquage', group: 'Jeu', type: 'number', arcade: 200, original: 200, min: 60, max: 400, step: 10, unit: '°/s', help: 'rotationSpeed × rotationMultiplier (8 × 25)' },
   { key: 'steerFatigue', label: 'Fatigue de virage', group: 'Jeu', type: 'number', arcade: 3.4, original: 4, min: 0, max: 10, step: 0.5, unit: 's', help: 'maxDirectionDuration : le braquage s’éteint si on garde la même direction. 0 = désactivé.' },
   { key: 'steerFatigueHold', label: 'Virage à pleine force pendant', group: 'Jeu', type: 'number', arcade: 1.6, original: 0, min: 0, max: 5, step: 0.1, unit: 's', help: 'Puis la voiture repart en ligne droite. 0 = atténuation dès le début (original).' },
-  { key: 'maxHealth', label: 'Santé maximale', group: 'Jeu', type: 'number', arcade: 100, original: 100, min: 20, max: 400, step: 10, help: 'HealthManager.maxHealth' },
-  { key: 'craterDamage', label: 'Dégâts d’un cratère', group: 'Jeu', type: 'number', arcade: 10, original: 10, min: 0, max: 50, step: 1 },
+  { key: 'maxHealth', label: 'Santé maximale', group: 'Jeu', type: 'number', arcade: 150, original: 100, min: 20, max: 400, step: 10, help: 'HealthManager.maxHealth' },
+  { key: 'craterDamage', label: 'Dégâts d’un cratère', group: 'Jeu', type: 'number', arcade: 15, original: 10, min: 0, max: 50, step: 1 },
   { key: 'invulnerability', label: 'Invulnérabilité après un choc', group: 'Jeu', type: 'number', arcade: 0.8, original: 0, min: 0, max: 3, step: 0.1, unit: 's' },
   { key: 'turbo', label: 'Turbo (bouton maintenu)', group: 'Jeu', type: 'bool', arcade: true, original: false },
   { key: 'stages', label: 'Étapes et objectifs', group: 'Jeu', type: 'bool', arcade: true, original: false, help: 'Objectifs successifs, la difficulté augmente à chaque étape.' },
@@ -82,11 +82,11 @@ export const SCHEMA: SettingDef[] = [
   { key: 'clockInterval', label: 'Intervalle d’apparition', group: 'Horloges', type: 'number', arcade: 5, original: 5, min: 1, max: 20, step: 0.5, unit: 's' },
   { key: 'clockMax', label: 'Nombre maximal par partie', group: 'Horloges', type: 'number', arcade: 0, original: 10, min: 0, max: 50, step: 1, help: '0 = illimité' },
   { key: 'clockLifetime', label: 'Durée de vie', group: 'Horloges', type: 'number', arcade: 10, original: 10, min: 3, max: 30, step: 1, unit: 's' },
-  { key: 'clockHeal', label: 'Santé rendue', group: 'Horloges', type: 'number', arcade: 20, original: 20, min: 5, max: 100, step: 5 },
+  { key: 'clockHeal', label: 'Santé rendue', group: 'Horloges', type: 'number', arcade: 10, original: 20, min: 5, max: 100, step: 5 },
   // --- Caméra
   { key: 'cameraTilt', label: 'Inclinaison de la caméra', group: 'Caméra', type: 'number', arcade: 30, original: 0, min: 0, max: 60, step: 1, unit: '°', help: '0 = vue de dessus exacte de l’original' },
   { key: 'cameraAdaptive', label: 'Caméra adaptative', group: 'Caméra', type: 'bool', arcade: true, original: false, help: 'Proche de la voiture sur une grosse planète, planète entière quand elle devient petite.' },
-  { key: 'cameraHeight', label: 'Hauteur de la caméra (proche)', group: 'Caméra', type: 'number', arcade: 6.2, original: 12, min: 3, max: 14, step: 0.2, unit: 'u', help: 'L’original place la caméra à 12 unités au-dessus de la voiture.' },
+  { key: 'cameraHeight', label: 'Hauteur de la caméra (proche)', group: 'Caméra', type: 'number', arcade: 4.0, original: 12, min: 3, max: 14, step: 0.2, unit: 'u', help: 'L’original place la caméra à 12 unités au-dessus de la voiture.' },
   { key: 'cameraShake', label: 'Secousses (explosions)', group: 'Caméra', type: 'bool', arcade: true, original: true },
   // --- Graphismes
   { key: 'quality', label: 'Qualité', group: 'Graphismes', type: 'select', arcade: 'auto', original: 'auto', options: [
